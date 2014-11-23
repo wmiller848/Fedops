@@ -8,10 +8,21 @@ import (
   "encoding/pem"
 )
 
+//
+//
+type Provider interface {
+  CreateKeypair()
+  CreateImage()
+  CreateVM()
+}
+
 type SSH_Config struct {
   Keysize int
 }
 
+//
+//
+//
 type Keypair struct {
   Keysize int
   PublicPem []byte
@@ -60,10 +71,10 @@ func (k *Keypair) Generate() {
   k.PublicPem = pem.EncodeToMemory(&pub_blk)
 }
 
-func (k *Keypair) ToString() string {
-  return string(k.PrivatePem) + string(k.PublicPem)
+func (k *Keypair) ToArray() []byte {
+  return append(k.PrivatePem, k.PublicPem...)
 }
 
-type DigitalOceanAuth struct {
-  ApiKey string
+func (k *Keypair) ToString() string {
+  return string(k.PrivatePem) + string(k.PublicPem)
 }

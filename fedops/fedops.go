@@ -31,8 +31,6 @@ func main() {
       pwd = value
     }
   }
-	fedops := fedops.CreateDispatcher(pwd)
-
   stdin := bufio.NewReader(os.Stdin)
 	_cli := cli.NewApp()
 	_cli.Name = "FedOps"
@@ -46,30 +44,54 @@ func main() {
     	Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
         fmt.Println("Providers: digital ocean, aws, google cloud, microsoft azure, openstack")
-        fmt.Println("Enter Cloud Provider...")
+        fmt.Printf("Enter Cloud Provider... ")
         cloudProvider, _ := stdin.ReadString('\n')
         cloudProvider = strings.Trim(cloudProvider, "\n")
 
-        fmt.Println("Password...")
-        passwd := gopass.GetPasswd()
+        tokens := fedops.ProviderTokens{}
+        switch cloudProvider {
+          case "digital ocean":
+            fmt.Printf("Enter Digital Ocean API Token... ")
+            digoToken, _ := stdin.ReadString('\n')
+            digoToken = strings.Trim(digoToken, "\n")
+            tokens.AccessToken = digoToken
+          case "aws":
+            fmt.Printf("Enter Amazon Webservice Token... ")
+            awsToken, _ := stdin.ReadString('\n')
+            awsToken = strings.Trim(awsToken, "\n")
+            tokens.AccessToken = awsToken
 
-        fmt.Println("Repeat...")
-        passwdR := gopass.GetPasswd()
+            fmt.Printf("Enter Amazon Webservice Security Token... ")
+            awsSecurityToken, _ := stdin.ReadString('\n')
+            awsSecurityToken = strings.Trim(awsSecurityToken, "\n")
+            tokens.SecurityToken = awsSecurityToken
+          case "google cloud":
+          case "microsoft azure":
+          case "openstack":
+          default:
+        }
 
-        if string(passwd) != string(passwdR) {
+
+        fmt.Printf("Password... ")
+        passwd := string(gopass.GetPasswd())
+        fmt.Printf("Repeat... ")
+        passwdR := string(gopass.GetPasswd())
+
+        if passwd != passwdR {
           fmt.Println("Passwords don't match")
           return
         }
         
+        fedops := fedops.CreateDispatcher(passwd, pwd)
         promise := make(chan uint)
         var status uint
-        fedops.InitCloudProvider(promise, cloudProvider)
+        fedops.InitCloudProvider(promise, cloudProvider, tokens)
         status = <- promise
         switch status {
           case fedops.Error:
             fmt.Println("Unable to use " + cloudProvider)
           case fedops.Ok:
-            fmt.Println("")
+            //fmt.Println("")
           case fedops.Unknown:
             fmt.Println("Unknown")
         }
