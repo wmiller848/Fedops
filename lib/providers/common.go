@@ -6,18 +6,27 @@ import (
   "crypto/rand"
   "crypto/x509"
   "encoding/pem"
+  _"encoding/base64"
+  "code.google.com/p/go.crypto/ssh"
 )
 
 //
 //
 type Provider interface {
-  CreateKeypair()
+  Name() string
+  CreateKeypair(Keypair) (string, error)
   CreateImage()
   CreateVM()
 }
 
 type SSH_Config struct {
   Keysize int
+}
+
+func GenerateKeypair(sshKeyConfig SSH_Config) (Keypair) {
+  sshkey := Keypair{Keysize: sshKeyConfig.Keysize}
+  sshkey.Generate()
+  return sshkey
 }
 
 //
@@ -27,6 +36,7 @@ type Keypair struct {
   Keysize int
   PublicPem []byte
   PrivatePem []byte
+  PublicSSH []byte
 }
 
 func (k *Keypair) Generate() {
@@ -69,6 +79,15 @@ func (k *Keypair) Generate() {
     Bytes: pub_der,
   }
   k.PublicPem = pem.EncodeToMemory(&pub_blk)
+
+  pubssh, err := ssh.NewPublicKey(&pub)
+  if err != nil {
+      fmt.Println("Failed to get ssh format for PublicKey.", err)
+      return
+  }
+  k.PublicSSH = ssh.MarshalAuthorizedKey(pubssh)
+  // base64.StdEncoding.EncodeToString(pubBytes)
+  fmt.Println(string(k.PublicSSH))
 }
 
 func (k *Keypair) ToArray() []byte {

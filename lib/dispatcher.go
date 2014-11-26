@@ -4,52 +4,48 @@ import (
   // Standard
   "os"
   "io/ioutil"
+  "bytes"
   "time"
   "fmt"
+  "encoding/json"
   // 3rd Party
   // FedOps
   "github.com/FedOps/lib/providers"
 )
 
-type DispatcherConfig struct {
-  ClusterID string
-  Created string
-  Modified string
-  Keys ProviderKeys
-  VMs []VM
+const (
+  DigitalOcean uint = 0
+  AWS uint = 1
+  GoogleCloud uint = 2
+  MicrosoftAzure uint = 3
+  OpenStack uint = 4
+)
+
+type ProviderTokens struct {
+  AccessToken string
+  SecurityToken string
 }
 
-type Dispatcher struct {
-  Verison string
-  PowerDirectory string
-  Timeout time.Duration
-  Config DispatcherConfig
-  Error uint
-  Ok uint
-  Unknown uint
+// SSH Keypairs for clusters by provider
+type ProviderKeyLogs struct {
+  Entry string
+  Date string
 }
 
-func CreateDispatcher(key, pwd string) *Dispatcher {
-
-  config, err := load(pwd)
-  if err != nil {
-    fmt.Println(err.Error())
-    return nil
-  }
-
-  d := &Dispatcher {
-    Config: config,
-    Verison: "0.0.1",
-    PowerDirectory: pwd,
-    Timeout: 60,
-    Error: 0,
-    Ok: 1,
-    Unknown: 2,
-  }
-  fmt.Printf("%+v \r\n", d)
-  return d
+type ProviderKeys struct {
+  Keys map[string]fedops_provider.Keypair
+  Logs map[string]ProviderKeyLogs
 }
 
+type VM struct {
+  Provider string
+  Role uint
+  IP string
+  Aliases []string
+}
+
+//
+//
 //
 //
 type DispatcherError struct {
@@ -66,31 +62,53 @@ func (err *DispatcherError) setMsg(msg string) {
 
 //
 //
+type DispatcherConfig struct {
+  ClusterID string
+  //Users []User
+  Created string
+  Modified string
+  Keys ProviderKeys
+  VMs []VM
+}
+
+type Dispatcher struct {
+  Version string
+  PowerDirectory string
+  Timeout time.Duration
+  Config DispatcherConfig
+  Error uint
+  Ok uint
+  Unknown uint
+}
+
+func CreateDispatcher(key, pwd string) (*Dispatcher, bool) {
+
+  config, loaded, err := load(pwd)
+  if err != nil {
+    fmt.Println(err.Error())
+    return nil, loaded
+  }
+
+  d := &Dispatcher {
+    Config: config,
+    Version: "0.0.1",
+    PowerDirectory: pwd,
+    Timeout: 60,
+    Error: 0,
+    Ok: 1,
+    Unknown: 2,
+  }
+  //fmt.Printf("%+v \r\n", d)
+  return d, loaded
+}
+
+//
+//
 func (d *Dispatcher) error() (DispatcherError) {
   return DispatcherError{}
 }
 
-func (d *Dispatcher) decrypt(bytz []byte) []byte {
-  return []byte("jibber_jabber")
-}
-
-func (d *Dispatcher) encrypt(bytz []byte) []byte {
-  return []byte("jibber_jabber")
-}
-
-func (d *Dispatcher) decode(bytz []byte) []byte {
-  return []byte("jibber_jabber")
-}
-
-func (d *Dispatcher) encode(bytz []byte) []byte {
-  return []byte("jibber_jabber")
-}
-
-func (d *Dispatcher) Unload() bool {
-  return true
-}
-
-func load(pwd string) (DispatcherConfig, error) {
+func load(pwd string) (DispatcherConfig, bool, error) {
   fdata, err := ioutil.ReadFile(pwd + "/.fedops")
   var config DispatcherConfig
   if err != nil {
@@ -99,16 +117,24 @@ func load(pwd string) (DispatcherConfig, error) {
     cid, err := GenerateRandomString(128)
     if err != nil {
       fmt.Println(err.Error())
-      return config, err
+      return config, false, err
     }
-    config = DispatcherConfig{
+    config = DispatcherConfig {
       ClusterID: cid,
     }
   } else {
     // We found the config, now unecrypt it, base64 decode it, and then marshal from json
     fmt.Println(fdata)
+    decrypted := decrypt(fdata)
+    debased := decrypt(decrypted)
+    decoder := json.NewDecoder(bytes.NewBuffer(debased))
+    err := decoder.Decode(&config)
+    if err != nil {
+      fmt.Println(err.Error())
+      return config, false, err;
+    }
   }
-  return config, nil
+  return config, true, nil
 }
 
 func (d *Dispatcher) Info() () {
@@ -124,7 +150,11 @@ func (d *Dispatcher) InitCloudProvider(promise chan uint, provider string, provi
   go func() {
     switch provider {
       case "digital ocean":
-        promise <- d.initDigitalOcean(providerTokens)
+        auth := fedops_provider.DigitalOceanAuth {
+          ApiKey: providerTokens.AccessToken,
+        }
+        digo := fedops_provider.DigitalOceanProvider(auth)
+        promise <- d._initProvider(&digo)
       case "aws":
         fmt.Println("No API Driver :(")
         promise <- d.Error
@@ -147,43 +177,48 @@ func (d *Dispatcher) InitCloudProvider(promise chan uint, provider string, provi
   }()
 }
 
-func (d *Dispatcher) createKeypair(sshKeyConfig fedops_provider.SSH_Config) (fedops_provider.Keypair) {
-  sshkey := fedops_provider.Keypair{Keysize: sshKeyConfig.Keysize}
-  sshkey.Generate()
-  return sshkey
-}
-
-// REMOVE
-func (d *Dispatcher) writeKeypair(sshKey fedops_provider.Keypair, provider string) {
-  //fmt.Println(d.PowerDirectory)
-  ioutil.WriteFile(d.PowerDirectory + "/" + provider + "_id_rsa.pub", sshKey.PublicPem, os.ModePerm)
-  ioutil.WriteFile(d.PowerDirectory + "/" + provider + "_id_rsa", sshKey.PrivatePem, os.ModePerm)
-}
-
-func (d *Dispatcher) initDigitalOcean(providerTokens ProviderTokens) (uint) {
-  //d.Info()
+func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) (uint) {
   sshKeyConfig := fedops_provider.SSH_Config { Keysize: 4096 }
-  //fmt.Println("Generating new ssh keys for cluster at " + strconv.FormatInt(int64(sshKeyConfig.Keysize), 10) + " bytes")
-  sshKey := d.createKeypair(sshKeyConfig)
-  auth := fedops_provider.DigitalOceanAuth {
-    ApiKey: providerTokens.AccessToken,
-  }
-  //
-  //
-  digo := fedops_provider.DigitalOceanProvider(auth)
-  keyid, err := digo.CreateKeypair(sshKey)
+  sshKey := fedops_provider.GenerateKeypair(sshKeyConfig)
+
+  keyid, err := provider.CreateKeypair(sshKey)
   if err != nil {
     fmt.Println(err.Error())
     return d.Error
   }
+
   keyMap := make(map[string]fedops_provider.Keypair)
-  keyMap[keyid] = sshKey
-  d.Config.Keys = ProviderKeys{
-    DigitalOcean: keyMap,
+  keyMap[provider.Name() + "-" + keyid] = sshKey
+  d.Config.Keys = ProviderKeys {
+    Keys: keyMap,
   }
-  
-  //d.writeKeypair(sshKey, "digital_ocean")
-  
-  fmt.Printf("%+v \r\n", d)
+  now := time.Now()
+  d.Config.Created = now.UTC().String()
+
+  persisted := d.Unload()
+  if persisted == true {
+    return d.Error
+  }
   return d.Ok
+}
+
+func (d *Dispatcher) Unload() bool {
+  disjson, err := json.Marshal(d)
+  if err != nil {
+    fmt.Println(err.Error())
+    return false
+  }
+
+  err = ioutil.WriteFile(d.PowerDirectory + "/.fedops", disjson, os.ModePerm)
+  if err != nil {
+    fmt.Println(err.Error())
+    return false
+  }
+  return true
+}
+
+func (d *Dispatcher) writeKeypair(sshKey fedops_provider.Keypair, provider fedops_provider.Provider) {
+  //fmt.Println(d.PowerDirectory)
+  ioutil.WriteFile(d.PowerDirectory + "/" + provider.Name() + "_id_rsa.pub", sshKey.PublicPem, os.ModePerm)
+  ioutil.WriteFile(d.PowerDirectory + "/" + provider.Name() + "_id_rsa", sshKey.PrivatePem, os.ModePerm)
 }

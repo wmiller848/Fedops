@@ -69,10 +69,11 @@ func main() {
           case "microsoft azure":
           case "openstack":
           default:
+          fmt.Println("Unknown provider")
+          return
         }
 
-
-        fmt.Printf("Password... ")
+        fmt.Printf("Cluster Password... ")
         passwd := string(gopass.GetPasswd())
         fmt.Printf("Repeat... ")
         passwdR := string(gopass.GetPasswd())
@@ -82,7 +83,11 @@ func main() {
           return
         }
         
-        fedops := fedops.CreateDispatcher(passwd, pwd)
+        fedops, loaded := fedops.CreateDispatcher(passwd, pwd)
+        if loaded == true {
+          fmt.Println("FedOps Cluster Config file found")
+          return
+        }
         promise := make(chan uint)
         var status uint
         fedops.InitCloudProvider(promise, cloudProvider, tokens)

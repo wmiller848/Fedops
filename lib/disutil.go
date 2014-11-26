@@ -6,37 +6,8 @@ import (
   "encoding/base64"
   // 3rd Party
   // FedOps
-  "github.com/FedOps/lib/providers"
+  _"github.com/FedOps/lib/providers"
 )
-
-const (
-  DigitalOcean uint = 0
-  AWS uint = 1
-  GoogleCloud uint = 2
-  MicrosoftAzure uint = 3
-  OpenStack uint = 4
-)
-
-type ProviderTokens struct {
-  AccessToken string
-  SecurityToken string
-}
-
-// SSH Keypairs for clusters by provider
-type ProviderKeys struct {
-  DigitalOcean map[string]fedops_provider.Keypair
-  AWS map[string]fedops_provider.Keypair
-  GoogleCloud map[string]fedops_provider.Keypair
-  MicrosoftAzure map[string]fedops_provider.Keypair
-  OpenStack map[string]fedops_provider.Keypair
-}
-
-type VM struct {
-  Provider string
-  Role uint
-  IP string
-  Aliases []string
-}
 
 // GenerateRandomBytes returns securely generated random bytes
 func GenerateRandomBytes(n int) ([]byte, error) {
@@ -52,4 +23,20 @@ func GenerateRandomBytes(n int) ([]byte, error) {
 func GenerateRandomString(s int) (string, error) {
     b, err := GenerateRandomBytes(s)
     return base64.URLEncoding.EncodeToString(b), err
+}
+
+func decrypt(bytz []byte) []byte {
+  return bytz
+}
+
+func encrypt(bytz []byte) []byte {
+  return bytz
+}
+
+func decode(bytz []byte) []byte {
+  return bytz
+}
+
+func encode(bytz []byte) []byte {
+  return bytz
 }
