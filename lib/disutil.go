@@ -22,7 +22,7 @@ func GenerateRandomBytes(n int) ([]byte, error) {
 // GenerateRandomString returns a URL-safe, base64 encoded, securely generated random string
 func GenerateRandomString(s int) (string, error) {
     b, err := GenerateRandomBytes(s)
-    return base64.URLEncoding.EncodeToString(b), err
+    return base64.StdEncoding.EncodeToString(b), err
 }
 
 func decrypt(bytz []byte) []byte {
@@ -34,9 +34,11 @@ func encrypt(bytz []byte) []byte {
 }
 
 func decode(bytz []byte) []byte {
-  return bytz
+  _r, _ := base64.StdEncoding.DecodeString(string(bytz))
+  return _r
 }
 
 func encode(bytz []byte) []byte {
-  return bytz
+  _r := []byte(base64.StdEncoding.EncodeToString(bytz))
+  return _r
 }

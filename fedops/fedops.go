@@ -118,7 +118,7 @@ func main() {
         if len(c.Args()) > 0 {
           return
         }
-        initTasks := []string{"--manifest", "--no-harden"}
+        initTasks := []string{"manifest", "no-harden"}
         for _, t := range initTasks {
           fmt.Println(t)
         }
