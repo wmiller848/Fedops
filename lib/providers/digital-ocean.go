@@ -6,6 +6,7 @@ import (
   _"io/ioutil"
   "net/http"
   "encoding/json"
+  "strconv"
 )
 
 type DigitalOceanAuth struct {
@@ -39,8 +40,8 @@ func (digo *DigitalOcean) CreateKeypair(key Keypair) (string, error) {
   }
   defer resp.Body.Close()
 
-  fmt.Println("Response Status:", resp.Status)
-  fmt.Println("Response Headers:", resp.Header)
+  //fmt.Println("Response Status:", resp.Status)
+  //fmt.Println("Response Headers:", resp.Header)
 
   // This is a post so we may have a post Body
   decoder := json.NewDecoder(resp.Body)
@@ -55,7 +56,7 @@ func (digo *DigitalOcean) CreateKeypair(key Keypair) (string, error) {
   jsonMap := data.(map[string]interface{})
   ssh_key := jsonMap["ssh_key"].(map[string]interface{})
 
-  return ssh_key["id"].(string), nil
+  return strconv.FormatFloat(ssh_key["id"].(float64), 'f', 0, 32), nil
 }
 
 func (digo *DigitalOcean) CreateImage() {  

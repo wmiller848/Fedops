@@ -86,8 +86,6 @@ func (k *Keypair) Generate() {
       return
   }
   k.PublicSSH = ssh.MarshalAuthorizedKey(pubssh)
-  // base64.StdEncoding.EncodeToString(pubBytes)
-  fmt.Println(string(k.PublicSSH))
 }
 
 func (k *Keypair) ToArray() []byte {

@@ -42,6 +42,12 @@ func main() {
     	ShortName: "i",
     	Usage: "create a new cluster",
     	Action: func(c *cli.Context) {
+        _, err := fedops.GetConfigFile(pwd)
+        if err == nil {
+          fmt.Println("FedOps cluster config file already exist")
+          fmt.Println("Try 'fedops info'")
+          return
+        }
         //fmt.Printf("%+v \r\n", c)
         fmt.Println("Providers: digital ocean, aws, google cloud, microsoft azure, openstack")
         fmt.Printf("Enter Cloud Provider... ")
@@ -83,21 +89,17 @@ func main() {
           return
         }
         
-        fedops, loaded := fedops.CreateDispatcher(passwd, pwd)
-        if loaded == true {
-          fmt.Println("FedOps Cluster Config file found")
-          return
-        }
+        fed, _ := fedops.CreateDispatcher(passwd, pwd)
         promise := make(chan uint)
         var status uint
-        fedops.InitCloudProvider(promise, cloudProvider, tokens)
+        fed.InitCloudProvider(promise, cloudProvider, tokens)
         status = <- promise
         switch status {
-          case fedops.Error:
+          case fed.Error:
             fmt.Println("Unable to use " + cloudProvider)
-          case fedops.Ok:
+          case fed.Ok:
             //fmt.Println("")
-          case fedops.Unknown:
+          case fed.Unknown:
             fmt.Println("Unknown")
         }
 

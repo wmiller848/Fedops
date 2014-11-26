@@ -26,17 +26,6 @@ type ProviderTokens struct {
   SecurityToken string
 }
 
-// SSH Keypairs for clusters by provider
-type ProviderKeyLogs struct {
-  Entry string
-  Date string
-}
-
-type ProviderKeys struct {
-  Keys map[string]fedops_provider.Keypair
-  Logs map[string]ProviderKeyLogs
-}
-
 type VM struct {
   Provider string
   Role uint
@@ -67,7 +56,8 @@ type DispatcherConfig struct {
   //Users []User
   Created string
   Modified string
-  Keys ProviderKeys
+  Keys map[string]fedops_provider.Keypair
+  Tokens map[string][]ProviderTokens
   VMs []VM
 }
 
@@ -102,14 +92,13 @@ func CreateDispatcher(key, pwd string) (*Dispatcher, bool) {
   return d, loaded
 }
 
-//
-//
-func (d *Dispatcher) error() (DispatcherError) {
-  return DispatcherError{}
+func GetConfigFile(pwd string) ([]byte, error) {
+  return ioutil.ReadFile(pwd + "/.fedops")
+  
 }
 
 func load(pwd string) (DispatcherConfig, bool, error) {
-  fdata, err := ioutil.ReadFile(pwd + "/.fedops")
+  fdata, err := GetConfigFile(pwd)
   var config DispatcherConfig
   if err != nil {
     //  We couldn't find the encrypted config file :(
@@ -122,24 +111,54 @@ func load(pwd string) (DispatcherConfig, bool, error) {
     config = DispatcherConfig {
       ClusterID: cid,
     }
-  } else {
-    // We found the config, now unecrypt it, base64 decode it, and then marshal from json
-    fmt.Println(fdata)
-    decrypted := decrypt(fdata)
-    debased := decrypt(decrypted)
-    decoder := json.NewDecoder(bytes.NewBuffer(debased))
-    err := decoder.Decode(&config)
-    if err != nil {
-      fmt.Println(err.Error())
-      return config, false, err;
-    }
+    return config, false, nil
   }
+
+  // We found the config, now unecrypt it, base64 decode it, and then marshal from json
+  decrypted := decrypt(fdata)
+  debased := decode(decrypted)
+  decoder := json.NewDecoder(bytes.NewBuffer(debased))
+  err = decoder.Decode(&config)
+  if err != nil {
+    fmt.Println(err.Error())
+    return config, true, err;
+  }
+
   return config, true, nil
+}
+
+//
+//
+func (d *Dispatcher) error() (DispatcherError) {
+  return DispatcherError{}
 }
 
 func (d *Dispatcher) Info() () {
   fmt.Println("[WARNING] Fedops encrypts all information you provide to it...")
   fmt.Println("[WARNING] Fedops data is UNRECOVERABLE without knowning the encryption key")
+}
+
+func (d *Dispatcher) writeKeypair(sshKey fedops_provider.Keypair, provider fedops_provider.Provider) {
+  //fmt.Println(d.PowerDirectory)
+  ioutil.WriteFile(d.PowerDirectory + "/" + provider.Name() + "_id_rsa.pub", sshKey.PublicPem, os.ModePerm)
+  ioutil.WriteFile(d.PowerDirectory + "/" + provider.Name() + "_id_rsa", sshKey.PrivatePem, os.ModePerm)
+}
+
+func (d *Dispatcher) Unload() bool {
+  pwd := d.PowerDirectory
+  fmt.Printf("%+v \r\n", d)
+  disjson, err := json.Marshal(d.Config)
+  if err != nil {
+    fmt.Println(err.Error())
+    return false
+  }
+
+  err = ioutil.WriteFile(pwd + "/.fedops", disjson, os.ModePerm)
+  if err != nil {
+    fmt.Println(err.Error())
+    return false
+  }
+  return true
 }
 
 //
@@ -154,6 +173,9 @@ func (d *Dispatcher) InitCloudProvider(promise chan uint, provider string, provi
           ApiKey: providerTokens.AccessToken,
         }
         digo := fedops_provider.DigitalOceanProvider(auth)
+        d.Config.Tokens = make(map[string][]ProviderTokens)
+        d.Config.Tokens[digo.Name()] = make([]ProviderTokens, 0)
+        d.Config.Tokens[digo.Name()] = append(d.Config.Tokens[digo.Name()], providerTokens)
         promise <- d._initProvider(&digo)
       case "aws":
         fmt.Println("No API Driver :(")
@@ -178,6 +200,7 @@ func (d *Dispatcher) InitCloudProvider(promise chan uint, provider string, provi
 }
 
 func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) (uint) {
+
   sshKeyConfig := fedops_provider.SSH_Config { Keysize: 4096 }
   sshKey := fedops_provider.GenerateKeypair(sshKeyConfig)
 
@@ -189,36 +212,14 @@ func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) (uint) {
 
   keyMap := make(map[string]fedops_provider.Keypair)
   keyMap[provider.Name() + "-" + keyid] = sshKey
-  d.Config.Keys = ProviderKeys {
-    Keys: keyMap,
-  }
+  d.Config.Keys = keyMap
   now := time.Now()
   d.Config.Created = now.UTC().String()
+  d.Config.Modified = now.UTC().String()
 
   persisted := d.Unload()
-  if persisted == true {
+  if persisted != true {
     return d.Error
   }
   return d.Ok
-}
-
-func (d *Dispatcher) Unload() bool {
-  disjson, err := json.Marshal(d)
-  if err != nil {
-    fmt.Println(err.Error())
-    return false
-  }
-
-  err = ioutil.WriteFile(d.PowerDirectory + "/.fedops", disjson, os.ModePerm)
-  if err != nil {
-    fmt.Println(err.Error())
-    return false
-  }
-  return true
-}
-
-func (d *Dispatcher) writeKeypair(sshKey fedops_provider.Keypair, provider fedops_provider.Provider) {
-  //fmt.Println(d.PowerDirectory)
-  ioutil.WriteFile(d.PowerDirectory + "/" + provider.Name() + "_id_rsa.pub", sshKey.PublicPem, os.ModePerm)
-  ioutil.WriteFile(d.PowerDirectory + "/" + provider.Name() + "_id_rsa", sshKey.PrivatePem, os.ModePerm)
 }
