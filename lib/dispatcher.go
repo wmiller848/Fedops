@@ -28,13 +28,18 @@ type ProviderTokens struct {
 
 type VM struct {
   Provider string
-  Role uint
   IP string
   Aliases []string
 }
 
-//
-//
+type Warehouse struct {
+  VM
+}
+
+type Truck struct {
+  VM
+}
+
 //
 //
 type DispatcherError struct {
@@ -50,21 +55,21 @@ func (err *DispatcherError) setMsg(msg string) {
 }
 
 //
-//
+// This config is stored encrypted on disk
 type DispatcherConfig struct {
   ClusterID string
-  //Users []User
   Created string
   Modified string
   Keys map[string]fedops_provider.Keypair
   Tokens map[string][]ProviderTokens
-  VMs []VM
+  Warehouses []Warehouse
+  Trucks []Truck
 }
 
 type Dispatcher struct {
-  Version string
-  Key []byte
+  Cipherkey []byte
   Salt []byte
+  Version string
   PowerDirectory string
   Timeout time.Duration
   Config DispatcherConfig
@@ -75,35 +80,40 @@ type Dispatcher struct {
 
 func CreateDispatcher(key []byte, pwd string, session bool) (*Dispatcher, error) {
 
-  var k []byte
+  var salt, cipherkey []byte
   if session == true {
-    k = key
+    cipherkey = key
   } else {
-    k = Hashkey(key)
+    var err error
+    salt, err = GetSalt(pwd)
+    if err != nil {
+      salt, err = GenerateRandomBytes(256)
+      if err != nil {
+        return nil, err
+      }
+    }
+    cipherkey = make([]byte, len(salt) + len(key))
+    cipherkey = append(cipherkey, salt...)
+    cipherkey = append(cipherkey, key...)
+    cipherkey = Hashkey(cipherkey)
   }
 
-  s, err := GetSalt(pwd)
-  if err != nil {
-    return nil, err
-  }
-
-  config, err := load(k, s, pwd)
+  config, err := load(cipherkey, pwd)
   if err != nil {
     return nil, err
   }
 
   d := &Dispatcher {
+    Cipherkey: Encode(cipherkey),  
+    Salt: salt,
     Config: config,
     Version: "0.0.1",
-    Key: Encode(k),
-    Salt: Encode(s),
     PowerDirectory: pwd,
     Timeout: 60,
     Error: 0,
     Ok: 1,
     Unknown: 2,
   }
-  //fmt.Printf("%+v \r\n", d)
   return d, nil
 }
 
@@ -123,7 +133,7 @@ func GetSalt(pwd string) ([]byte, error) {
   return ioutil.ReadFile(pwd + "/.fedops-salt")
 }
 
-func load(key, salt []byte, pwd string) (DispatcherConfig, error) {
+func load(cipherkey []byte, pwd string) (DispatcherConfig, error) {
   fdata, err := GetConfigFile(pwd)
   var config DispatcherConfig
   if err != nil {
@@ -140,9 +150,6 @@ func load(key, salt []byte, pwd string) (DispatcherConfig, error) {
   }
 
   // We found the config, now unecrypt it, base64 decode it, and then marshal from json
-  cipherkey := make([]byte, len(salt) + len(key))
-  cipherkey = append(cipherkey, salt...)
-  cipherkey = append(cipherkey, key...)
   decrypted, err := Decrypt(cipherkey, fdata)
   if err != nil {
     return config, err
@@ -180,20 +187,12 @@ func (d *Dispatcher) Unload() bool {
     fmt.Println(err.Error())
     return false
   }
-  key, err := Decode(d.Key)
-  if err != nil {
-    fmt.Println(err.Error())
-    return false
-  }
-  salt, err := Decode(d.Salt)
+  cipherkey, err := Decode(d.Cipherkey)
   if err != nil {
     fmt.Println(err.Error())
     return false
   }
 
-  cipherkey := make([]byte, len(salt) + len(key))
-  cipherkey = append(cipherkey, salt...)
-  cipherkey = append(cipherkey, key...)
   encrypted, err := Encrypt(cipherkey, disjson)
   if err != nil {
     fmt.Println(err.Error())
@@ -214,40 +213,36 @@ func (d *Dispatcher) Unload() bool {
 }
 
 //
-//
 func (d *Dispatcher) InitCloudProvider(promise chan uint, provider string, providerTokens ProviderTokens) {
-  //
   // digital-ocean, aws, google-cloud, microsoft-azure
-  go func() {
-    switch provider {
-      case "digital ocean":
-        auth := fedops_provider.DigitalOceanAuth {
-          ApiKey: providerTokens.AccessToken,
-        }
-        digo := fedops_provider.DigitalOceanProvider(auth)
-        d.Config.Tokens = make(map[string][]ProviderTokens)
-        d.Config.Tokens[digo.Name()] = make([]ProviderTokens, 0)
-        d.Config.Tokens[digo.Name()] = append(d.Config.Tokens[digo.Name()], providerTokens)
-        promise <- d._initProvider(&digo)
-      case "aws":
-        fmt.Println("No API Driver :(")
-        promise <- d.Error
-      case "google cloud":
-        fmt.Println("No API Driver :(")
-        promise <- d.Error
-      case "microsoft azure":
-        fmt.Println("No API Driver :(")
-        promise <- d.Error
-      default:
-        fmt.Println("Unknown provider " + provider)
-        promise <- d.Error
-    }
-    
-    go func() {
-      time.Sleep(d.Timeout * time.Second)
-      // Signal to finish
+  switch provider {
+    case "digital ocean":
+      auth := fedops_provider.DigitalOceanAuth {
+        ApiKey: providerTokens.AccessToken,
+      }
+      digo := fedops_provider.DigitalOceanProvider(auth)
+      d.Config.Tokens = make(map[string][]ProviderTokens)
+      d.Config.Tokens[digo.Name()] = make([]ProviderTokens, 0)
+      d.Config.Tokens[digo.Name()] = append(d.Config.Tokens[digo.Name()], providerTokens)
+      promise <- d._initProvider(&digo)
+    case "aws":
+      fmt.Println("No API Driver :(")
       promise <- d.Error
-    }()
+    case "google cloud":
+      fmt.Println("No API Driver :(")
+      promise <- d.Error
+    case "microsoft azure":
+      fmt.Println("No API Driver :(")
+      promise <- d.Error
+    default:
+      fmt.Println("Unknown provider " + provider)
+      promise <- d.Error
+  }
+  //
+  go func() {
+    time.Sleep(d.Timeout * time.Second)
+    // Signal to finish
+    promise <- d.Error
   }()
 }
 
@@ -268,12 +263,6 @@ func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) (uint) {
   now := time.Now()
   d.Config.Created = now.UTC().String()
   d.Config.Modified = now.UTC().String()
-
-  d.Salt, err = GenerateRandomBytes(256)
-  if err != nil {
-    fmt.Println(err.Error())
-    return d.Error
-  }
 
   persisted := d.Unload()
   if persisted != true {
