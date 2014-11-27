@@ -2,14 +2,16 @@ package fedops
 
 import (
   // Standard
+  "crypto/md5"
   "crypto/rand"
+  "crypto/aes"
+  "crypto/cipher"
   "encoding/base64"
+  "io"
   // 3rd Party
   // FedOps
-  _"github.com/FedOps/lib/providers"
 )
 
-// GenerateRandomBytes returns securely generated random bytes
 func GenerateRandomBytes(n int) ([]byte, error) {
     b := make([]byte, n)
     _, err := rand.Read(b)
@@ -19,26 +21,58 @@ func GenerateRandomBytes(n int) ([]byte, error) {
     return b, nil
 }
 
-// GenerateRandomString returns a URL-safe, base64 encoded, securely generated random string
 func GenerateRandomString(s int) (string, error) {
     b, err := GenerateRandomBytes(s)
     return base64.StdEncoding.EncodeToString(b), err
 }
 
-func decrypt(bytz []byte) []byte {
-  return bytz
+func Encode(bytz []byte) ([]byte) {
+  return []byte(base64.StdEncoding.EncodeToString(bytz))  
 }
 
-func encrypt(bytz []byte) []byte {
-  return bytz
+func Decode(bytz []byte) ([]byte, error) {
+  return base64.StdEncoding.DecodeString(string(bytz))
 }
 
-func decode(bytz []byte) []byte {
-  _r, _ := base64.StdEncoding.DecodeString(string(bytz))
-  return _r
+func Encrypt(key, bytz []byte) ([]byte, error) {
+  block, err := aes.NewCipher(key)
+  if err != nil {
+    return nil, err
+  }
+  b := Encode(bytz)
+  ciphertext := make([]byte, aes.BlockSize+len(b))
+  iv := ciphertext[:aes.BlockSize]
+  if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+    return nil, err
+  }
+  cfb := cipher.NewCFBEncrypter(block, iv)
+  cfb.XORKeyStream(ciphertext[aes.BlockSize:], b)
+  return ciphertext, nil
 }
 
-func encode(bytz []byte) []byte {
-  _r := []byte(base64.StdEncoding.EncodeToString(bytz))
-  return _r
+func Decrypt(key, bytz []byte) ([]byte, error) { 
+  block, err := aes.NewCipher(key)
+  if err != nil {
+    return nil, err
+  }
+  iv := bytz[:aes.BlockSize]
+  ciphertext := bytz[aes.BlockSize:]
+  cfb := cipher.NewCFBDecrypter(block, iv)
+  plaintext := make([]byte, len(ciphertext))
+  cfb.XORKeyStream(plaintext, ciphertext)
+  data, err := Decode(plaintext)
+  if err != nil {
+    return nil, err
+  }
+  return data, nil
+}
+
+func Hashkey(key []byte) []byte {
+  var cipherkey []byte
+  keyl := len(key)/2
+  sumA := md5.Sum(key[:keyl])
+  sumB := md5.Sum(key[keyl:])
+  cipherkey = append(cipherkey, sumA[:]...)
+  cipherkey = append(cipherkey, sumB[:]...)
+  return cipherkey
 }

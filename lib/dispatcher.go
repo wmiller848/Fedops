@@ -63,6 +63,8 @@ type DispatcherConfig struct {
 
 type Dispatcher struct {
   Version string
+  Key []byte
+  Salt []byte
   PowerDirectory string
   Timeout time.Duration
   Config DispatcherConfig
@@ -71,17 +73,30 @@ type Dispatcher struct {
   Unknown uint
 }
 
-func CreateDispatcher(key, pwd string) (*Dispatcher, bool) {
+func CreateDispatcher(key []byte, pwd string, session bool) (*Dispatcher, error) {
 
-  config, loaded, err := load(pwd)
+  var k []byte
+  if session == true {
+    k = key
+  } else {
+    k = Hashkey(key)
+  }
+
+  s, err := GetSalt(pwd)
   if err != nil {
-    fmt.Println(err.Error())
-    return nil, loaded
+    return nil, err
+  }
+
+  config, err := load(k, s, pwd)
+  if err != nil {
+    return nil, err
   }
 
   d := &Dispatcher {
     Config: config,
     Version: "0.0.1",
+    Key: Encode(k),
+    Salt: Encode(s),
     PowerDirectory: pwd,
     Timeout: 60,
     Error: 0,
@@ -89,42 +104,56 @@ func CreateDispatcher(key, pwd string) (*Dispatcher, bool) {
     Unknown: 2,
   }
   //fmt.Printf("%+v \r\n", d)
-  return d, loaded
+  return d, nil
+}
+
+func HasConfigFile(pwd string) bool {
+  _, err := os.Stat(pwd + "/.fedops")
+  if err != nil {
+    return false
+  }
+  return true
 }
 
 func GetConfigFile(pwd string) ([]byte, error) {
   return ioutil.ReadFile(pwd + "/.fedops")
-  
 }
 
-func load(pwd string) (DispatcherConfig, bool, error) {
+func GetSalt(pwd string) ([]byte, error) {
+  return ioutil.ReadFile(pwd + "/.fedops-salt")
+}
+
+func load(key, salt []byte, pwd string) (DispatcherConfig, error) {
   fdata, err := GetConfigFile(pwd)
   var config DispatcherConfig
   if err != nil {
-    //  We couldn't find the encrypted config file :(
+    //  We couldn't find the config file :(
     //fmt.Println(err.Error())
-    cid, err := GenerateRandomString(128)
+    cid, err := GenerateRandomString(256)
     if err != nil {
-      fmt.Println(err.Error())
-      return config, false, err
+      return config, err
     }
     config = DispatcherConfig {
       ClusterID: cid,
     }
-    return config, false, nil
+    return config, nil
   }
 
   // We found the config, now unecrypt it, base64 decode it, and then marshal from json
-  decrypted := decrypt(fdata)
-  debased := decode(decrypted)
-  decoder := json.NewDecoder(bytes.NewBuffer(debased))
+  cipherkey := make([]byte, len(salt) + len(key))
+  cipherkey = append(cipherkey, salt...)
+  cipherkey = append(cipherkey, key...)
+  decrypted, err := Decrypt(cipherkey, fdata)
+  if err != nil {
+    return config, err
+  }
+  decoder := json.NewDecoder(bytes.NewBuffer(decrypted))
   err = decoder.Decode(&config)
   if err != nil {
-    fmt.Println(err.Error())
-    return config, true, err;
+    return config, err
   }
 
-  return config, true, nil
+  return config, nil
 }
 
 //
@@ -146,14 +175,37 @@ func (d *Dispatcher) writeKeypair(sshKey fedops_provider.Keypair, provider fedop
 
 func (d *Dispatcher) Unload() bool {
   pwd := d.PowerDirectory
-  fmt.Printf("%+v \r\n", d)
   disjson, err := json.Marshal(d.Config)
   if err != nil {
     fmt.Println(err.Error())
     return false
   }
+  key, err := Decode(d.Key)
+  if err != nil {
+    fmt.Println(err.Error())
+    return false
+  }
+  salt, err := Decode(d.Salt)
+  if err != nil {
+    fmt.Println(err.Error())
+    return false
+  }
 
-  err = ioutil.WriteFile(pwd + "/.fedops", disjson, os.ModePerm)
+  cipherkey := make([]byte, len(salt) + len(key))
+  cipherkey = append(cipherkey, salt...)
+  cipherkey = append(cipherkey, key...)
+  encrypted, err := Encrypt(cipherkey, disjson)
+  if err != nil {
+    fmt.Println(err.Error())
+    return false
+  }
+
+  err = ioutil.WriteFile(pwd + "/.fedops", encrypted, 0666)
+  if err != nil {
+    fmt.Println(err.Error())
+    return false
+  }
+  err = ioutil.WriteFile(pwd + "/.fedops-salt", d.Salt, 0666)
   if err != nil {
     fmt.Println(err.Error())
     return false
@@ -216,6 +268,12 @@ func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) (uint) {
   now := time.Now()
   d.Config.Created = now.UTC().String()
   d.Config.Modified = now.UTC().String()
+
+  d.Salt, err = GenerateRandomBytes(256)
+  if err != nil {
+    fmt.Println(err.Error())
+    return d.Error
+  }
 
   persisted := d.Unload()
   if persisted != true {

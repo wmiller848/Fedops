@@ -22,7 +22,7 @@ func main() {
   runtime.GOMAXPROCS(numCpus)
 
   env := os.Environ()
-  pwd := ""
+  var pwd string
   for _, e := range env {
     pair := strings.Split(e, "=")
     name := pair[0]
@@ -42,10 +42,10 @@ func main() {
     	ShortName: "i",
     	Usage: "create a new cluster",
     	Action: func(c *cli.Context) {
-        _, err := fedops.GetConfigFile(pwd)
-        if err == nil {
+        hasConfig := fedops.HasConfigFile(pwd)
+        if hasConfig == true {
           fmt.Println("FedOps cluster config file already exist")
-          fmt.Println("Try 'fedops info'")
+          fmt.Println("Try 'fedops info' or 'fedops dashboard'")
           return
         }
         //fmt.Printf("%+v \r\n", c)
@@ -80,16 +80,26 @@ func main() {
         }
 
         fmt.Printf("Cluster Password... ")
-        passwd := string(gopass.GetPasswd())
-        fmt.Printf("Repeat... ")
-        passwdR := string(gopass.GetPasswd())
+        passwd := gopass.GetPasswd()
 
-        if passwd != passwdR {
+        if len(passwd) < 4 {
+          fmt.Println("Password to short, must be at least 4 characters long")
+          return
+        }
+
+        fmt.Printf("Repeat... ")
+        passwdR := gopass.GetPasswd()
+
+        if string(passwd) != string(passwdR) {
           fmt.Println("Passwords don't match")
           return
         }
+
+        if c.Bool("no-harden") == true {
+          fmt.Println("You have requested image full disk encryption be disabled!")
+        }
         
-        fed, _ := fedops.CreateDispatcher(passwd, pwd)
+        fed, _ := fedops.CreateDispatcher(passwd, pwd, false)
         promise := make(chan uint)
         var status uint
         fed.InitCloudProvider(promise, cloudProvider, tokens)
@@ -102,17 +112,13 @@ func main() {
           case fed.Unknown:
             fmt.Println("Unknown")
         }
-
-        //fmt.Println("Configuring a new fedops cluster...")
-
-        //fmt.Println("Running Test Transaction...")
-
-        //fmt.Println("Creating a new warehouse...")
-        //fmt.Println("Shipping to warehouse...")
-
-        //fmt.Println("Creating a new truck...")
-        //fmt.Println("Shipping to truck...")
     	},
+      Flags: []cli.Flag {
+        cli.BoolFlag {
+          Name: "no-harden",
+          Usage: "enable or disable full disk encryption",
+        },
+      },
       BashComplete: func(c *cli.Context) {
         // This will complete if no args are passed
         if len(c.Args()) > 0 {
@@ -148,8 +154,39 @@ func main() {
       ShortName: "i",
       Usage: "get info on the cluster",
       Action: func(c *cli.Context) {
-        //fmt.Printf("%+v \r\n", c)
-        fmt.Println("Talking to the cloud...")
+        hasConfig := fedops.HasConfigFile(pwd)
+        if hasConfig == false {
+          fmt.Println("FedOps cluster config file does not already exist")
+          fmt.Println("Try 'fedops init' or 'fedops connect'")
+          return
+        }
+
+        var passwd []byte
+        session_key := os.Getenv("FEDOPS_SESSION_KEY")
+        useSession := false
+        if session_key != "" {
+          var err error
+          passwd, err = fedops.Decode([]byte(session_key))
+          if err != nil {
+            fmt.Println(err.Error())
+            return
+          }
+          useSession = true
+        } else {
+          fmt.Printf("Cluster Password... ")
+          passwd = gopass.GetPasswd()
+        }
+
+        fed, err := fedops.CreateDispatcher(passwd, pwd, useSession)
+        if err != nil {
+          fmt.Println("Incorrect Password")
+          return
+        }
+        fmt.Println("ClusterID | " + fed.Config.ClusterID)
+        fmt.Println("warehouses")
+        fmt.Println("\tn/a")
+        fmt.Println("trucks")
+        fmt.Println("\tn/a")
       },
       BashComplete: func(c *cli.Context) {
         // This will complete if no args are passed
@@ -165,17 +202,30 @@ func main() {
     {
       Name: "session",
       ShortName: "session",
-      Usage: "create a new session, required for every use",
+      Usage: "output session key",
       Action: func(c *cli.Context) {
-        //fmt.Printf("%+v \r\n", c)
-        fmt.Println("Decrypt Fedops Config")
+        hasConfig := fedops.HasConfigFile(pwd)
+        if hasConfig == false {
+          fmt.Println("FedOps cluster config file does not already exist")
+          fmt.Println("Try 'fedops init' or 'fedops connect'")
+          return
+        }
+
+        fmt.Printf("Cluster Password... ")
+        passwd := gopass.GetPasswd()
+        fed, err := fedops.CreateDispatcher(passwd, pwd, false)
+        if err != nil {
+          fmt.Println("Incorrect Password")
+          return
+        }
+        fmt.Println("export FEDOPS_SESSION_KEY=" + string(fed.Key))
       },
       BashComplete: func(c *cli.Context) {
         // This will complete if no args are passed
         if len(c.Args()) > 0 {
           return
         }
-        warehouseTasks := []string{"create", "destroy"}
+        warehouseTasks := []string{"create"}
         for _, t := range warehouseTasks {
           fmt.Println(t)
         }
@@ -184,7 +234,7 @@ func main() {
     {
       Name: "warehouse",
       ShortName: "w",
-      Usage: "create a new warehouse machine",
+      Usage: "create a new warehouse",
       Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
         fmt.Println("Talking to the cloud...")
@@ -203,7 +253,7 @@ func main() {
     {
       Name: "truck",
       ShortName: "t",
-      Usage: "create a new truck machine",
+      Usage: "create a new truck",
       Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
         fmt.Println("Talking to the cloud...")
@@ -256,9 +306,9 @@ func main() {
       },
     },
     {
-      Name: "fork",
-      ShortName: "f",
-      Usage: "fork a truck machine",
+      Name: "alias",
+      ShortName: "a",
+      Usage: "alias a truck",
       Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
         fmt.Println("Talking to the cloud...")
@@ -276,7 +326,7 @@ func main() {
     {
       Name: "use",
       ShortName: "u",
-      Usage: "use a manifest file for the cluster",
+      Usage: "use a manifest file for the cluster [WARNING]",
       Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
         fmt.Println("Talking to the cloud...")
@@ -294,7 +344,7 @@ func main() {
     {
       Name: "manifest",
       ShortName: "m",
-      Usage: "generate a manifest file for the cluster",
+      Usage: "generate a manifest file from the cluster",
       Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
         fmt.Println("Talking to the cloud...")
