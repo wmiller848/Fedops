@@ -20,6 +20,9 @@ const (
   GoogleCloud uint = 2
   MicrosoftAzure uint = 3
   OpenStack uint = 4
+  
+  SaltSize int = 512
+  ClusterIDSize int = 32
 )
 
 type ProviderTokens struct {
@@ -28,6 +31,7 @@ type ProviderTokens struct {
 }
 
 type VM struct {
+  ID string
   Provider string
   IP string
   Aliases []string
@@ -36,10 +40,12 @@ type VM struct {
 
 type Warehouse struct {
   VM
+  WarehouseID string
 }
 
 type Truck struct {
   VM
+  TruckID string
 }
 
 type Container struct {
@@ -95,7 +101,7 @@ func CreateDispatcher(key []byte, pwd string, session bool) (*Dispatcher, error)
     var err error
     salt, err = GetSalt(pwd)
     if err != nil {
-      salt, err = GenerateRandomBytes(256)
+      salt, err = GenerateRandomBytes(SaltSize)
       if err != nil {
         return nil, err
       }
@@ -147,7 +153,7 @@ func load(cipherkey []byte, pwd string) (DispatcherConfig, error) {
   if err != nil {
     //  We couldn't find the config file :(
     //fmt.Println(err.Error())
-    cid, err := GenerateRandomString(256)
+    cid, err := GenerateRandomHex(ClusterIDSize)
     if err != nil {
       return config, err
     }
@@ -260,14 +266,14 @@ func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) (uint) {
   sshKeyConfig := fedops_provider.SSH_Config { Keysize: 4096 }
   sshKey := fedops_provider.GenerateKeypair(sshKeyConfig)
 
-  keyid, err := provider.CreateKeypair(sshKey)
+  keypair, err := provider.CreateKeypair(d.Config.ClusterID, sshKey)
   if err != nil {
     fmt.Println(err.Error())
     return d.Error
   }
 
   keyMap := make(map[string]fedops_provider.Keypair)
-  keyMap[provider.Name() + "-" + keyid] = sshKey
+  keyMap[provider.Name() + "-" + keypair.ID] = sshKey
   d.Config.Keys = keyMap
   now := time.Now()
   d.Config.Created = now.UTC().String()
@@ -280,7 +286,7 @@ func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) (uint) {
   return d.Ok
 }
 
-func (d *Dispatcher) CreateTruck(promise chan uint) {
+func (d *Dispatcher) CreateTruck(promise chan uint, provider, memSize, diskSize, numVcpus string) {
   //fmt.Printf("%+v \r\n", d)
   for keyname, _ := range d.Config.Keys {
     if strings.Contains(keyname, fedops_provider.DigitalOceanName) == true {
@@ -289,16 +295,47 @@ func (d *Dispatcher) CreateTruck(promise chan uint) {
         ApiKey: providerTokens.AccessToken,
       }
       digo := fedops_provider.DigitalOceanProvider(auth)
-      images, _ := digo.ListImage()
-      fmt.Printf("%+v \r\n", images)
-      for index, imagevalue := range images {
-        fmt.Println(index)
-        distro := imagevalue.(map[string]interface{})["distribution"]
-        slug := imagevalue.(map[string]interface{})["slug"]
-        fmt.Println(slug, distro)
+
+      size, err := digo.GetDefaultSize()
+      if err != nil {
+        fmt.Println(err.Error())
+        promise <- d.Error
       }
+      fmt.Printf("%+v \r\n", size)
+
+      image, err := digo.GetDefaultImage()
+      if err != nil {
+        fmt.Println(err.Error())
+        promise <- d.Error
+      }
+      fmt.Printf("%+v \r\n", image)
+
+      id := strings.Split(keyname, "-")[1]
+      keypair := fedops_provider.ProviderKeypair {
+        ID: id,
+      }
+      vmid, err := GenerateRandomHex(32)
+      if err != nil {
+        fmt.Println(err.Error())
+        promise <- d.Error
+      }
+      vm, err := digo.CreateVM(vmid, size, image, keypair)
+      if err != nil {
+        fmt.Println(err.Error())
+        promise <- d.Error
+      }
+
+      warehouse := new(Warehouse)
+      warehouse.WarehouseID = vmid
+      warehouse.ID = vm.ID
+      warehouse.Provider = digo.Name()
+      d.Config.Warehouses = append(d.Config.Warehouses, *warehouse)
     }
-    //fmt.Println(keyname, keyvalue)
+  }
+
+  persisted := d.Unload()
+  if persisted != true {
+    promise <- d.Error
   }
   promise <- d.Ok
 }

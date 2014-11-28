@@ -14,6 +14,10 @@ import (
   "github.com/FedOps/lib"
 )
 
+const (
+  MinKeyLength int = 6
+)
+
 func initFedops(pwd string) (*fedops.Dispatcher, error) {
   var passwd []byte
   session_key := os.Getenv("FEDOPS_SESSION_KEY")
@@ -47,14 +51,18 @@ func main() {
   runtime.GOMAXPROCS(numCpus)
 
   pwd := os.Getenv("PWD")
-  minKeyLength := 6
-
   stdin := bufio.NewReader(os.Stdin)
+
 	_cli := cli.NewApp()
 	_cli.Name = "FedOps"
-	_cli.Usage = "continuous deployment made easy, see https://github.com/wmiller848/FedOps for guides"
+	_cli.Usage = "Docker continuous deployment made easy, see https://github.com/wmiller848/FedOps for guides"
   _cli.Version = "0.0.1"
   _cli.EnableBashCompletion = true
+
+  commands := []cli.Command
+  commandInit(stdin, pwd, commands)
+  commandConnect(stdin, pwd, commands)
+
 	_cli.Commands = []cli.Command {
     {
       Name: "init",
@@ -101,8 +109,8 @@ func main() {
         fmt.Printf("Cluster Config Password... ")
         passwd := gopass.GetPasswd()
 
-        if len(passwd) < minKeyLength {
-          fmt.Printf("Password to short, must be at least %v characters long \r\n", minKeyLength)
+        if len(passwd) < MinKeyLength {
+          fmt.Printf("Password to short, must be at least %v characters long \r\n", MinKeyLength)
           return
         }
 
@@ -116,11 +124,8 @@ func main() {
 
         if c.Bool("no-harden") == true {
           fmt.Println("WARNING")
-          fmt.Println("This cluster will NOT be hardened")
-          fmt.Println("Full disk encryption and iptables have been disable")
-        } else {
-          fmt.Println("This cluster will be hardened")
-          fmt.Println("Full disk encryption and iptables have been enabled")
+          fmt.Println("This cluster's base image will NOT be hardened")
+          fmt.Println("Full disk encryption and iptables have been disabled")
         }
         
         fed, err := fedops.CreateDispatcher(passwd, pwd, false)
@@ -220,21 +225,25 @@ func main() {
           return
         }
 
+        //fmt.Printf("%+v \r\n", fed.Config)
+
         //fmt.Println("ClusterID | " + fed.Config.ClusterID)
         fmt.Println("Warehouses")
         if len(fed.Config.Warehouses) > 0 {
-
+          for _, warehouse := range fed.Config.Warehouses {
+            fmt.Println("\t", "- ", warehouse.WarehouseID, " ", warehouse.IP, " | ", "uptime...")
+          }
         } else {
-          fmt.Println("\tNo warehouses available")
-          fmt.Println("\tTry 'fedops warehouse create'")
+          fmt.Println("\t", "No warehouses available")
+          fmt.Println("\t", "Try 'fedops warehouse create'")
         }
 
         fmt.Println("Trucks")
         if len(fed.Config.Trucks) > 0 {
 
         } else {
-          fmt.Println("\tNo trucks available")
-          fmt.Println("\tTry 'fedops truck create'")
+          fmt.Println("\t", "No trucks available")
+          fmt.Println("\t", "Try 'fedops truck create'")
         }
       },
       BashComplete: func(c *cli.Context) {
@@ -279,12 +288,31 @@ func main() {
       },
     },
     {
+      Name: "ssh",
+      ShortName: "s",
+      Usage: "ssh into a warehouse or truck",
+      Action: func(c *cli.Context) {
+        //fmt.Printf("%+v \r\n", c)
+        fmt.Println("Doing ssh thing...")
+      },
+      BashComplete: func(c *cli.Context) {
+        // This will complete if no args are passed
+        if len(c.Args()) > 0 {
+          return
+        }
+        sshTasks := []string{"warehouse", "truck", "keys"}
+        for _, t := range sshTasks {
+          fmt.Println(t)
+        }
+      },
+    },
+    {
       Name: "log",
       ShortName: "l",
       Usage: "output event stream logs",
       Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
-        fmt.Println("Talking to the cloud...")
+        fmt.Println("Doing log thing...")
       },
       BashComplete: func(c *cli.Context) {
         // This will complete if no args are passed
@@ -299,7 +327,7 @@ func main() {
     },
     {
       Name: "session",
-      ShortName: "s",
+      ShortName: "se",
       Usage: "output session key",
       Action: func(c *cli.Context) {
         hasConfig := fedops.HasConfigFile(pwd)
@@ -353,23 +381,27 @@ func main() {
           return
         }
 
+        provider := "auto"
+        memSize := "auto"
+        diskSize := "auto"
+        numVcpus := "auto"
+
         cmd := args[0]
         switch cmd {
           case "create":
-            fmt.Println("Creating a warehouse...")
             fed, err := initFedops(pwd)
             if err != nil {
               fmt.Println("Incorrect Password")
               return
             }
             promise := make(chan uint)
-            go fed.CreateTruck(promise)
+            go fed.CreateTruck(promise, provider, memSize, diskSize, numVcpus)
             status :=  <- promise
             switch status {
               case fed.Error:
                 fmt.Println("Error")
               case fed.Ok:
-                fmt.Println("Ok")
+                //fmt.Println("Ok")
               case fed.Unknown:
                 fmt.Println("Unknown")
             }
@@ -381,7 +413,19 @@ func main() {
       Flags: []cli.Flag {
         cli.StringFlag {
           Name: "provider",
-          Usage: "name of provider to be used for this warehouse, otherwise automatically selects an available provider",
+          Usage: "provider for warehouse, otherwise automatically selects an available provider",
+        },
+        cli.StringFlag {
+          Name: "memory-size",
+          Usage: "memory size for warehouse, otherwise automatically selects default for provider",
+        },
+        cli.StringFlag {
+          Name: "disk-size",
+          Usage: "disk size for warehouse, otherwise automatically selects default for provider",
+        },
+        cli.StringFlag {
+          Name: "vcpus-size",
+          Usage: "number of vcpus for warehouse, otherwise automatically selects default for provider",
         },
       },
       BashComplete: func(c *cli.Context) {
@@ -401,7 +445,7 @@ func main() {
       Usage: "create a new truck",
       Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
-        fmt.Println("Talking to the cloud...")
+        fmt.Println("Do the truck thing...")
       },
       BashComplete: func(c *cli.Context) {
         // This will complete if no args are passed
@@ -419,7 +463,7 @@ func main() {
       Usage: "create, destroy, assign, ship, or info",
       Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
-        fmt.Println("Talking to the cloud...")
+        fmt.Println("Do the container thing...")
       },
       BashComplete: func(c *cli.Context) {
         // This will complete if no args are passed
@@ -438,7 +482,7 @@ func main() {
       Usage: "create a new deployment env",
       Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
-        fmt.Println("Talking to the cloud...")
+        fmt.Println("Do the env thing...")
       },
       BashComplete: func(c *cli.Context) {
         // This will complete if no args are passed
@@ -456,7 +500,7 @@ func main() {
       Usage: "alias a truck",
       Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
-        fmt.Println("Talking to the cloud...")
+        fmt.Println("Do the alias thing...")
       },
       BashComplete: func(c *cli.Context) {
         // This will complete if no args are passed
@@ -474,7 +518,7 @@ func main() {
       Usage: "use a manifest file for the cluster",
       Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
-        fmt.Println("Talking to the cloud...")
+        fmt.Println("Do the use thing...")
       },
       BashComplete: func(c *cli.Context) {
         // This will complete if no args are passed
@@ -492,7 +536,7 @@ func main() {
       Usage: "generate a manifest file from the cluster",
       Action: func(c *cli.Context) {
         //fmt.Printf("%+v \r\n", c)
-        fmt.Println("Talking to the cloud...")
+        fmt.Println("Do the manifest thing...")
       },
       BashComplete: func(c *cli.Context) {
         // This will complete if no args are passed

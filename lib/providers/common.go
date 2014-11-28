@@ -2,6 +2,7 @@ package fedops_provider
 
 import (
   "fmt"
+  "bytes"
   "crypto/rsa"
   "crypto/rand"
   "crypto/x509"
@@ -10,6 +11,19 @@ import (
   "code.google.com/p/go.crypto/ssh"
 )
 
+type ProviderKeypair struct {
+  ID string
+}
+
+type ProviderSize struct {
+  ID string
+  Memory float64
+  Vcpus float64
+  Disk float64
+  Bandwidth float64
+  Price float64
+}
+
 type ProviderImage struct {
   ID string
   Distribution string
@@ -17,18 +31,25 @@ type ProviderImage struct {
 }
 
 type ProviderVM struct {
-
+  ID string
 }
 
 //
 //
 type Provider interface {
   Name() string
-  CreateKeypair(Keypair) (string, error)
-  ListImage() ([]interface {}, error)
-  CreateImage()
-  ListVM() ([]interface {}, error)
-  CreateVM()
+
+  CreateKeypair(string, Keypair) (ProviderKeypair, error)
+
+  ListSize() ([]ProviderSize, error)
+  GetDefaultSize() (ProviderSize, error)
+
+  ListImage() ([]ProviderImage, error)
+  GetDefaultImage() (ProviderImage, error)
+
+  ListVM() ([]ProviderVM, error)
+  CreateVM(string, ProviderSize, ProviderImage, ProviderKeypair) (ProviderVM, error)
+  SnapShotVM(ProviderVM) (ProviderImage, error)
 }
 
 type SSH_Config struct {
@@ -75,7 +96,7 @@ func (k *Keypair) Generate() {
 
   // Resultant private key in PEM format.
   // priv_pem string
-  k.PrivatePem = pem.EncodeToMemory(&priv_blk)
+  k.PrivatePem = bytes.Trim(pem.EncodeToMemory(&priv_blk), "\n")
 
   // Public Key generation
   pub := priv.PublicKey;
@@ -90,14 +111,14 @@ func (k *Keypair) Generate() {
     Headers: nil,
     Bytes: pub_der,
   }
-  k.PublicPem = pem.EncodeToMemory(&pub_blk)
+  k.PublicPem = bytes.Trim(pem.EncodeToMemory(&pub_blk), "\n")
 
   pubssh, err := ssh.NewPublicKey(&pub)
   if err != nil {
       fmt.Println("Failed to get ssh format for PublicKey.", err)
       return
   }
-  k.PublicSSH = ssh.MarshalAuthorizedKey(pubssh)
+  k.PublicSSH = bytes.Trim(ssh.MarshalAuthorizedKey(pubssh), "\n")
 }
 
 func (k *Keypair) ToArray() []byte {

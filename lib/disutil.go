@@ -8,23 +8,29 @@ import (
   "crypto/aes"
   "crypto/cipher"
   "encoding/base64"
+  "encoding/hex"
   "io"
   // 3rd Party
   // FedOps
 )
 
 func GenerateRandomBytes(n int) ([]byte, error) {
-    b := make([]byte, n)
-    _, err := rand.Read(b)
-    if err != nil {
-      return nil, err
-    }
-    return b, nil
+  b := make([]byte, n)
+  _, err := rand.Read(b)
+  if err != nil {
+    return nil, err
+  }
+  return b, nil
 }
 
-func GenerateRandomString(s int) (string, error) {
-    b, err := GenerateRandomBytes(s)
-    return base64.StdEncoding.EncodeToString(b), err
+func GenerateRandomBase64(s int) (string, error) {
+  b, err := GenerateRandomBytes(s)
+  return base64.StdEncoding.EncodeToString(b), err
+}
+
+func GenerateRandomHex(s int) (string, error) {
+  b, err := GenerateRandomBytes(s)
+  return hex.EncodeToString(b), err
 }
 
 func Encode(bytz []byte) ([]byte) {
@@ -69,8 +75,6 @@ func Decrypt(key, bytz []byte) ([]byte, error) {
 }
 
 func Hashkey(key []byte) []byte {
-  var cipherkey []byte
   sum := sha256.Sum256(key)
-  cipherkey = append(cipherkey, sum[:]...)
-  return cipherkey
+  return sum[:]
 }
