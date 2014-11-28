@@ -14,6 +14,31 @@ import (
   "github.com/FedOps/lib"
 )
 
+func initFedops(pwd string) (*fedops.Dispatcher, error) {
+  var passwd []byte
+  session_key := os.Getenv("FEDOPS_SESSION_KEY")
+  useSession := false
+  if session_key != "" {
+    // The user has set the session key
+    // which is just the encoded cipherkey
+    var err error
+    passwd, err = fedops.Decode([]byte(session_key))
+    if err != nil {
+      return nil, err
+    }
+    useSession = true
+  } else {
+    fmt.Printf("Cluster Config Password... ")
+    passwd = gopass.GetPasswd()
+  }
+
+  fed, err := fedops.CreateDispatcher(passwd, pwd, useSession)
+  if err != nil {
+    return nil, err
+  }
+  return fed, nil
+}
+
 //
 //
 func main() {
@@ -21,17 +46,9 @@ func main() {
   numCpus := runtime.NumCPU()
   runtime.GOMAXPROCS(numCpus)
 
-  env := os.Environ()
-  var pwd string
-  for _, e := range env {
-    pair := strings.Split(e, "=")
-    name := pair[0]
-    value := pair[1]
-    if name == "PWD" {
-      pwd = value
-    }
-  }
+  pwd := os.Getenv("PWD")
   minKeyLength := 6
+
   stdin := bufio.NewReader(os.Stdin)
 	_cli := cli.NewApp()
 	_cli.Name = "FedOps"
@@ -112,14 +129,12 @@ func main() {
           return
         }
         promise := make(chan uint)
-        var status uint
         go fed.InitCloudProvider(promise, cloudProvider, tokens)
-        status = <- promise
+        status := <- promise
         switch status {
           case fed.Error:
             fmt.Println("Unable to use " + cloudProvider)
           case fed.Ok:
-            //fmt.Println("")
           case fed.Unknown:
             fmt.Println("Unknown")
         }
@@ -199,42 +214,27 @@ func main() {
           return
         }
 
-        var passwd []byte
-        session_key := os.Getenv("FEDOPS_SESSION_KEY")
-        useSession := false
-        if session_key != "" {
-          // The user has set the session key
-          // which is just the encoded cipherkey
-          var err error
-          passwd, err = fedops.Decode([]byte(session_key))
-          if err != nil {
-            fmt.Println(err.Error())
-            return
-          }
-          useSession = true
-        } else {
-          fmt.Printf("Cluster Config Password... ")
-          passwd = gopass.GetPasswd()
-        }
-
-        fed, err := fedops.CreateDispatcher(passwd, pwd, useSession)
+        fed, err := initFedops(pwd)
         if err != nil {
           fmt.Println("Incorrect Password")
           return
         }
+
         //fmt.Println("ClusterID | " + fed.Config.ClusterID)
         fmt.Println("Warehouses")
         if len(fed.Config.Warehouses) > 0 {
 
         } else {
-          fmt.Println("\tn/a")
+          fmt.Println("\tNo warehouses available")
+          fmt.Println("\tTry 'fedops warehouse create'")
         }
 
         fmt.Println("Trucks")
         if len(fed.Config.Trucks) > 0 {
 
         } else {
-          fmt.Println("\tn/a")
+          fmt.Println("\tNo trucks available")
+          fmt.Println("\tTry 'fedops truck create'")
         }
       },
       BashComplete: func(c *cli.Context) {
@@ -251,7 +251,7 @@ func main() {
     {
       Name: "dashboard",
       ShortName: "d",
-      Usage: "output session key",
+      Usage: "create a secure tunnel to the cluster and host a dashboard",
       Action: func(c *cli.Context) {
         hasConfig := fedops.HasConfigFile(pwd)
         if hasConfig == false {
@@ -260,14 +260,12 @@ func main() {
           return
         }
 
-        fmt.Printf("Cluster Password... ")
-        passwd := gopass.GetPasswd()
-        fed, err := fedops.CreateDispatcher(passwd, pwd, false)
+        fed, err := initFedops(pwd)
         if err != nil {
           fmt.Println("Incorrect Password")
           return
         }
-        fmt.Println("export FEDOPS_SESSION_KEY=" + string(fed.Cipherkey))
+        fmt.Printf("%+v \r\n", fed.Cipherkey)
       },
       BashComplete: func(c *cli.Context) {
         // This will complete if no args are passed
@@ -345,8 +343,46 @@ func main() {
       ShortName: "w",
       Usage: "create a new warehouse",
       Action: func(c *cli.Context) {
-        //fmt.Printf("%+v \r\n", c)
-        fmt.Println("Talking to the cloud...")
+
+        args := c.Args()
+        if len(args) == 0 {
+          fmt.Println("not enought arguments")
+          return
+        } else if len(args) > 1 {
+          fmt.Println("too many arguments")
+          return
+        }
+
+        cmd := args[0]
+        switch cmd {
+          case "create":
+            fmt.Println("Creating a warehouse...")
+            fed, err := initFedops(pwd)
+            if err != nil {
+              fmt.Println("Incorrect Password")
+              return
+            }
+            promise := make(chan uint)
+            go fed.CreateTruck(promise)
+            status :=  <- promise
+            switch status {
+              case fed.Error:
+                fmt.Println("Error")
+              case fed.Ok:
+                fmt.Println("Ok")
+              case fed.Unknown:
+                fmt.Println("Unknown")
+            }
+            
+          default:
+            fmt.Println("Unknown argument for 'fedops warehouse'")
+        }
+      },
+      Flags: []cli.Flag {
+        cli.StringFlag {
+          Name: "provider",
+          Usage: "name of provider to be used for this warehouse, otherwise automatically selects an available provider",
+        },
       },
       BashComplete: func(c *cli.Context) {
         // This will complete if no args are passed

@@ -2,7 +2,8 @@ package fedops
 
 import (
   // Standard
-  "crypto/md5"
+  _"crypto/md5"
+  "crypto/sha256"
   "crypto/rand"
   "crypto/aes"
   "crypto/cipher"
@@ -69,10 +70,7 @@ func Decrypt(key, bytz []byte) ([]byte, error) {
 
 func Hashkey(key []byte) []byte {
   var cipherkey []byte
-  keyl := len(key)/2
-  sumA := md5.Sum(key[:keyl])
-  sumB := md5.Sum(key[keyl:])
-  cipherkey = append(cipherkey, sumA[:]...)
-  cipherkey = append(cipherkey, sumB[:]...)
+  sum := sha256.Sum256(key)
+  cipherkey = append(cipherkey, sum[:]...)
   return cipherkey
 }

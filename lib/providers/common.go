@@ -10,12 +10,24 @@ import (
   "code.google.com/p/go.crypto/ssh"
 )
 
+type ProviderImage struct {
+  ID string
+  Distribution string
+  Version string
+}
+
+type ProviderVM struct {
+
+}
+
 //
 //
 type Provider interface {
   Name() string
   CreateKeypair(Keypair) (string, error)
+  ListImage() ([]interface {}, error)
   CreateImage()
+  ListVM() ([]interface {}, error)
   CreateVM()
 }
 

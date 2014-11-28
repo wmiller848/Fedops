@@ -5,6 +5,7 @@ import (
   "os"
   "io/ioutil"
   "bytes"
+  "strings"
   "time"
   "fmt"
   "encoding/json"
@@ -30,6 +31,7 @@ type VM struct {
   Provider string
   IP string
   Aliases []string
+  Containers []Container
 }
 
 type Warehouse struct {
@@ -38,6 +40,12 @@ type Warehouse struct {
 
 type Truck struct {
   VM
+}
+
+type Container struct {
+  ID string
+  Name string
+  Repo string
 }
 
 //
@@ -61,7 +69,7 @@ type DispatcherConfig struct {
   Created string
   Modified string
   Keys map[string]fedops_provider.Keypair
-  Tokens map[string][]ProviderTokens
+  Tokens map[string]ProviderTokens
   Warehouses []Warehouse
   Trucks []Truck
 }
@@ -221,9 +229,10 @@ func (d *Dispatcher) InitCloudProvider(promise chan uint, provider string, provi
         ApiKey: providerTokens.AccessToken,
       }
       digo := fedops_provider.DigitalOceanProvider(auth)
-      d.Config.Tokens = make(map[string][]ProviderTokens)
-      d.Config.Tokens[digo.Name()] = make([]ProviderTokens, 0)
-      d.Config.Tokens[digo.Name()] = append(d.Config.Tokens[digo.Name()], providerTokens)
+      d.Config.Tokens = make(map[string]ProviderTokens)
+      d.Config.Tokens[fedops_provider.DigitalOceanName] = providerTokens
+      //d.Config.Tokens[digo.Name()] = make([]ProviderTokens, 0)
+      //d.Config.Tokens[digo.Name()] = append(d.Config.Tokens[digo.Name()], providerTokens)
       promise <- d._initProvider(&digo)
     case "aws":
       fmt.Println("No API Driver :(")
@@ -269,4 +278,31 @@ func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) (uint) {
     return d.Error
   }
   return d.Ok
+}
+
+func (d *Dispatcher) CreateTruck(promise chan uint) {
+  //fmt.Printf("%+v \r\n", d)
+  for keyname, _ := range d.Config.Keys {
+    if strings.Contains(keyname, fedops_provider.DigitalOceanName) == true {
+      providerTokens := d.Config.Tokens[fedops_provider.DigitalOceanName]
+      auth := fedops_provider.DigitalOceanAuth {
+        ApiKey: providerTokens.AccessToken,
+      }
+      digo := fedops_provider.DigitalOceanProvider(auth)
+      images, _ := digo.ListImage()
+      fmt.Printf("%+v \r\n", images)
+      for index, imagevalue := range images {
+        fmt.Println(index)
+        distro := imagevalue.(map[string]interface{})["distribution"]
+        slug := imagevalue.(map[string]interface{})["slug"]
+        fmt.Println(slug, distro)
+      }
+    }
+    //fmt.Println(keyname, keyvalue)
+  }
+  promise <- d.Ok
+}
+
+func (d *Dispatcher) _CreateVM() {
+
 }
