@@ -3,10 +3,10 @@ package main
 import (
   // Standard
   _"runtime"
-  _"os"
+  "os"
   "bufio"
   "fmt"
-  "strings"
+  _"strings"
   // 3rd Party
   "github.com/codegangsta/cli"
   "github.com/gopass"
@@ -15,7 +15,7 @@ import (
 )
 
 
-func commandConnect(stdin bufio.Reader, pwd string, cmds []cli.Command) {
+func commandSession(stdin *bufio.Reader, pwd string) cli.Command {
   cmd := cli.Command {
     Name: "session",
     ShortName: "se",
@@ -57,5 +57,5 @@ func commandConnect(stdin bufio.Reader, pwd string, cmds []cli.Command) {
       //}
     },
   }
-  cmds = append(cmds, cmd)
+  return cmd
 }

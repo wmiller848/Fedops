@@ -15,7 +15,7 @@ import (
 )
 
 
-func commandInit(stdin bufio.Reader, pwd string, cmds []cli.Command) {
+func commandInit(stdin *bufio.Reader, pwd string) cli.Command {
   cmd := cli.Command {
     Name: "init",
     ShortName: "i",
@@ -97,5 +97,5 @@ func commandInit(stdin bufio.Reader, pwd string, cmds []cli.Command) {
       }
     },
   }
-  cmds = append(cmds, cmd)
+  return cmd
 }

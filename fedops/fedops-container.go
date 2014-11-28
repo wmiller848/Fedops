@@ -6,16 +6,16 @@ import (
   _"os"
   "bufio"
   "fmt"
-  "strings"
+  _"strings"
   // 3rd Party
   "github.com/codegangsta/cli"
-  "github.com/gopass"
+  _"github.com/gopass"
   // FedOps
-  "github.com/FedOps/lib"
+  _"github.com/FedOps/lib"
 )
 
 
-func commandConnect(stdin bufio.Reader, pwd string, cmds []cli.Command) {
+func commandContainer(stdin *bufio.Reader, pwd string) cli.Command {
   cmd := cli.Command {
     Name: "container",
     ShortName: "ct",
@@ -35,5 +35,5 @@ func commandConnect(stdin bufio.Reader, pwd string, cmds []cli.Command) {
       }
     },
   }
-  cmds = append(cmds, cmd)
+  return cmd
 }
