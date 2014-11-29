@@ -1,3 +1,25 @@
+// The MIT License (MIT)
+
+// Copyright (c) 2014 William Miller
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 package fedops
 
 import (
@@ -5,7 +27,7 @@ import (
   "os"
   "io/ioutil"
   "bytes"
-  "strings"
+  _"strings"
   "time"
   "fmt"
   "encoding/json"
@@ -22,36 +44,42 @@ const (
   OpenStack uint = 4
   
   SaltSize int = 512
-  ClusterIDSize int = 32
+  ClusterIDSize int = 8
+
+  WarehouseStatusBooting string = "booting"
+  WarehouseStatusUp string = "up"
+  WarehouseStatusDown string = "down"
+
+  FedopsError uint = 0
+  FedopsOk uint = 1
+  FedopsUnknown uint = 2
 )
 
-type ProviderTokens struct {
+type FedopsAction struct {
+  Status uint
+}
+
+type Tokens struct {
   AccessToken string
   SecurityToken string
 }
 
-type VM struct {
-  ID string
-  Provider string
-  IP string
-  Aliases []string
-  Containers []Container
-}
-
-type Warehouse struct {
-  VM
-  WarehouseID string
-}
-
-type Truck struct {
-  VM
-  TruckID string
-}
-
-type Container struct {
+type Services struct {
   ID string
   Name string
   Repo string
+}
+
+type Warehouse struct {
+  fedops_provider.ProviderVM 
+  WarehouseID string
+  Services []*Services
+}
+
+type Truck struct {
+  fedops_provider.ProviderVM
+  TruckID string
+  Services []*Services
 }
 
 //
@@ -74,10 +102,10 @@ type DispatcherConfig struct {
   ClusterID string
   Created string
   Modified string
-  Keys map[string]fedops_provider.Keypair
-  Tokens map[string]ProviderTokens
-  Warehouses []Warehouse
-  Trucks []Truck
+  Keys []fedops_provider.ProviderKeypair
+  Tokens map[string]Tokens
+  Warehouses []*Warehouse
+  Trucks []*Truck
 }
 
 type Dispatcher struct {
@@ -87,9 +115,6 @@ type Dispatcher struct {
   PowerDirectory string
   Timeout time.Duration
   Config DispatcherConfig
-  Error uint
-  Ok uint
-  Unknown uint
 }
 
 func CreateDispatcher(key []byte, pwd string, session bool) (*Dispatcher, error) {
@@ -112,7 +137,7 @@ func CreateDispatcher(key []byte, pwd string, session bool) (*Dispatcher, error)
     cipherkey = Hashkey(cipherkey)
   }
 
-  config, err := load(cipherkey, pwd)
+  config, err := loadConfig(cipherkey, pwd)
   if err != nil {
     return nil, err
   }
@@ -124,9 +149,6 @@ func CreateDispatcher(key []byte, pwd string, session bool) (*Dispatcher, error)
     Version: "0.0.1",
     PowerDirectory: pwd,
     Timeout: 60,
-    Error: 0,
-    Ok: 1,
-    Unknown: 2,
   }
   return d, nil
 }
@@ -147,7 +169,7 @@ func GetSalt(pwd string) ([]byte, error) {
   return ioutil.ReadFile(pwd + "/.fedops-salt")
 }
 
-func load(cipherkey []byte, pwd string) (DispatcherConfig, error) {
+func loadConfig(cipherkey []byte, pwd string) (DispatcherConfig, error) {
   fdata, err := GetConfigFile(pwd)
   var config DispatcherConfig
   if err != nil {
@@ -227,37 +249,47 @@ func (d *Dispatcher) Unload() bool {
 }
 
 //
-func (d *Dispatcher) InitCloudProvider(promise chan uint, provider string, providerTokens ProviderTokens) {
+func (d *Dispatcher) InitCloudProvider(promise chan FedopsAction, provider string, tokens Tokens) {
   // digital-ocean, aws, google-cloud, microsoft-azure
   switch provider {
     case "digital ocean":
       auth := fedops_provider.DigitalOceanAuth {
-        ApiKey: providerTokens.AccessToken,
+        ApiKey: tokens.AccessToken,
       }
       digo := fedops_provider.DigitalOceanProvider(auth)
-      d.Config.Tokens = make(map[string]ProviderTokens)
-      d.Config.Tokens[fedops_provider.DigitalOceanName] = providerTokens
-      //d.Config.Tokens[digo.Name()] = make([]ProviderTokens, 0)
-      //d.Config.Tokens[digo.Name()] = append(d.Config.Tokens[digo.Name()], providerTokens)
-      promise <- d._initProvider(&digo)
+      d.Config.Tokens = make(map[string]Tokens)
+      d.Config.Tokens[fedops_provider.DigitalOceanName] = tokens
+      promise <- FedopsAction {
+        Status: d._initProvider(&digo),
+      }
     case "aws":
       fmt.Println("No API Driver :(")
-      promise <- d.Error
+      promise <- FedopsAction {
+        Status: FedopsError,
+      }
     case "google cloud":
       fmt.Println("No API Driver :(")
-      promise <- d.Error
+      promise <- FedopsAction {
+        Status: FedopsError,
+      }
     case "microsoft azure":
       fmt.Println("No API Driver :(")
-      promise <- d.Error
+      promise <- FedopsAction {
+        Status: FedopsError,
+      }
     default:
       fmt.Println("Unknown provider " + provider)
-      promise <- d.Error
+      promise <- FedopsAction {
+        Status: FedopsError,
+      }
   }
   //
   go func() {
     time.Sleep(d.Timeout * time.Second)
     // Signal to finish
-    promise <- d.Error
+    promise <- FedopsAction {
+      Status: FedopsError,
+    }
   }()
 }
 
@@ -269,77 +301,133 @@ func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) (uint) {
   keypair, err := provider.CreateKeypair(d.Config.ClusterID, sshKey)
   if err != nil {
     fmt.Println(err.Error())
-    return d.Error
+    return FedopsError
   }
-
-  keyMap := make(map[string]fedops_provider.Keypair)
-  keyMap[provider.Name() + "-" + keypair.ID] = sshKey
-  d.Config.Keys = keyMap
+  d.Config.Keys = append(d.Config.Keys, keypair)
   now := time.Now()
   d.Config.Created = now.UTC().String()
   d.Config.Modified = now.UTC().String()
 
   persisted := d.Unload()
   if persisted != true {
-    return d.Error
+    return FedopsError
   }
-  return d.Ok
+  return FedopsOk
 }
 
-func (d *Dispatcher) CreateTruck(promise chan uint, provider, memSize, diskSize, numVcpus string) {
+func (d *Dispatcher) CreateTruck(promise chan FedopsAction, provider, memSize, diskSize, numVcpus string) {
   //fmt.Printf("%+v \r\n", d)
-  for keyname, _ := range d.Config.Keys {
-    if strings.Contains(keyname, fedops_provider.DigitalOceanName) == true {
-      providerTokens := d.Config.Tokens[fedops_provider.DigitalOceanName]
-      auth := fedops_provider.DigitalOceanAuth {
-        ApiKey: providerTokens.AccessToken,
-      }
-      digo := fedops_provider.DigitalOceanProvider(auth)
 
-      size, err := digo.GetDefaultSize()
-      if err != nil {
-        fmt.Println(err.Error())
-        promise <- d.Error
-      }
-      fmt.Printf("%+v \r\n", size)
-
-      image, err := digo.GetDefaultImage()
-      if err != nil {
-        fmt.Println(err.Error())
-        promise <- d.Error
-      }
-      fmt.Printf("%+v \r\n", image)
-
-      id := strings.Split(keyname, "-")[1]
-      keypair := fedops_provider.ProviderKeypair {
-        ID: id,
-      }
-      vmid, err := GenerateRandomHex(32)
-      if err != nil {
-        fmt.Println(err.Error())
-        promise <- d.Error
-      }
-      vm, err := digo.CreateVM(vmid, size, image, keypair)
-      if err != nil {
-        fmt.Println(err.Error())
-        promise <- d.Error
-      }
-
-      warehouse := new(Warehouse)
-      warehouse.WarehouseID = vmid
-      warehouse.ID = vm.ID
-      warehouse.Provider = digo.Name()
-      d.Config.Warehouses = append(d.Config.Warehouses, *warehouse)
+  // Cycle through all the provider tokens
+  for name, token := range d.Config.Tokens {
+    switch name {
+      case fedops_provider.DigitalOceanName:
+        auth := fedops_provider.DigitalOceanAuth {
+          ApiKey: token.AccessToken,
+        }
+        provider := fedops_provider.DigitalOceanProvider(auth)
+        status := d._createTruck(&provider)
+        if status == FedopsError {
+          promise <- FedopsAction {
+            Status: FedopsError,
+          }
+          return
+        }
     }
   }
 
   persisted := d.Unload()
   if persisted != true {
-    promise <- d.Error
+    promise <- FedopsAction {
+      Status: FedopsError,
+    }
   }
-  promise <- d.Ok
+  promise <- FedopsAction {
+    Status: FedopsOk,
+  }
 }
 
-func (d *Dispatcher) _CreateVM() {
+func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
+  size, err := provider.GetDefaultSize()
+  if err != nil {
+    fmt.Println(err.Error())
+    return FedopsError
+  }
+  fmt.Printf("%+v \r\n", size)
 
+  image, err := provider.GetDefaultImage()
+  if err != nil {
+    fmt.Println(err.Error())
+    return FedopsError
+  }
+  fmt.Printf("%+v \r\n", image)
+  // See if there is a key for this provider
+  vmid, err := GenerateRandomHex(8)
+  if err != nil {
+    fmt.Println(err.Error())
+    return FedopsError
+  }
+  vm, err := provider.CreateVM(vmid, size, image, d.Config.Keys)
+  if err != nil {
+    fmt.Println(err.Error())
+    return FedopsError
+  }
+
+  warehouse := new(Warehouse)
+  warehouse.WarehouseID = vmid
+  warehouse.ID = vm.ID
+  warehouse.Provider = provider.Name()
+  warehouse.Status = WarehouseStatusBooting
+  d.Config.Warehouses = append(d.Config.Warehouses, warehouse)
+
+  return FedopsOk
+}
+
+func (d *Dispatcher) Refresh(promise chan FedopsAction) {
+  
+  // Cycle through all the provider tokens
+  for name, token := range d.Config.Tokens {
+    switch name {
+      case fedops_provider.DigitalOceanName:
+        auth := fedops_provider.DigitalOceanAuth {
+          ApiKey: token.AccessToken,
+        }
+        provider := fedops_provider.DigitalOceanProvider(auth)
+        status := d._refresh(&provider)
+        if status == FedopsError {
+          promise <- FedopsAction {
+            Status: FedopsError,
+          }
+          return
+        }
+    }
+  }
+
+  persisted := d.Unload()
+  if persisted != true {
+    promise <- FedopsAction {
+      Status: FedopsError,
+    }
+  }
+  promise <- FedopsAction {
+    Status: FedopsOk,
+  }
+}
+
+func (d *Dispatcher) _refresh(provider fedops_provider.Provider) uint {
+  vms, err := provider.ListVM()
+  if err != nil {
+    fmt.Println(err.Error())
+    return FedopsError
+  }
+
+  for _, warehouse := range d.Config.Warehouses {
+    for _, vm := range vms {  
+      if vm.ID[provider.Name()] == warehouse.ID[provider.Name()] {
+        warehouse.IPV4 = vm.IPV4
+      }
+    }
+  }
+
+  return FedopsOk
 }

@@ -1,8 +1,30 @@
+// The MIT License (MIT)
+
+// Copyright (c) 2014 William Miller
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 package fedops_provider
 
 import (
   "fmt"
-  "bytes"
+  _"bytes"
   "crypto/rsa"
   "crypto/rand"
   "crypto/x509"
@@ -10,29 +32,6 @@ import (
   _"encoding/base64"
   "code.google.com/p/go.crypto/ssh"
 )
-
-type ProviderKeypair struct {
-  ID string
-}
-
-type ProviderSize struct {
-  ID string
-  Memory float64
-  Vcpus float64
-  Disk float64
-  Bandwidth float64
-  Price float64
-}
-
-type ProviderImage struct {
-  ID string
-  Distribution string
-  Version string
-}
-
-type ProviderVM struct {
-  ID string
-}
 
 //
 //
@@ -48,8 +47,36 @@ type Provider interface {
   GetDefaultImage() (ProviderImage, error)
 
   ListVM() ([]ProviderVM, error)
-  CreateVM(string, ProviderSize, ProviderImage, ProviderKeypair) (ProviderVM, error)
+  CreateVM(string, ProviderSize, ProviderImage, []ProviderKeypair) (ProviderVM, error)
   SnapShotVM(ProviderVM) (ProviderImage, error)
+}
+
+type ProviderKeypair struct {
+  ID map[string]string
+  Keypair Keypair
+}
+
+type ProviderSize struct {
+  ID map[string]string
+  Memory float64
+  Vcpus float64
+  Disk float64
+  Bandwidth float64
+  Price float64
+}
+
+type ProviderImage struct {
+  ID map[string]string
+  Distribution string
+  Version string
+}
+
+type ProviderVM struct {
+  ID map[string]string
+  IPV4 string
+  IPV6 string
+  Provider string
+  Status string
 }
 
 type SSH_Config struct {
@@ -96,7 +123,8 @@ func (k *Keypair) Generate() {
 
   // Resultant private key in PEM format.
   // priv_pem string
-  k.PrivatePem = bytes.Trim(pem.EncodeToMemory(&priv_blk), "\n")
+  //k.PrivatePem = bytes.Trim(pem.EncodeToMemory(&priv_blk), "\n")
+  k.PrivatePem = pem.EncodeToMemory(&priv_blk)
 
   // Public Key generation
   pub := priv.PublicKey;
@@ -111,14 +139,16 @@ func (k *Keypair) Generate() {
     Headers: nil,
     Bytes: pub_der,
   }
-  k.PublicPem = bytes.Trim(pem.EncodeToMemory(&pub_blk), "\n")
+  //k.PublicPem = bytes.Trim(pem.EncodeToMemory(&pub_blk), "\n")
+  k.PublicPem = pem.EncodeToMemory(&pub_blk)
 
   pubssh, err := ssh.NewPublicKey(&pub)
   if err != nil {
       fmt.Println("Failed to get ssh format for PublicKey.", err)
       return
   }
-  k.PublicSSH = bytes.Trim(ssh.MarshalAuthorizedKey(pubssh), "\n")
+  //k.PublicSSH = bytes.Trim(ssh.MarshalAuthorizedKey(pubssh), "\n")
+  k.PublicSSH = ssh.MarshalAuthorizedKey(pubssh)
 }
 
 func (k *Keypair) ToArray() []byte {

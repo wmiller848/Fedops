@@ -1,3 +1,25 @@
+// The MIT License (MIT)
+
+// Copyright (c) 2014 William Miller
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 package main
 
 import (
@@ -6,7 +28,6 @@ import (
   "os"
   "bufio"
 	"fmt"
-  _"strings"
 	// 3rd Party
 	"github.com/codegangsta/cli"
   "github.com/gopass"
@@ -55,22 +76,22 @@ func main() {
 
 	_cli := cli.NewApp()
 	_cli.Name = "FedOps"
-	_cli.Usage = "Docker continuous deployment made easy, see https://github.com/wmiller848/FedOps for guides"
+	_cli.Usage = "Docker continuous deployment and cloud management, see https://github.com/wmiller848/Fedops for guides"
   _cli.Version = "0.0.1"
   _cli.EnableBashCompletion = true
 
   commands := []cli.Command{}
 
-  commands = append(commands, commandAlias(stdin, pwd))
+  // Register subcommands
   commands = append(commands, commandConfig(stdin, pwd))
   commands = append(commands, commandConnect(stdin, pwd))
-  commands = append(commands, commandContainer(stdin, pwd))
   commands = append(commands, commandDashboard(stdin, pwd))
   commands = append(commands, commandEnv(stdin, pwd))
   commands = append(commands, commandInfo(stdin, pwd))
   commands = append(commands, commandInit(stdin, pwd))
   commands = append(commands, commandLog(stdin, pwd))
   commands = append(commands, commandManifest(stdin, pwd))
+  commands = append(commands, commandService(stdin, pwd))
   commands = append(commands, commandSession(stdin, pwd))
   commands = append(commands, commandSSH(stdin, pwd))
   commands = append(commands, commandTruck(stdin, pwd))

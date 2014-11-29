@@ -37,23 +37,24 @@ import (
 )
 
 
-func commandUse(stdin *bufio.Reader, pwd string) cli.Command {
+func commandService(stdin *bufio.Reader, pwd string) cli.Command {
   cmd := cli.Command {
-    Name: "use",
-    ShortName: "u",
-    Usage: "use a manifest file for the cluster",
+    Name: "service",
+    ShortName: "sr",
+    Usage: "create, destroy, assign, or info",
     Action: func(c *cli.Context) {
       //fmt.Printf("%+v \r\n", c)
-      fmt.Println("Do the use thing...")
+      fmt.Println("Do the service thing...")
     },
     BashComplete: func(c *cli.Context) {
       // This will complete if no args are passed
       if len(c.Args()) > 0 {
         return
       }
-      //for _, t := range tasks {
-      //  fmt.Println(t)
-      //}
+      serviceTasks := []string{"create", "destroy", "assign", "info"}
+      for _, t := range serviceTasks {
+        fmt.Println(t)
+      }
     },
   }
   return cmd

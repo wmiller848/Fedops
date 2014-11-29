@@ -1,3 +1,25 @@
+// The MIT License (MIT)
+
+// Copyright (c) 2014 William Miller
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 package fedops_provider
 
 import (
@@ -46,11 +68,11 @@ func (digo *DigitalOcean) Name() string {
   return DigitalOceanName
 }
 
-func (digo *DigitalOcean) CreateKeypair(clusterid string, key Keypair) (ProviderKeypair, error) {  
+func (digo *DigitalOcean) CreateKeypair(clusterid string, keypair Keypair) (ProviderKeypair, error) {  
   client := &http.Client{}
   reqKey := digitalOceanKeyRequest {
     Name: "FedOps-ClusterKey-" + clusterid,
-    Public_key: string(key.PublicSSH),
+    Public_key: string(keypair.PublicSSH),
   }
   reqJSON, err := json.Marshal(reqKey)
   if err != nil {
@@ -80,10 +102,13 @@ func (digo *DigitalOcean) CreateKeypair(clusterid string, key Keypair) (Provider
   jsonMap := data.(map[string]interface{})
   ssh_key := jsonMap["ssh_key"].(map[string]interface{})
 
-  pkey := ProviderKeypair {
-    ID: strconv.FormatFloat(ssh_key["id"].(float64), 'f', 0, 32),
+  ids := make(map[string]string)
+  ids[DigitalOceanName] = strconv.FormatFloat(ssh_key["id"].(float64), 'f', 0, 32)
+  pkeypair := ProviderKeypair {
+    ID: ids,
+    Keypair: keypair,
   }
-  return pkey, nil
+  return pkeypair, nil
 }
 
 func (digo *DigitalOcean) ListSize() ([]ProviderSize, error) {
@@ -121,8 +146,10 @@ func (digo *DigitalOcean) ListSize() ([]ProviderSize, error) {
     bandwidth := sizevalue.(map[string]interface{})["transfer"]
     price := sizevalue.(map[string]interface{})["price_monthly"]
 
+    ids := make(map[string]string)
+    ids[DigitalOceanName] = id.(string)
     psize := ProviderSize {
-      ID: id.(string),
+      ID: ids,
       Memory: memory.(float64),
       Vcpus: vcpus.(float64),
       Disk: disk.(float64),
@@ -140,7 +167,7 @@ func (digo *DigitalOcean) GetDefaultSize() (ProviderSize, error) {
     return sizes[0], err
   }
   for index, sizevalue := range sizes {
-    if sizevalue.ID == "512mb" {
+    if sizevalue.ID[DigitalOceanName] == "512mb" {
       return sizes[index], nil
     }
   }
@@ -179,8 +206,10 @@ func (digo *DigitalOcean) ListImage() ([]ProviderImage, error) {
     distro := imagevalue.(map[string]interface{})["distribution"]
     slug := imagevalue.(map[string]interface{})["slug"]
 
+    ids := make(map[string]string)
+    ids[DigitalOceanName] = strconv.FormatFloat(id.(float64), 'f', 0, 32)
     pimage := ProviderImage {
-      ID: strconv.FormatFloat(id.(float64), 'f', 0, 32),
+      ID: ids,
       Distribution: distro.(string),
       Version: slug.(string),
     }
@@ -203,17 +232,69 @@ func (digo *DigitalOcean) GetDefaultImage() (ProviderImage, error) {
 }
 
 func (digo *DigitalOcean) ListVM() ([]ProviderVM, error) {
-  return nil, nil
+  client := &http.Client{}
+  req, err := http.NewRequest("GET", digo.ApiEndpoint + digo.VM_URI, nil)
+  req.Header.Add("X-FedOps-Provider", digo.Name())
+  //req.Header.Add("Content-Type", "application/json")
+  req.Header.Add("Authorization", "Bearer " + digo.ApiKey)
+  resp, err := client.Do(req)
+  if err != nil {
+    return nil, err
+  }
+  defer resp.Body.Close()
+
+  //fmt.Println("Response Status:", resp.Status)
+  //fmt.Println("Response Headers:", resp.Header)
+  decoder := json.NewDecoder(resp.Body)
+  var data interface{}
+
+  err = decoder.Decode(&data)
+  if err != nil {
+    fmt.Println("JSON body not formated correctly", err.Error())
+    return nil, err;
+  }
+
+  jsonMap := data.(map[string]interface{})
+  droplets := jsonMap["droplets"].([]interface{})
+
+  //fmt.Printf("%+v \r\n", droplets)
+
+  var pvms []ProviderVM
+  for _, vmvalue := range droplets {
+    id := vmvalue.(map[string]interface{})["id"]
+    networks := vmvalue.(map[string]interface{})["networks"].(map[string]interface{})
+    ipv4 := networks["v4"].([]interface{})
+    v4 := ipv4[0].(map[string]interface{})
+    //ipv6 := networks["v6"].([]interface{})
+    //v6 := ipv6[0].(map[string]interface{})
+
+    ids := make(map[string]string)
+    ids[DigitalOceanName] = strconv.FormatFloat(id.(float64), 'f', 0, 32)
+    pvm := ProviderVM {
+      ID: ids,
+      IPV4: v4["ip_address"].(string),
+      //IPV6: v6["ip_address"].(string),
+      Provider: DigitalOceanName,
+    }
+    pvms = append(pvms, pvm)
+  }
+  return pvms, nil
 }
 
-func (digo *DigitalOcean) CreateVM(vmid string, size ProviderSize, image ProviderImage, keypair ProviderKeypair) (ProviderVM, error) {
+func (digo *DigitalOcean) CreateVM(vmid string, size ProviderSize, image ProviderImage, keypairs []ProviderKeypair) (ProviderVM, error) {
+
+  keyids := []string{}
+  for _, keypair := range keypairs {
+    keyids = append(keyids, keypair.ID[DigitalOceanName])
+  }
+
   client := &http.Client{}
   reqVM := digitalOceanVMRequest {
     Name: "FedOpsWarehouse-" + vmid,
     Region: "nyc2",
-    Size: size.ID,
-    Image: image.ID,
-    Keys: []string{keypair.ID},
+    Size: size.ID[DigitalOceanName],
+    Image: image.ID[DigitalOceanName],
+    Keys: keyids,
     Backups: false,
     IPV6: true,
   }
@@ -249,8 +330,11 @@ func (digo *DigitalOcean) CreateVM(vmid string, size ProviderSize, image Provide
   jsonMap := data.(map[string]interface{})
   droplet := jsonMap["droplet"].(map[string]interface{})
 
+  ids := make(map[string]string)
+  ids[DigitalOceanName] = strconv.FormatFloat(droplet["id"].(float64), 'f', 0, 32)
   pvm := ProviderVM {
-    ID: strconv.FormatFloat(droplet["id"].(float64), 'f', 0, 32),
+    ID: ids,
+    Provider: DigitalOceanName,
   }
   return pvm, nil
 }
