@@ -1,9 +1,12 @@
 # Fedops #
 
-## IN FREQUENT DEVELOPMENT ##
+### IN FREQUENT DEVELOPMENT ###
 ### This project is not ready for usage :p ###
 
 ### Development, Deployment, Done ###
+
+## About ##
+
 
 Fedops is a cloud vps manager and contionous intigration tool designed to easilty and securely manage shipping docker containers. Fedops initigrates very tightly with docker, and the docker registery.
 
@@ -43,7 +46,7 @@ cd ~/clusters/wordpress
 fedops connect [fedops_warehouse_ip]
 
 * Cluster with one envirment
-  fedops info // Example Output
+  fedops info
 
   warehouses
   - cd-uswest1 - 201.0.10.10 | Up 3 months & 7 days
@@ -66,7 +69,7 @@ fedops connect [fedops_warehouse_ip]
       * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 7 hours
 
 * Cluster with two envirments
-  fedops info // Example Output
+  fedops info
 
   warehouses
     - cd-uswest1 - 201.0.10.10 | Up 3 months & 7 days
@@ -109,92 +112,79 @@ fedops connect [fedops_warehouse_ip]
 ### Fresh Cluster with Manifest ###
 
 * fedops init
-  # enter provider
-  > digital ocean
-  # enter encryption key
-  > fedops_key
-  # enter digital ocean api key
-  > api_key
 
-* fedops container create some.service
-  # enter encryption key
-  >
+* fedops service create --repo=https://github.com/wmiller/fedops-example
+
 * fedops use some.manifest
-  # enter encryption key
-  >
 
-# wait a few seconds
+* fedops info
 
-* fedops info // Example Output
-  # enter encryption key
-  >
-  # warehouses
-  #  - cd-uswest1 - 201.0.10.1 | Up 1 min
-  #    * Fedops-www[x02] : "https://githib.com/wmiller/Fedops-www" | √, Built...2 hours ago
-  #      s819af1 -> trucks.www1
-  #
-  # trucks
-  #  - www1 - 201.0.10.2 | Up 1 min
-  #    * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 10 hours
+  warehouses
+    - cd-uswest1 - 201.0.10.1 | Up 1 min
+      * Fedops-www[x02] : "https://githib.com/wmiller/Fedops-www" | √, Built...2 hours ago
+        s819af1 -> trucks.www1
+
+  trucks
+    - www1 - 201.0.10.2 | Up 1 min
+      * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 10 hours
 
 -------------------------------------------
 
 ### Fresh Cluster without Manifest ###
 
 * fedops init
-  # enter provider
-  > digital ocean
-  # enter encryption key
-  > fedops_key
-  # enter digital ocean api key
-  > api_key
 
-* fedops warehouse create [warehouse_name]
-  # enter encryption key
-  >
-  # enter name
-  > warehouse_name
-* fedops truck create [truck_name]
-  # enter encryption key
-  >
-  # enter name
-  > truck_name
+* fedops warehouse create --name=cd-uswest1
 
-* fedops container create -w cd-uswest1 some.service
-  # enter encryption key
-  >
+* fedops truck create --name=www1
 
-* fedops info // Example Output
-  # enter encryption key
-  >
-  # warehouses
-  #  - cd-uswest1 - 201.0.10.1 | Up 1 min
-  #    * Fedops-www[x02] : "https://githib.com/wmiller/Fedops-www" | _, Building...
-  #
-  # trucks
-  #  - www1 - 201.0.10.2 | Up 1 min
-  #
+* fedops service create --warehouse=cd-uswest1 --truck=www1  some.service
 
-* fedops env create [env_name]
-  # enter encryption key
-  >
-  # enter env name
-  > env_name
+* fedops info
 
-* fedops info // Example Output
-  # enter encryption key
-  >
-  # warehouses
-  #  - cd-uswest1 - 201.0.10.1 | Up 3 min
-  #    * Fedops-www[x02] : "https://githib.com/wmiller/Fedops-www" | √, Built...2 hours ago
-  #      prod | √, Pass...10 minutes
-  #        s819af1 -> trucks.www1
-  #
-  # trucks
-  #  - www1 - 201.0.10.2 | Up 3 min
-  #    * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 10 hours
-  #
+  warehouses
+    - cd-uswest1 - 201.0.10.1 | Up 1 min
+      * Fedops-www[x01] : "https://githib.com/wmiller/Fedops-www" | _, Building...
 
-## About ##
+  trucks
+    - www1 - 201.0.10.2 | Up 1 min
+      * n/a | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | _, down
+
+* fedops env create --name=prod
+
+* fedops info
+
+  warehouses
+    - cd-uswest1 - 201.0.10.1 | Up 3 min
+      * Fedops-www[x02] : "https://githib.com/wmiller/Fedops-www" | √, Built...2 minutes ago
+        prod | √, Pass...1 minute ago
+          s819af1 -> trucks.www1
+
+  trucks
+    - www1 - 201.0.10.2 | Up 3 min
+      * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 1 min
+
 
 ## Liceneces ##
+
+The MIT License (MIT)
+
+Copyright (c) 2014 William Miller
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
