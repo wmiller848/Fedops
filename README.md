@@ -109,7 +109,7 @@ fedops connect [fedops_warehouse_ip]
 
 -------------------------------------------
 
-### Fresh Cluster with Manifest ###
+### New Cluster with Manifest ###
 
 * fedops init
 
@@ -130,7 +130,7 @@ fedops connect [fedops_warehouse_ip]
 
 -------------------------------------------
 
-### Fresh Cluster without Manifest ###
+### New Cluster without Manifest ###
 
 * fedops init
 
