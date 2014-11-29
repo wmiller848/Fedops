@@ -121,12 +121,12 @@ fedops connect [fedops_warehouse_ip]
 
   warehouses
     - cd-uswest1 - 201.0.10.1 | Up 1 min
-      * Fedops-www[x02] : "https://githib.com/wmiller/Fedops-www" | √, Built...2 hours ago
+      * Fedops-www[x02] : "https://githib.com/wmiller/Fedops-www" | √, Built...1 minute ago
         s819af1 -> trucks.www1
 
   trucks
     - www1 - 201.0.10.2 | Up 1 min
-      * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 10 hours
+      * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 1 minute
 
 -------------------------------------------
 
