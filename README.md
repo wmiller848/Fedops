@@ -7,7 +7,6 @@
 
 ## About ##
 
-
 Fedops is a cloud vps manager and contionous intigration tool designed to easilty and securely manage shipping docker containers. Fedops initigrates very tightly with docker, and the docker registery.
 
 You can use Fedops to create a cluster of machines that will poll source control, build, test, and deploy to any number of enviroments you define.
