@@ -1,5 +1,8 @@
 # Fedops #
 
+## IN FREQUENT DEVELOPMENT ##
+### This project is not ready for usage :p ###
+
 ### Development, Deployment, Done ###
 
 Fedops is a cloud vps manager and contionous intigration tool designed to easilty and securely manage shipping docker containers. Fedops initigrates very tightly with docker, and the docker registery.
@@ -36,75 +39,66 @@ Fedops uses 3 types of configurations files
 
 ### From Existing Cluster ###
 
-* cd ~/clusters/wordpress
-* fedops connect [fedops_warehouse_ip]
-  # Verify ~/.ssh/id_rsa.pub
-  # Enter authorization key
-  > auth_key
-  # enter encryption key
-  > fedops_key
-  # enter digital ocean api key
-  > api_key
+cd ~/clusters/wordpress
+fedops connect [fedops_warehouse_ip]
 
+* Cluster with one envirment
+  fedops info // Example Output
 
-// Cluster with one envirment
-* fedops info // Example Output
-  # enter encryption key
-  >
-  # warehouses
-  #  - cd-uswest1 - 201.0.10.10 | Up 3 months & 7 days
-  #    * Fedops[x01] : "https://githib.com/wmiller/Fedops" | √, Built...1 minute ago
-  #    * AmazingOtherApp[x02] : "https://githib.com/AmazingUser/AmazingOtherApp" | √, Built...2 hours ago
-  #      qzj1h8o -> trucks.www1, trucks.www2, trucks.www3
-  #  - cd-uswest2 - 201.0.10.11 | Up 3 months & 7 days
-  #    * Fedops-www[x01] : "https://githib.com/wmiller/Fedops-www" | √, Built...2 hours ago
-  #      s819af1 -> trucks.www1, trucks.www2
-  #
-  # trucks
-  #  - www1 - 201.0.10.2 | Up 3 months & 5 days
-  #    * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 10 hours
-  #    * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 10 hours
-  #  - www2 - 201.0.10.3 | Up 23 days
-  #    * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 10 hours
-  #    * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 10 hours
-  #  - www3 - 201.0.10.4 | Up 2 days
-  #    * z918yd1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | X, Down 14 hours
-  #    * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 7 hours
+  warehouses
+  - cd-uswest1 - 201.0.10.10 | Up 3 months & 7 days
+    * Fedops[x01] : "https://githib.com/wmiller/Fedops" | √, Built...1 minute ago
+    * AmazingOtherApp[x02] : "https://githib.com/AmazingUser/AmazingOtherApp" | √, Built...2 hours ago
+      qzj1h8o -> trucks.www1, trucks.www2, trucks.www3
+  - cd-uswest2 - 201.0.10.11 | Up 3 months & 7 days
+    * Fedops-www[x01] : "https://githib.com/wmiller/Fedops-www" | √, Built...2 hours ago
+      s819af1 -> trucks.www1, trucks.www2
 
-// Cluster with two envirments
-* fedops info // Example Output
-  # enter encryption key
-  >
-  # warehouses
-  #  - cd-uswest1 - 201.0.10.10 | Up 3 months & 7 days
-  #    * Fedops[x01] : "https://githib.com/wmiller/Fedops" | √, Built...1 minute ago
-  #    * AmazingOtherApp[x02] : "https://githib.com/AmazingUser/AmazingOtherApp" | √, Built...2 hours ago
-  #      dev | √, Pass...10 minutes | PUSH
-  #        qzj1h8o -> trucks.www1-dev
-  #      prod | √, Synced
-  #        qzj1h8o -> trucks.www1, trucks.www2, trucks.www3
-  #
-  #  - cd-uswest2 - 201.0.10.11 | Up 3 months & 7 days
-  #    * Fedops-www[x01] : "https://githib.com/wmiller/Fedops-www" | √, Built...2 hours ago
-  #      dev | √, Pass...10 minutes | HOLD
-  #        919jcah -> trucks.www1-dev
-  #      prod | X, Not Synced
-  #        s819af1 -> trucks.www1, trucks.www2, trucks.www3
-  # trucks
-  #  - www1-dev - 201.0.10.2 | Up 4 months & 9 days
-  #    * 919jcah | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 20 hours
-  #    * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 10 hours
-  #  - www1 - 201.0.10.2 | Up 3 months & 5 days
-  #    * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 10 hours
-  #    * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 9 hours
-  #  - www2 - 201.0.10.3 | Up 23 days
-  #    * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 10 hours
-  #    * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 9 hours
-  #  - www3 - 201.0.10.4 | Up 2 days
-  #    * z918yd1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | X, Down 14 hours
-  #    * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 7 hours
+  trucks
+    - www1 - 201.0.10.2 | Up 3 months & 5 days
+      * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 10 hours
+      * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 10 hours
+    - www2 - 201.0.10.3 | Up 23 days
+      * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 10 hours
+      * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 10 hours
+    - www3 - 201.0.10.4 | Up 2 days
+      * z918yd1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | X, Down 14 hours
+      * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 7 hours
 
-* fedops ssh trucks.www1
+* Cluster with two envirments
+  fedops info // Example Output
+
+  warehouses
+    - cd-uswest1 - 201.0.10.10 | Up 3 months & 7 days
+      * Fedops[x01] : "https://githib.com/wmiller/Fedops" | √, Built...1 minute ago
+      * AmazingOtherApp[x02] : "https://githib.com/AmazingUser/AmazingOtherApp" | √, Built...2 hours ago
+        dev | √, Pass...10 minutes | PUSH
+          qzj1h8o -> trucks.www1-dev
+        prod | √, Synced
+          qzj1h8o -> trucks.www1, trucks.www2, trucks.www3
+
+    - cd-uswest2 - 201.0.10.11 | Up 3 months & 7 days
+      * Fedops-www[x01] : "https://githib.com/wmiller/Fedops-www" | √, Built...2 hours ago
+        dev | √, Pass...10 minutes | HOLD
+          919jcah -> trucks.www1-dev
+        prod | X, Not Synced
+          s819af1 -> trucks.www1, trucks.www2, trucks.www3
+
+  trucks
+    - www1-dev - 201.0.10.2 | Up 4 months & 9 days
+      * 919jcah | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 20 hours
+      * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 10 hours
+    - www1 - 201.0.10.2 | Up 3 months & 5 days
+      * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 10 hours
+      * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 9 hours
+    - www2 - 201.0.10.3 | Up 23 days
+      * s819af1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | √, Up 10 hours
+      * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 9 hours
+    - www3 - 201.0.10.4 | Up 2 days
+      * z918yd1 | Fedops-www[x01] : warehouses.uswest2.Fedops-www[x02] | X, Down 14 hours
+      * qzj1h8o | AmazingOtherApp[x02] : warehouses.uswest1.AmazingOtherApp[x02] | √, Up 7 hours
+
+  fedops ssh trucks.www1
   >$
 
 * cake
