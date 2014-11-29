@@ -23,333 +23,332 @@
 package fedops_provider
 
 import (
-  "fmt"
-  "bytes"
-  _"io/ioutil"
-  "net/http"
-  "encoding/json"
-  "strconv"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	_ "io/ioutil"
+	"net/http"
+	"strconv"
 )
 
 const DigitalOceanName string = "DigitalOcean"
 
-
 type digitalOceanKeyRequest struct {
-  Name string `json:"name"`
-  Public_key string `json:"public_key"`
+	Name       string `json:"name"`
+	Public_key string `json:"public_key"`
 }
 
 type digitalOceanVMRequest struct {
-  Name string `json:"name"`
-  Region string `json:"region"`
-  Size string `json:"size"`
-  Image string `json:"image"`
-  Keys []string `json:"ssh_keys"`
-  Backups bool `json:"backups"`
-  IPV6 bool `json:"ipv6"`
-  //UserData string `json:"user_data"`
-  //PrivateNetworking bool `json:"private_networking"`
+	Name    string   `json:"name"`
+	Region  string   `json:"region"`
+	Size    string   `json:"size"`
+	Image   string   `json:"image"`
+	Keys    []string `json:"ssh_keys"`
+	Backups bool     `json:"backups"`
+	IPV6    bool     `json:"ipv6"`
+	//UserData string `json:"user_data"`
+	//PrivateNetworking bool `json:"private_networking"`
 }
 
 type DigitalOceanAuth struct {
-  ApiKey string
+	ApiKey string
 }
 
 type DigitalOcean struct {
-  ApiKey string
-  ApiEndpoint string
-  KeyURI string
-  SizeURI string
-  ImageURI string
-  VM_URI string
+	ApiKey      string
+	ApiEndpoint string
+	KeyURI      string
+	SizeURI     string
+	ImageURI    string
+	VM_URI      string
 }
 
 func (digo *DigitalOcean) Name() string {
-  return DigitalOceanName
+	return DigitalOceanName
 }
 
-func (digo *DigitalOcean) CreateKeypair(clusterid string, keypair Keypair) (ProviderKeypair, error) {  
-  client := &http.Client{}
-  reqKey := digitalOceanKeyRequest {
-    Name: "FedOps-ClusterKey-" + clusterid,
-    Public_key: string(keypair.PublicSSH),
-  }
-  reqJSON, err := json.Marshal(reqKey)
-  if err != nil {
-    return ProviderKeypair{}, err
-  }
-  req, err := http.NewRequest("POST", digo.ApiEndpoint + digo.KeyURI, bytes.NewBuffer(reqJSON))
-  req.Header.Add("X-FedOps-Provider", digo.Name())
-  req.Header.Add("Content-Type", "application/json")
-  req.Header.Add("Authorization", "Bearer " + digo.ApiKey)
-  resp, err := client.Do(req)
-  if err != nil {
-    return ProviderKeypair{}, err
-  }
-  defer resp.Body.Close()
+func (digo *DigitalOcean) CreateKeypair(clusterid string, keypair Keypair) (ProviderKeypair, error) {
+	client := &http.Client{}
+	reqKey := digitalOceanKeyRequest{
+		Name:       "FedOps-ClusterKey-" + clusterid,
+		Public_key: string(keypair.PublicSSH),
+	}
+	reqJSON, err := json.Marshal(reqKey)
+	if err != nil {
+		return ProviderKeypair{}, err
+	}
+	req, err := http.NewRequest("POST", digo.ApiEndpoint+digo.KeyURI, bytes.NewBuffer(reqJSON))
+	req.Header.Add("X-FedOps-Provider", digo.Name())
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
+	resp, err := client.Do(req)
+	if err != nil {
+		return ProviderKeypair{}, err
+	}
+	defer resp.Body.Close()
 
-  //fmt.Println("Response Status:", resp.Status)
-  //fmt.Println("Response Headers:", resp.Header)
-  decoder := json.NewDecoder(resp.Body)
-  var data interface{}
+	//fmt.Println("Response Status:", resp.Status)
+	//fmt.Println("Response Headers:", resp.Header)
+	decoder := json.NewDecoder(resp.Body)
+	var data interface{}
 
-  err = decoder.Decode(&data)
-  if err != nil {
-    fmt.Println("JSON body not formated correctly", err.Error())
-    return ProviderKeypair{}, err;
-  }
+	err = decoder.Decode(&data)
+	if err != nil {
+		fmt.Println("JSON body not formated correctly", err.Error())
+		return ProviderKeypair{}, err
+	}
 
-  jsonMap := data.(map[string]interface{})
-  ssh_key := jsonMap["ssh_key"].(map[string]interface{})
+	jsonMap := data.(map[string]interface{})
+	ssh_key := jsonMap["ssh_key"].(map[string]interface{})
 
-  ids := make(map[string]string)
-  ids[DigitalOceanName] = strconv.FormatFloat(ssh_key["id"].(float64), 'f', 0, 32)
-  pkeypair := ProviderKeypair {
-    ID: ids,
-    Keypair: keypair,
-  }
-  return pkeypair, nil
+	ids := make(map[string]string)
+	ids[DigitalOceanName] = strconv.FormatFloat(ssh_key["id"].(float64), 'f', 0, 32)
+	pkeypair := ProviderKeypair{
+		ID:      ids,
+		Keypair: keypair,
+	}
+	return pkeypair, nil
 }
 
 func (digo *DigitalOcean) ListSize() ([]ProviderSize, error) {
-  client := &http.Client{}
-  req, err := http.NewRequest("GET", digo.ApiEndpoint + digo.SizeURI, nil)
-  req.Header.Add("X-FedOps-Provider", digo.Name())
-  //req.Header.Add("Content-Type", "application/json")
-  req.Header.Add("Authorization", "Bearer " + digo.ApiKey)
-  resp, err := client.Do(req)
-  if err != nil {
-    return nil, err
-  }
-  defer resp.Body.Close()
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", digo.ApiEndpoint+digo.SizeURI, nil)
+	req.Header.Add("X-FedOps-Provider", digo.Name())
+	//req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
 
-  //fmt.Println("Response Status:", resp.Status)
-  //fmt.Println("Response Headers:", resp.Header)
-  decoder := json.NewDecoder(resp.Body)
-  var data interface{}
+	//fmt.Println("Response Status:", resp.Status)
+	//fmt.Println("Response Headers:", resp.Header)
+	decoder := json.NewDecoder(resp.Body)
+	var data interface{}
 
-  err = decoder.Decode(&data)
-  if err != nil {
-    fmt.Println("JSON body not formated correctly", err.Error())
-    return nil, err;
-  }
+	err = decoder.Decode(&data)
+	if err != nil {
+		fmt.Println("JSON body not formated correctly", err.Error())
+		return nil, err
+	}
 
-  jsonMap := data.(map[string]interface{})
-  sizes := jsonMap["sizes"].([]interface{})
+	jsonMap := data.(map[string]interface{})
+	sizes := jsonMap["sizes"].([]interface{})
 
-  var psizes []ProviderSize
-  for _, sizevalue := range sizes {
-    id := sizevalue.(map[string]interface{})["slug"]
-    memory := sizevalue.(map[string]interface{})["memory"]
-    vcpus := sizevalue.(map[string]interface{})["vcpus"]
-    disk := sizevalue.(map[string]interface{})["disk"]
-    bandwidth := sizevalue.(map[string]interface{})["transfer"]
-    price := sizevalue.(map[string]interface{})["price_monthly"]
+	var psizes []ProviderSize
+	for _, sizevalue := range sizes {
+		id := sizevalue.(map[string]interface{})["slug"]
+		memory := sizevalue.(map[string]interface{})["memory"]
+		vcpus := sizevalue.(map[string]interface{})["vcpus"]
+		disk := sizevalue.(map[string]interface{})["disk"]
+		bandwidth := sizevalue.(map[string]interface{})["transfer"]
+		price := sizevalue.(map[string]interface{})["price_monthly"]
 
-    ids := make(map[string]string)
-    ids[DigitalOceanName] = id.(string)
-    psize := ProviderSize {
-      ID: ids,
-      Memory: memory.(float64),
-      Vcpus: vcpus.(float64),
-      Disk: disk.(float64),
-      Bandwidth: bandwidth.(float64),
-      Price: price.(float64),
-    }
-    psizes = append(psizes, psize)
-  }
-  return psizes, nil
+		ids := make(map[string]string)
+		ids[DigitalOceanName] = id.(string)
+		psize := ProviderSize{
+			ID:        ids,
+			Memory:    memory.(float64),
+			Vcpus:     vcpus.(float64),
+			Disk:      disk.(float64),
+			Bandwidth: bandwidth.(float64),
+			Price:     price.(float64),
+		}
+		psizes = append(psizes, psize)
+	}
+	return psizes, nil
 }
 
 func (digo *DigitalOcean) GetDefaultSize() (ProviderSize, error) {
-  sizes, err := digo.ListSize()
-  if err != nil {
-    return sizes[0], err
-  }
-  for index, sizevalue := range sizes {
-    if sizevalue.ID[DigitalOceanName] == "512mb" {
-      return sizes[index], nil
-    }
-  }
-  return sizes[0], nil
+	sizes, err := digo.ListSize()
+	if err != nil {
+		return sizes[0], err
+	}
+	for index, sizevalue := range sizes {
+		if sizevalue.ID[DigitalOceanName] == "512mb" {
+			return sizes[index], nil
+		}
+	}
+	return sizes[0], nil
 }
 
 func (digo *DigitalOcean) ListImage() ([]ProviderImage, error) {
-  client := &http.Client{}
-  req, err := http.NewRequest("GET", digo.ApiEndpoint + digo.ImageURI, nil)
-  req.Header.Add("X-FedOps-Provider", digo.Name())
-  //req.Header.Add("Content-Type", "application/json")
-  req.Header.Add("Authorization", "Bearer " + digo.ApiKey)
-  resp, err := client.Do(req)
-  if err != nil {
-    return nil, err
-  }
-  defer resp.Body.Close()
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", digo.ApiEndpoint+digo.ImageURI, nil)
+	req.Header.Add("X-FedOps-Provider", digo.Name())
+	//req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
 
-  //fmt.Println("Response Status:", resp.Status)
-  //fmt.Println("Response Headers:", resp.Header)
-  decoder := json.NewDecoder(resp.Body)
-  var data interface{}
+	//fmt.Println("Response Status:", resp.Status)
+	//fmt.Println("Response Headers:", resp.Header)
+	decoder := json.NewDecoder(resp.Body)
+	var data interface{}
 
-  err = decoder.Decode(&data)
-  if err != nil {
-    fmt.Println("JSON body not formated correctly", err.Error())
-    return nil, err;
-  }
+	err = decoder.Decode(&data)
+	if err != nil {
+		fmt.Println("JSON body not formated correctly", err.Error())
+		return nil, err
+	}
 
-  jsonMap := data.(map[string]interface{})
-  images := jsonMap["images"].([]interface{})
+	jsonMap := data.(map[string]interface{})
+	images := jsonMap["images"].([]interface{})
 
-  var pimages []ProviderImage
-  for _, imagevalue := range images {
-    id := imagevalue.(map[string]interface{})["id"]
-    distro := imagevalue.(map[string]interface{})["distribution"]
-    slug := imagevalue.(map[string]interface{})["slug"]
+	var pimages []ProviderImage
+	for _, imagevalue := range images {
+		id := imagevalue.(map[string]interface{})["id"]
+		distro := imagevalue.(map[string]interface{})["distribution"]
+		slug := imagevalue.(map[string]interface{})["slug"]
 
-    ids := make(map[string]string)
-    ids[DigitalOceanName] = strconv.FormatFloat(id.(float64), 'f', 0, 32)
-    pimage := ProviderImage {
-      ID: ids,
-      Distribution: distro.(string),
-      Version: slug.(string),
-    }
-    pimages = append(pimages, pimage)
-  }
-  return pimages, nil
+		ids := make(map[string]string)
+		ids[DigitalOceanName] = strconv.FormatFloat(id.(float64), 'f', 0, 32)
+		pimage := ProviderImage{
+			ID:           ids,
+			Distribution: distro.(string),
+			Version:      slug.(string),
+		}
+		pimages = append(pimages, pimage)
+	}
+	return pimages, nil
 }
 
 func (digo *DigitalOcean) GetDefaultImage() (ProviderImage, error) {
-  images, err := digo.ListImage()
-  if err != nil {
-    return images[0], err
-  }
-  for index, imagevalue := range images {
-    if imagevalue.Version == "fedora-20-x64" {
-      return images[index], nil
-    }
-  }
-  return images[0], nil
+	images, err := digo.ListImage()
+	if err != nil {
+		return images[0], err
+	}
+	for index, imagevalue := range images {
+		if imagevalue.Version == "fedora-20-x64" {
+			return images[index], nil
+		}
+	}
+	return images[0], nil
 }
 
 func (digo *DigitalOcean) ListVM() ([]ProviderVM, error) {
-  client := &http.Client{}
-  req, err := http.NewRequest("GET", digo.ApiEndpoint + digo.VM_URI, nil)
-  req.Header.Add("X-FedOps-Provider", digo.Name())
-  //req.Header.Add("Content-Type", "application/json")
-  req.Header.Add("Authorization", "Bearer " + digo.ApiKey)
-  resp, err := client.Do(req)
-  if err != nil {
-    return nil, err
-  }
-  defer resp.Body.Close()
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", digo.ApiEndpoint+digo.VM_URI, nil)
+	req.Header.Add("X-FedOps-Provider", digo.Name())
+	//req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
 
-  //fmt.Println("Response Status:", resp.Status)
-  //fmt.Println("Response Headers:", resp.Header)
-  decoder := json.NewDecoder(resp.Body)
-  var data interface{}
+	//fmt.Println("Response Status:", resp.Status)
+	//fmt.Println("Response Headers:", resp.Header)
+	decoder := json.NewDecoder(resp.Body)
+	var data interface{}
 
-  err = decoder.Decode(&data)
-  if err != nil {
-    fmt.Println("JSON body not formated correctly", err.Error())
-    return nil, err;
-  }
+	err = decoder.Decode(&data)
+	if err != nil {
+		fmt.Println("JSON body not formated correctly", err.Error())
+		return nil, err
+	}
 
-  jsonMap := data.(map[string]interface{})
-  droplets := jsonMap["droplets"].([]interface{})
+	jsonMap := data.(map[string]interface{})
+	droplets := jsonMap["droplets"].([]interface{})
 
-  //fmt.Printf("%+v \r\n", droplets)
+	//fmt.Printf("%+v \r\n", droplets)
 
-  var pvms []ProviderVM
-  for _, vmvalue := range droplets {
-    id := vmvalue.(map[string]interface{})["id"]
-    networks := vmvalue.(map[string]interface{})["networks"].(map[string]interface{})
-    ipv4 := networks["v4"].([]interface{})
-    v4 := ipv4[0].(map[string]interface{})
-    //ipv6 := networks["v6"].([]interface{})
-    //v6 := ipv6[0].(map[string]interface{})
+	var pvms []ProviderVM
+	for _, vmvalue := range droplets {
+		id := vmvalue.(map[string]interface{})["id"]
+		networks := vmvalue.(map[string]interface{})["networks"].(map[string]interface{})
+		ipv4 := networks["v4"].([]interface{})
+		v4 := ipv4[0].(map[string]interface{})
+		//ipv6 := networks["v6"].([]interface{})
+		//v6 := ipv6[0].(map[string]interface{})
 
-    ids := make(map[string]string)
-    ids[DigitalOceanName] = strconv.FormatFloat(id.(float64), 'f', 0, 32)
-    pvm := ProviderVM {
-      ID: ids,
-      IPV4: v4["ip_address"].(string),
-      //IPV6: v6["ip_address"].(string),
-      Provider: DigitalOceanName,
-    }
-    pvms = append(pvms, pvm)
-  }
-  return pvms, nil
+		ids := make(map[string]string)
+		ids[DigitalOceanName] = strconv.FormatFloat(id.(float64), 'f', 0, 32)
+		pvm := ProviderVM{
+			ID:   ids,
+			IPV4: v4["ip_address"].(string),
+			//IPV6: v6["ip_address"].(string),
+			Provider: DigitalOceanName,
+		}
+		pvms = append(pvms, pvm)
+	}
+	return pvms, nil
 }
 
 func (digo *DigitalOcean) CreateVM(vmid string, size ProviderSize, image ProviderImage, keypairs []ProviderKeypair) (ProviderVM, error) {
 
-  keyids := []string{}
-  for _, keypair := range keypairs {
-    keyids = append(keyids, keypair.ID[DigitalOceanName])
-  }
+	keyids := []string{}
+	for _, keypair := range keypairs {
+		keyids = append(keyids, keypair.ID[DigitalOceanName])
+	}
 
-  client := &http.Client{}
-  reqVM := digitalOceanVMRequest {
-    Name: "FedOpsWarehouse-" + vmid,
-    Region: "nyc2",
-    Size: size.ID[DigitalOceanName],
-    Image: image.ID[DigitalOceanName],
-    Keys: keyids,
-    Backups: false,
-    IPV6: true,
-  }
-  reqJSON, err := json.Marshal(reqVM)
-  if err != nil {
-    return ProviderVM{}, err
-  }
+	client := &http.Client{}
+	reqVM := digitalOceanVMRequest{
+		Name:    "FedOpsWarehouse-" + vmid,
+		Region:  "nyc2",
+		Size:    size.ID[DigitalOceanName],
+		Image:   image.ID[DigitalOceanName],
+		Keys:    keyids,
+		Backups: false,
+		IPV6:    true,
+	}
+	reqJSON, err := json.Marshal(reqVM)
+	if err != nil {
+		return ProviderVM{}, err
+	}
 
-  fmt.Println(string(reqJSON))
+	fmt.Println(string(reqJSON))
 
-  req, err := http.NewRequest("POST", digo.ApiEndpoint + digo.VM_URI, bytes.NewBuffer(reqJSON))
-  req.Header.Add("X-FedOps-Provider", digo.Name())
-  req.Header.Add("Content-Type", "application/json")
-  req.Header.Add("Authorization", "Bearer " + digo.ApiKey)
-  resp, err := client.Do(req)
-  if err != nil {
-    return ProviderVM{}, err
-  }
-  defer resp.Body.Close()
+	req, err := http.NewRequest("POST", digo.ApiEndpoint+digo.VM_URI, bytes.NewBuffer(reqJSON))
+	req.Header.Add("X-FedOps-Provider", digo.Name())
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
+	resp, err := client.Do(req)
+	if err != nil {
+		return ProviderVM{}, err
+	}
+	defer resp.Body.Close()
 
-  //fmt.Println("Response Status:", resp.Status)
-  //fmt.Println("Response Headers:", resp.Header)
-  decoder := json.NewDecoder(resp.Body)
-  var data interface{}
+	//fmt.Println("Response Status:", resp.Status)
+	//fmt.Println("Response Headers:", resp.Header)
+	decoder := json.NewDecoder(resp.Body)
+	var data interface{}
 
-  err = decoder.Decode(&data)
-  if err != nil {
-    fmt.Println("JSON body not formated correctly", err.Error())
-    return ProviderVM{}, err;
-  }
-  fmt.Printf("%+v \r\n", data)
+	err = decoder.Decode(&data)
+	if err != nil {
+		fmt.Println("JSON body not formated correctly", err.Error())
+		return ProviderVM{}, err
+	}
+	fmt.Printf("%+v \r\n", data)
 
-  jsonMap := data.(map[string]interface{})
-  droplet := jsonMap["droplet"].(map[string]interface{})
+	jsonMap := data.(map[string]interface{})
+	droplet := jsonMap["droplet"].(map[string]interface{})
 
-  ids := make(map[string]string)
-  ids[DigitalOceanName] = strconv.FormatFloat(droplet["id"].(float64), 'f', 0, 32)
-  pvm := ProviderVM {
-    ID: ids,
-    Provider: DigitalOceanName,
-  }
-  return pvm, nil
+	ids := make(map[string]string)
+	ids[DigitalOceanName] = strconv.FormatFloat(droplet["id"].(float64), 'f', 0, 32)
+	pvm := ProviderVM{
+		ID:       ids,
+		Provider: DigitalOceanName,
+	}
+	return pvm, nil
 }
 
 func (digo *DigitalOcean) SnapShotVM(ProviderVM) (ProviderImage, error) {
-  return ProviderImage{}, nil
+	return ProviderImage{}, nil
 }
 
 func DigitalOceanProvider(auth DigitalOceanAuth) DigitalOcean {
-  return DigitalOcean{
-    ApiKey: auth.ApiKey,
-    ApiEndpoint: "https://api.digitalocean.com",
-    KeyURI: "/v2/account/keys",
-    SizeURI: "/v2/sizes",
-    ImageURI: "/v2/images?type=distribution",
-    VM_URI: "/v2/droplets",
-  }
+	return DigitalOcean{
+		ApiKey:      auth.ApiKey,
+		ApiEndpoint: "https://api.digitalocean.com",
+		KeyURI:      "/v2/account/keys",
+		SizeURI:     "/v2/sizes",
+		ImageURI:    "/v2/images?type=distribution",
+		VM_URI:      "/v2/droplets",
+	}
 }

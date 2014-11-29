@@ -23,83 +23,82 @@
 package main
 
 import (
-  // Standard
-  _"runtime"
-  _"os"
-  "bufio"
-  "fmt"
-  _"strings"
-  // 3rd Party
-  "github.com/codegangsta/cli"
-  _"github.com/gopass"
-  // FedOps
-  "github.com/FedOps/lib"
+	// Standard
+	"bufio"
+	"fmt"
+	_ "os"
+	_ "runtime"
+	_ "strings"
+	// 3rd Party
+	"github.com/codegangsta/cli"
+	_ "github.com/gopass"
+	// FedOps
+	"github.com/FedOps/lib"
 )
 
-
 func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
-  cmd := cli.Command {
-    Name: "info",
-    ShortName: "if",
-    Usage: "get info on the cluster",
-    Action: func(c *cli.Context) {
-      hasConfig := fedops.HasConfigFile(pwd)
-      if hasConfig == false {
-        fmt.Println("FedOps cluster config file does not already exist")
-        fmt.Println("Try 'fedops init' or 'fedops connect'")
-        return
-      }
+	cmd := cli.Command{
+		Name:      "info",
+		ShortName: "if",
+		Usage:     "get info on the cluster",
+		Action: func(c *cli.Context) {
+			hasConfig := fedops.HasConfigFile(pwd)
+			if hasConfig == false {
+				fmt.Println("Fedops cluster config file does not already exist")
+				fmt.Println("Try 'fedops init' or 'fedops connect'")
+				return
+			}
 
-      fed, err := initFedops(pwd)
-      if err != nil {
-        fmt.Println("Incorrect Password")
-        return
-      }
+			fed, err := initFedops(pwd)
+			if err != nil {
+				fmt.Println("Incorrect Password")
+				return
+			}
 
-      promise := make(chan fedops.FedopsAction)
-      go fed.Refresh(promise)
-      result :=  <- promise
-      switch result.Status {
-        case fedops.FedopsError:
-          fmt.Println("Error")
-        case fedops.FedopsOk:
-          //fmt.Println("Ok")
-        case fedops.FedopsUnknown:
-          fmt.Println("Unknown")
-      }  
-      //fmt.Printf("%+v \r\n", fed.Config)
+			promise := make(chan fedops.FedopsAction)
+			go fed.Refresh(promise)
+			result := <-promise
+			switch result.Status {
+			case fedops.FedopsError:
+				fmt.Println("Error")
+			case fedops.FedopsOk:
+				//fmt.Println("Ok")
+			case fedops.FedopsUnknown:
+				fmt.Println("Unknown")
+			}
+			//fmt.Printf("%+v \r\n", fed.Config)
 
-      //fmt.Println("ClusterID | " + fed.Config.ClusterID)
-      fmt.Println("Warehouses")
-      if len(fed.Config.Warehouses) > 0 {
-        for _, warehouse := range fed.Config.Warehouses {
-          fmt.Println("\t", " -", warehouse.WarehouseID, " - ", warehouse.IPV4, " | ", warehouse.Status)
-        }
-      } else {
-        fmt.Println("\t", "No warehouses available")
-        fmt.Println("\t", "Try 'fedops warehouse create'")
-      }
+			//fmt.Println("ClusterID | " + fed.Config.ClusterID)
+			fmt.Println("Warehouses")
+			if len(fed.Config.Warehouses) > 0 {
+				for _, warehouse := range fed.Config.Warehouses {
+					fmt.Println("\t", " -", warehouse.WarehouseID, " - ", warehouse.IPV4, " | ", warehouse.Status)
+				}
+			} else {
+				fmt.Println("\t", "No warehouses available")
+				fmt.Println("\t", "Try 'fedops warehouse create'")
+			}
 
-      fmt.Println("Trucks")
-      if len(fed.Config.Trucks) > 0 {
-        for _, truck := range fed.Config.Trucks {
-          fmt.Println("\t", " -", truck.TruckID, " - ", truck.IPV4, " | ", truck.Status)
-        }
-      } else {
-        fmt.Println("\t", "No trucks available")
-        fmt.Println("\t", "Try 'fedops truck create'")
-      }
-    },
-    BashComplete: func(c *cli.Context) {
-      // This will complete if no args are passed
-      if len(c.Args()) > 0 {
-        return
-      }
-      //warehouseTasks := []string{"create", "destroy"}
-      //for _, t := range warehouseTasks {
-      //  fmt.Println(t)
-      //}
-    },
-  }
-  return cmd
+			fmt.Println("Trucks")
+			if len(fed.Config.Trucks) > 0 {
+				for _, truck := range fed.Config.Trucks {
+					fmt.Println("\t", " -", truck.TruckID, " - ", truck.IPV4, " | ", truck.Status)
+				}
+			} else {
+				fmt.Println("\t", "No trucks available")
+				fmt.Println("\t", "Try 'fedops truck create'")
+			}
+		},
+		BashComplete: func(c *cli.Context) {
+			// This will complete if no args are passed
+			if len(c.Args()) > 0 {
+				return
+			}
+			//warehouseTasks := []string{"create", "destroy"}
+			//for _, t := range warehouseTasks {
+			//  fmt.Println(t)
+			//}
+		},
+	}
+	return cmd
 }

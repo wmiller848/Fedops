@@ -23,58 +23,57 @@
 package main
 
 import (
-  // Standard
-  _"runtime"
-  _"os"
-  "bufio"
-  "fmt"
-  _"strings"
-  "encoding/json"
-  // 3rd Party
-  "github.com/codegangsta/cli"
-  _"github.com/gopass"
-  // FedOps
-  "github.com/FedOps/lib"
+	// Standard
+	"bufio"
+	"encoding/json"
+	"fmt"
+	_ "os"
+	_ "runtime"
+	_ "strings"
+	// 3rd Party
+	"github.com/codegangsta/cli"
+	_ "github.com/gopass"
+	// FedOps
+	"github.com/FedOps/lib"
 )
 
-
 func commandConfig(stdin *bufio.Reader, pwd string) cli.Command {
-  cmd := cli.Command {
-    Name: "config",
-    ShortName: "cf",
-    Usage: "access the cluster config",
-    Action: func(c *cli.Context) {
-      hasConfig := fedops.HasConfigFile(pwd)
-      if hasConfig == false {
-        fmt.Println("FedOps cluster config file does not already exist")
-        fmt.Println("Try 'fedops init' or 'fedops connect'")
-        return
-      }
+	cmd := cli.Command{
+		Name:      "config",
+		ShortName: "cf",
+		Usage:     "access the cluster config",
+		Action: func(c *cli.Context) {
+			hasConfig := fedops.HasConfigFile(pwd)
+			if hasConfig == false {
+				fmt.Println("FedOps cluster config file does not already exist")
+				fmt.Println("Try 'fedops init' or 'fedops connect'")
+				return
+			}
 
-      fed, err := initFedops(pwd)
-      if err != nil {
-        fmt.Println("Incorrect Password")
-        return
-      }
+			fed, err := initFedops(pwd)
+			if err != nil {
+				fmt.Println("Incorrect Password")
+				return
+			}
 
-      config, err := json.MarshalIndent(fed.Config, "", "  ")
-      if err != nil {
-        fmt.Println(err.Error())
-        return
-      }
-      fmt.Println(string(config))
+			config, err := json.MarshalIndent(fed.Config, "", "  ")
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+			fmt.Println(string(config))
 
-    },
-    BashComplete: func(c *cli.Context) {
-      // This will complete if no args are passed
-      if len(c.Args()) > 0 {
-        return
-      }
-      warehouseTasks := []string{"password", "export"}
-      for _, t := range warehouseTasks {
-        fmt.Println(t)
-      }
-    },
-  }
-  return cmd
+		},
+		BashComplete: func(c *cli.Context) {
+			// This will complete if no args are passed
+			if len(c.Args()) > 0 {
+				return
+			}
+			warehouseTasks := []string{"password", "export"}
+			for _, t := range warehouseTasks {
+				fmt.Println(t)
+			}
+		},
+	}
+	return cmd
 }

@@ -23,39 +23,38 @@
 package main
 
 import (
-  // Standard
-  _"runtime"
-  _"os"
-  "bufio"
-  "fmt"
-  _"strings"
-  // 3rd Party
-  "github.com/codegangsta/cli"
-  _"github.com/gopass"
-  // FedOps
-  _"github.com/FedOps/lib"
+	// Standard
+	"bufio"
+	"fmt"
+	_ "os"
+	_ "runtime"
+	_ "strings"
+	// 3rd Party
+	"github.com/codegangsta/cli"
+	_ "github.com/gopass"
+	// FedOps
+	_ "github.com/FedOps/lib"
 )
 
-
 func commandService(stdin *bufio.Reader, pwd string) cli.Command {
-  cmd := cli.Command {
-    Name: "service",
-    ShortName: "sr",
-    Usage: "create, destroy, assign, or info",
-    Action: func(c *cli.Context) {
-      //fmt.Printf("%+v \r\n", c)
-      fmt.Println("Do the service thing...")
-    },
-    BashComplete: func(c *cli.Context) {
-      // This will complete if no args are passed
-      if len(c.Args()) > 0 {
-        return
-      }
-      serviceTasks := []string{"create", "destroy", "assign", "info"}
-      for _, t := range serviceTasks {
-        fmt.Println(t)
-      }
-    },
-  }
-  return cmd
+	cmd := cli.Command{
+		Name:      "service",
+		ShortName: "sr",
+		Usage:     "create, destroy, assign, or info",
+		Action: func(c *cli.Context) {
+			//fmt.Printf("%+v \r\n", c)
+			fmt.Println("Do the service thing...")
+		},
+		BashComplete: func(c *cli.Context) {
+			// This will complete if no args are passed
+			if len(c.Args()) > 0 {
+				return
+			}
+			serviceTasks := []string{"create", "destroy", "assign", "info"}
+			for _, t := range serviceTasks {
+				fmt.Println(t)
+			}
+		},
+	}
+	return cmd
 }
