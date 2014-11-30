@@ -73,13 +73,13 @@ type Services struct {
 type Warehouse struct {
 	fedops_provider.ProviderVM
 	WarehouseID string
-	Services    []*Services
+	Services    []Services
 }
 
 type Truck struct {
 	fedops_provider.ProviderVM
 	TruckID  string
-	Services []*Services
+	Services []Services
 }
 
 //
@@ -104,8 +104,8 @@ type DispatcherConfig struct {
 	Modified   string
 	Keys       []fedops_provider.ProviderKeypair
 	Tokens     map[string]Tokens
-	Warehouses []*Warehouse
-	Trucks     []*Truck
+	Warehouses []Warehouse
+	Trucks     []Truck
 }
 
 type Dispatcher struct {
@@ -378,7 +378,7 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
 	warehouse.ID = vm.ID
 	warehouse.Provider = provider.Name()
 	warehouse.Status = WarehouseStatusBooting
-	d.Config.Warehouses = append(d.Config.Warehouses, warehouse)
+	d.Config.Warehouses = append(d.Config.Warehouses, *warehouse)
 
 	return FedopsOk
 }
@@ -415,16 +415,17 @@ func (d *Dispatcher) Refresh(promise chan FedopsAction) {
 }
 
 func (d *Dispatcher) _refresh(provider fedops_provider.Provider) uint {
-	vms, err := provider.ListVM()
+	vms, err := provider.ListVMs()
 	if err != nil {
 		fmt.Println(err.Error())
 		return FedopsError
 	}
 
-	for _, warehouse := range d.Config.Warehouses {
-		for _, vm := range vms {
-			if vm.ID[provider.Name()] == warehouse.ID[provider.Name()] {
-				warehouse.IPV4 = vm.IPV4
+  warehouses := d.Config.Warehouses
+	for wIndex, _ := range warehouses {
+		for vIndex, _ := range vms {
+			if vms[vIndex].ID[provider.Name()] == warehouses[wIndex].ID[provider.Name()] {
+				warehouses[wIndex].IPV4 = vms[vIndex].IPV4
 			}
 		}
 	}

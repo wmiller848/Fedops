@@ -25,7 +25,7 @@ package fedops_provider
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	_ "fmt"
 	_ "io/ioutil"
 	"net/http"
 	"strconv"
@@ -78,7 +78,7 @@ func (digo *DigitalOcean) CreateKeypair(clusterid string, keypair Keypair) (Prov
 		return ProviderKeypair{}, err
 	}
 	req, err := http.NewRequest("POST", digo.ApiEndpoint+digo.KeyURI, bytes.NewBuffer(reqJSON))
-	req.Header.Add("X-FedOps-Provider", digo.Name())
+	req.Header.Add("X-FedOps-Provider", DigitalOceanName)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
 	resp, err := client.Do(req)
@@ -94,7 +94,6 @@ func (digo *DigitalOcean) CreateKeypair(clusterid string, keypair Keypair) (Prov
 
 	err = decoder.Decode(&data)
 	if err != nil {
-		fmt.Println("JSON body not formated correctly", err.Error())
 		return ProviderKeypair{}, err
 	}
 
@@ -110,10 +109,15 @@ func (digo *DigitalOcean) CreateKeypair(clusterid string, keypair Keypair) (Prov
 	return pkeypair, nil
 }
 
-func (digo *DigitalOcean) ListSize() ([]ProviderSize, error) {
+
+func (digo *DigitalOcean) ListSize() (ProviderSize, error) {
+  return ProviderSize{}, nil
+}
+
+func (digo *DigitalOcean) ListSizes() ([]ProviderSize, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", digo.ApiEndpoint+digo.SizeURI, nil)
-	req.Header.Add("X-FedOps-Provider", digo.Name())
+	req.Header.Add("X-FedOps-Provider", DigitalOceanName)
 	//req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
 	resp, err := client.Do(req)
@@ -129,7 +133,6 @@ func (digo *DigitalOcean) ListSize() ([]ProviderSize, error) {
 
 	err = decoder.Decode(&data)
 	if err != nil {
-		fmt.Println("JSON body not formated correctly", err.Error())
 		return nil, err
 	}
 
@@ -161,7 +164,7 @@ func (digo *DigitalOcean) ListSize() ([]ProviderSize, error) {
 }
 
 func (digo *DigitalOcean) GetDefaultSize() (ProviderSize, error) {
-	sizes, err := digo.ListSize()
+	sizes, err := digo.ListSizes()
 	if err != nil {
 		return sizes[0], err
 	}
@@ -173,10 +176,14 @@ func (digo *DigitalOcean) GetDefaultSize() (ProviderSize, error) {
 	return sizes[0], nil
 }
 
-func (digo *DigitalOcean) ListImage() ([]ProviderImage, error) {
+func (digo *DigitalOcean) ListImage() (ProviderImage, error) {
+  return ProviderImage{}, nil
+}
+
+func (digo *DigitalOcean) ListImages() ([]ProviderImage, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", digo.ApiEndpoint+digo.ImageURI, nil)
-	req.Header.Add("X-FedOps-Provider", digo.Name())
+	req.Header.Add("X-FedOps-Provider", DigitalOceanName)
 	//req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
 	resp, err := client.Do(req)
@@ -192,7 +199,6 @@ func (digo *DigitalOcean) ListImage() ([]ProviderImage, error) {
 
 	err = decoder.Decode(&data)
 	if err != nil {
-		fmt.Println("JSON body not formated correctly", err.Error())
 		return nil, err
 	}
 
@@ -218,7 +224,7 @@ func (digo *DigitalOcean) ListImage() ([]ProviderImage, error) {
 }
 
 func (digo *DigitalOcean) GetDefaultImage() (ProviderImage, error) {
-	images, err := digo.ListImage()
+	images, err := digo.ListImages()
 	if err != nil {
 		return images[0], err
 	}
@@ -230,10 +236,14 @@ func (digo *DigitalOcean) GetDefaultImage() (ProviderImage, error) {
 	return images[0], nil
 }
 
-func (digo *DigitalOcean) ListVM() ([]ProviderVM, error) {
+func (digo *DigitalOcean) ListVM() (ProviderVM, error) {
+  return ProviderVM{}, nil
+}
+
+func (digo *DigitalOcean) ListVMs() ([]ProviderVM, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", digo.ApiEndpoint+digo.VM_URI, nil)
-	req.Header.Add("X-FedOps-Provider", digo.Name())
+	req.Header.Add("X-FedOps-Provider", DigitalOceanName)
 	//req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
 	resp, err := client.Do(req)
@@ -249,14 +259,11 @@ func (digo *DigitalOcean) ListVM() ([]ProviderVM, error) {
 
 	err = decoder.Decode(&data)
 	if err != nil {
-		fmt.Println("JSON body not formated correctly", err.Error())
 		return nil, err
 	}
 
 	jsonMap := data.(map[string]interface{})
 	droplets := jsonMap["droplets"].([]interface{})
-
-	//fmt.Printf("%+v \r\n", droplets)
 
 	var pvms []ProviderVM
 	for _, vmvalue := range droplets {
@@ -302,10 +309,8 @@ func (digo *DigitalOcean) CreateVM(vmid string, size ProviderSize, image Provide
 		return ProviderVM{}, err
 	}
 
-	fmt.Println(string(reqJSON))
-
 	req, err := http.NewRequest("POST", digo.ApiEndpoint+digo.VM_URI, bytes.NewBuffer(reqJSON))
-	req.Header.Add("X-FedOps-Provider", digo.Name())
+	req.Header.Add("X-FedOps-Provider", DigitalOceanName)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
 	resp, err := client.Do(req)
@@ -321,10 +326,8 @@ func (digo *DigitalOcean) CreateVM(vmid string, size ProviderSize, image Provide
 
 	err = decoder.Decode(&data)
 	if err != nil {
-		fmt.Println("JSON body not formated correctly", err.Error())
 		return ProviderVM{}, err
 	}
-	fmt.Printf("%+v \r\n", data)
 
 	jsonMap := data.(map[string]interface{})
 	droplet := jsonMap["droplet"].(map[string]interface{})
