@@ -32,6 +32,8 @@ import (
 	_ "strings"
 	"time"
 	// 3rd Party
+  _ "code.google.com/p/go.crypto/ssh"
+  _ "code.google.com/p/go.crypto/ssh/terminal"
 	// FedOps
 	"github.com/FedOps/lib/providers"
 )
@@ -45,6 +47,8 @@ const (
 
 	SaltSize      int = 512
 	ClusterIDSize int = 8
+  WarehouseIDSize int = 8
+  TruckIDSize int = 8
 
 	WarehouseStatusBooting string = "booting"
 	WarehouseStatusUp      string = "up"
@@ -70,17 +74,6 @@ type Services struct {
 	Repo string
 }
 
-type Warehouse struct {
-	fedops_provider.ProviderVM
-	WarehouseID string
-	Services    []Services
-}
-
-type Truck struct {
-	fedops_provider.ProviderVM
-	TruckID  string
-	Services []Services
-}
 
 //
 //
@@ -217,6 +210,10 @@ func (d *Dispatcher) writeKeypair(sshKey fedops_provider.Keypair, provider fedop
 }
 
 func (d *Dispatcher) Unload() bool {
+
+  now := time.Now()
+  d.Config.Modified = now.UTC().String()
+
 	pwd := d.PowerDirectory
 	disjson, err := json.Marshal(d.Config)
 	if err != nil {
@@ -240,11 +237,13 @@ func (d *Dispatcher) Unload() bool {
 		fmt.Println(err.Error())
 		return false
 	}
-	err = ioutil.WriteFile(pwd+"/.fedops-salt", d.Salt, 0666)
-	if err != nil {
-		fmt.Println(err.Error())
-		return false
-	}
+  if len(d.Salt) > 0 {
+    err = ioutil.WriteFile(pwd+"/.fedops-salt", d.Salt, 0666)
+    if err != nil {
+      fmt.Println(err.Error())
+      return false
+    }
+  }
 	return true
 }
 
@@ -263,20 +262,25 @@ func (d *Dispatcher) InitCloudProvider(promise chan FedopsAction, provider strin
 			Status: d._initProvider(&digo),
 		}
 	case "aws":
-		fmt.Println("No API Driver :(")
+		fmt.Println("No API Driver... consider forking and submiting a PR")
 		promise <- FedopsAction{
 			Status: FedopsError,
 		}
 	case "google cloud":
-		fmt.Println("No API Driver :(")
+		fmt.Println("No API Driver... consider forking and submiting a PR")
 		promise <- FedopsAction{
 			Status: FedopsError,
 		}
 	case "microsoft azure":
-		fmt.Println("No API Driver :(")
+		fmt.Println("No API Driver... consider forking and submiting a PR")
 		promise <- FedopsAction{
 			Status: FedopsError,
 		}
+  case "openstack":
+    fmt.Println("No API Driver... consider forking and submiting a PR")
+    promise <- FedopsAction{
+      Status: FedopsError,
+    }
 	default:
 		fmt.Println("Unknown provider " + provider)
 		promise <- FedopsAction{
@@ -312,74 +316,6 @@ func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) uint {
 	if persisted != true {
 		return FedopsError
 	}
-	return FedopsOk
-}
-
-func (d *Dispatcher) CreateTruck(promise chan FedopsAction, provider, memSize, diskSize, numVcpus string) {
-	//fmt.Printf("%+v \r\n", d)
-
-	// Cycle through all the provider tokens
-	for name, token := range d.Config.Tokens {
-		switch name {
-		case fedops_provider.DigitalOceanName:
-			auth := fedops_provider.DigitalOceanAuth{
-				ApiKey: token.AccessToken,
-			}
-			provider := fedops_provider.DigitalOceanProvider(auth)
-			status := d._createTruck(&provider)
-			if status == FedopsError {
-				promise <- FedopsAction{
-					Status: FedopsError,
-				}
-				return
-			}
-		}
-	}
-
-	persisted := d.Unload()
-	if persisted != true {
-		promise <- FedopsAction{
-			Status: FedopsError,
-		}
-	}
-	promise <- FedopsAction{
-		Status: FedopsOk,
-	}
-}
-
-func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
-	size, err := provider.GetDefaultSize()
-	if err != nil {
-		fmt.Println(err.Error())
-		return FedopsError
-	}
-	fmt.Printf("%+v \r\n", size)
-
-	image, err := provider.GetDefaultImage()
-	if err != nil {
-		fmt.Println(err.Error())
-		return FedopsError
-	}
-	fmt.Printf("%+v \r\n", image)
-	// See if there is a key for this provider
-	vmid, err := GenerateRandomHex(8)
-	if err != nil {
-		fmt.Println(err.Error())
-		return FedopsError
-	}
-	vm, err := provider.CreateVM(vmid, size, image, d.Config.Keys)
-	if err != nil {
-		fmt.Println(err.Error())
-		return FedopsError
-	}
-
-	warehouse := new(Warehouse)
-	warehouse.WarehouseID = vmid
-	warehouse.ID = vm.ID
-	warehouse.Provider = provider.Name()
-	warehouse.Status = WarehouseStatusBooting
-	d.Config.Warehouses = append(d.Config.Warehouses, *warehouse)
-
 	return FedopsOk
 }
 
@@ -426,6 +362,7 @@ func (d *Dispatcher) _refresh(provider fedops_provider.Provider) uint {
 		for vIndex, _ := range vms {
 			if vms[vIndex].ID[provider.Name()] == warehouses[wIndex].ID[provider.Name()] {
 				warehouses[wIndex].IPV4 = vms[vIndex].IPV4
+        warehouses[wIndex].Status = vms[vIndex].Status
 			}
 		}
 	}

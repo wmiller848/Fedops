@@ -38,12 +38,12 @@ import (
 
 func commandTruck(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
-		Name:      "container",
-		ShortName: "ct",
+		Name:      "truck",
+		ShortName: "t",
 		Usage:     "create, destroy, assign, ship, or info",
 		Action: func(c *cli.Context) {
 			//fmt.Printf("%+v \r\n", c)
-			fmt.Println("Do the container thing...")
+			fmt.Println("Do the truck thing...")
 		},
 		BashComplete: func(c *cli.Context) {
 			// This will complete if no args are passed

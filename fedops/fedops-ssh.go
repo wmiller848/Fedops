@@ -40,11 +40,31 @@ func commandSSH(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
 		Name:      "ssh",
 		ShortName: "s",
-		Usage:     "ssh into a warehouse or truck",
+		Usage:     "ssh into a warehouse or truck given there ID",
 		Action: func(c *cli.Context) {
 			//fmt.Printf("%+v \r\n", c)
-			fmt.Println("Doing ssh thing...")
+      fed, err := initFedops(pwd)
+      if err != nil {
+        fmt.Println("Incorrect Password")
+        return
+      }
+
+      cmds := c.Args()
+
+      if len(cmds) < 1 {
+        fmt.Println("Need a warehouse or truck ID, run 'fedops info' to view a list")
+        return
+      }
+
+      warehouseID := cmds[0]
+      fed.SSH(warehouseID)
 		},
+    // Flags: []cli.Flag{
+    //   cli.StringFlag{
+    //     Name:  "warehouseID",
+    //     Usage: "warehouseID for warehouse to ssh into",
+    //   },
+    // },
 		BashComplete: func(c *cli.Context) {
 			// This will complete if no args are passed
 			if len(c.Args()) > 0 {

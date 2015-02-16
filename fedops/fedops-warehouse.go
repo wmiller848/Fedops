@@ -52,7 +52,7 @@ func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
 				return
 			}
 
-			provider := "auto"
+			providerName := "auto"
 			memSize := "auto"
 			diskSize := "auto"
 			numVcpus := "auto"
@@ -66,7 +66,7 @@ func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
 					return
 				}
 				promise := make(chan fedops.FedopsAction)
-				go fed.CreateTruck(promise, provider, memSize, diskSize, numVcpus)
+				go fed.CreateWarehouse(promise, providerName, memSize, diskSize, numVcpus)
 				result := <-promise
 				switch result.Status {
 				case fedops.FedopsError:
@@ -76,7 +76,26 @@ func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
 				case fedops.FedopsUnknown:
 					fmt.Println("Unknown")
 				}
+      case "destory":
+        fed, err := initFedops(pwd)
+        if err != nil {
+          fmt.Println("Incorrect Password")
+          return
+        }
 
+
+        warehouseID := c.String("warehouseID")
+        promise := make(chan fedops.FedopsAction)
+        go fed.DestroyWarehouse(promise, warehouseID)
+        result := <-promise
+        switch result.Status {
+        case fedops.FedopsError:
+          fmt.Println("Error")
+        case fedops.FedopsOk:
+          //fmt.Println("Ok")
+        case fedops.FedopsUnknown:
+          fmt.Println("Unknown")
+        }
 			default:
 				fmt.Println("Unknown argument for 'fedops warehouse'")
 			}
@@ -98,6 +117,10 @@ func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
 				Name:  "vcpus-size",
 				Usage: "number of vcpus for warehouse, otherwise automatically selects default for provider",
 			},
+      cli.StringFlag{
+        Name:  "warehouseID",
+        Usage: "warehouse ID",
+      },
 		},
 		BashComplete: func(c *cli.Context) {
 			// This will complete if no args are passed

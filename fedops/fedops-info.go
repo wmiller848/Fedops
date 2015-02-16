@@ -57,7 +57,7 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 
 			promise := make(chan fedops.FedopsAction)
 			go fed.Refresh(promise)
-			result := <-promise
+			result := <- promise
 			switch result.Status {
 			case fedops.FedopsError:
 				fmt.Println("Error")
@@ -72,7 +72,7 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 			fmt.Println("Warehouses")
 			if len(fed.Config.Warehouses) > 0 {
 				for _, warehouse := range fed.Config.Warehouses {
-					fmt.Println("\t", " -", warehouse.WarehouseID, " - ", warehouse.IPV4, " | ", warehouse.Status)
+					fmt.Println("\t", " -", warehouse.WarehouseID, " | ", warehouse.IPV4, " | ", warehouse.Status)
 				}
 			} else {
 				fmt.Println("\t", "No warehouses available")
@@ -82,7 +82,7 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 			fmt.Println("Trucks")
 			if len(fed.Config.Trucks) > 0 {
 				for _, truck := range fed.Config.Trucks {
-					fmt.Println("\t", " -", truck.TruckID, " - ", truck.IPV4, " | ", truck.Status)
+					fmt.Println("\t", " -", truck.TruckID, " | ", truck.IPV4, " | ", truck.Status)
 				}
 			} else {
 				fmt.Println("\t", "No trucks available")
