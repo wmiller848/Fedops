@@ -96,11 +96,11 @@ func (d *Dispatcher) _createWarehouse(provider fedops_provider.Provider) uint {
   warehouse.Provider = provider.Name()
   d.Config.Warehouses = append(d.Config.Warehouses, *warehouse)
 
-  fmt.Printf("Virtual machine is booting...")
+  fmt.Printf("Initializing...")
 
   done := false
   for done == false {
-    time.Sleep(5 * time.Second)
+    time.Sleep(FedopsPoolTime * time.Second)
     fmt.Printf(".")
     // fmt.Println("Refreshing...")
     promise := make(chan FedopsAction)
@@ -124,25 +124,55 @@ func (d *Dispatcher) _createWarehouse(provider fedops_provider.Provider) uint {
   fmt.Printf("\r\n")
 
   // Give the machine a few seconds to boot
-  time.Sleep(30 * time.Second)
+  time.Sleep(FedopsBootWaitTime * time.Second)
+
+  fmt.Printf("Bootstrapping...")
+  done = false
+  go func() {
+    for done == false {
+      time.Sleep(FedopsPoolTime * time.Second)
+      fmt.Printf(".")
+    }
+  }()
+
   d._bootstrap(warehouse.WarehouseID)
+  done = true
+  fmt.Printf("\r\n")
 
   return FedopsOk
 }
 
 func (d *Dispatcher) DestroyWarehouse(promise chan FedopsAction, warehouseID string) {
 
-  providerName := ""
+  var warehouse Warehouse
+  warehouses := d.Config.Warehouses
+  found := false
+  var wIndex int
+  for wIndex = range warehouses {
+    if warehouses[wIndex].WarehouseID == warehouseID {
+      warehouse = warehouses[wIndex]
+      found = true
+      break
+    }
+  }
 
-  token := d.Config.Tokens[providerName]
+  if !found {
+    fmt.Println("Unable to locate warehouse with ID " + warehouseID)
+    promise <- FedopsAction{
+      Status: FedopsError,
+    }
+    return
+  }
 
-  switch providerName {
+  token := d.Config.Tokens[warehouse.Provider]
+
+  switch warehouse.Provider {
     case fedops_provider.DigitalOceanName:
       auth := fedops_provider.DigitalOceanAuth{
         ApiKey: token.AccessToken,
       }
       provider := fedops_provider.DigitalOceanProvider(auth)
-      status := d._destroyWarehouse(&provider, warehouseID)
+      status := d._destroyWarehouse(&provider, warehouse)
       if status == FedopsError {
         promise <- FedopsAction{
           Status: FedopsError,
@@ -150,6 +180,8 @@ func (d *Dispatcher) DestroyWarehouse(promise chan FedopsAction, warehouseID str
         return
       }
   }
+
+  d.Config.Warehouses = append(d.Config.Warehouses[:wIndex], d.Config.Warehouses[wIndex+1:]...)
 
   persisted := d.Unload()
   if persisted != true {
@@ -162,6 +194,14 @@ func (d *Dispatcher) DestroyWarehouse(promise chan FedopsAction, warehouseID str
   }
 }
 
-func (d *Dispatcher) _destroyWarehouse(provider fedops_provider.Provider, warehouseID string) uint {
+func (d *Dispatcher) _destroyWarehouse(provider fedops_provider.Provider, warehouse Warehouse) uint {
+  vm := fedops_provider.ProviderVM{
+    ID: warehouse.ID,
+  }
+  err := provider.DestroyVM(vm)
+  if err != nil {
+    fmt.Println(err.Error())
+    return FedopsError
+  }
   return FedopsOk
 }

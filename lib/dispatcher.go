@@ -50,9 +50,12 @@ const (
   WarehouseIDSize int = 8
   TruckIDSize int = 8
 
-	WarehouseStatusBooting string = "booting"
-	WarehouseStatusUp      string = "up"
-	WarehouseStatusDown    string = "down"
+	// WarehouseStatusBooting string = "booting"
+	// WarehouseStatusUp      string = "up"
+	// WarehouseStatusDown    string = "down"
+
+  FedopsPoolTime time.Duration = 5
+  FedopsBootWaitTime time.Duration = 30
 
 	FedopsError   uint = 0
 	FedopsOk      uint = 1
@@ -366,6 +369,16 @@ func (d *Dispatcher) _refresh(provider fedops_provider.Provider) uint {
 			}
 		}
 	}
+
+  trucks := d.Config.Trucks
+  for tIndex, _ := range trucks {
+    for vIndex, _ := range vms {
+      if vms[vIndex].ID[provider.Name()] == trucks[tIndex].ID[provider.Name()] {
+        trucks[tIndex].IPV4 = vms[vIndex].IPV4
+        trucks[tIndex].Status = vms[vIndex].Status
+      }
+    }
+  }
 
 	return FedopsOk
 }

@@ -32,14 +32,24 @@ import (
   // FedOps
 )
 
-func (d *Dispatcher) _bootstrap(boxID string) uint {
+func (d *Dispatcher) _bootstrap(vmID string) uint {
   ip := ""
   providerName := ""
+
   warehouses := d.Config.Warehouses
   for wIndex, _ := range warehouses {
-    if warehouses[wIndex].WarehouseID == boxID {
+    if warehouses[wIndex].WarehouseID == vmID {
       ip = warehouses[wIndex].IPV4
       providerName = warehouses[wIndex].Provider
+      break
+    }
+  }
+
+  trucks := d.Config.Trucks
+  for tIndex, _ := range trucks {
+    if trucks[tIndex].TruckID == vmID {
+      ip = trucks[tIndex].IPV4
+      providerName = trucks[tIndex].Provider
       break
     }
   }
@@ -66,7 +76,7 @@ func (d *Dispatcher) _bootstrap(boxID string) uint {
   }
 
   if ip == "" {
-    fmt.Println("Could not find warehouse or truck with ID", boxID)
+    fmt.Println("Could not find warehouse or truck with ID", vmID)
     return FedopsError
   }
 
@@ -84,6 +94,8 @@ func (d *Dispatcher) _bootstrap(boxID string) uint {
   }
   defer session.Close()
 
+  // TODO :: Make this an external config file
+  // Disable Password SSH login
   cmd := "sed --in-place=.bak 's/ChallengeResponseAuthentication\\ yes/ChallengeResponseAuthentication\\ no/' /etc/ssh/sshd_config"
   cmd += " && "
   cmd += "sed --in-place=.bak 's/PasswordAuthentication\\ yes/PasswordAuthentication\\ no/' /etc/ssh/sshd_config"
@@ -91,6 +103,24 @@ func (d *Dispatcher) _bootstrap(boxID string) uint {
   cmd += "sed --in-place=.bak 's/UsePAM\\ yes/UsePAM\\ no/' /etc/ssh/sshd_config"
   cmd += " && "
   cmd += "systemctl restart sshd"
+  // Install Docker
+  cmd += " && "
+  cmd += "yum -y install docker"
+  cmd += " && "
+  cmd += "systemctl start docker"
+  cmd += " && "
+  cmd += "systemctl enable docker"
+  // Install Fedops
+  cmd += " && "
+  cmd += " yum -y install git"
+  cmd += " && "
+  cmd += "git clone https://github.com/wmiller848/Fedops.git"
+  cmd += " && "
+  cmd += "docker build -t fedops/warehouse ./Fedops/fedops-warehouse"
+  cmd += " && "
+  cmd += "docker build -t fedops/truck ./Fedops/fedops-truck"
+  cmd += " && "
+  cmd += "docker run -d -u=warehouse -h=fedops -v=/opt/fedops:/opt/fedops fedops/warehouse"
   // fmt.Println("Running", cmd)
   err = session.Run(cmd)
   if err != nil {
@@ -102,8 +132,8 @@ func (d *Dispatcher) _bootstrap(boxID string) uint {
 }
 
 
-func (d *Dispatcher) SSH(boxID string) uint {
-  d._ssh(boxID)
+func (d *Dispatcher) SSH(vmID string) uint {
+  d._ssh(vmID)
   // fmt.Println("SSH Session Ended")
   persisted := d.Unload()
   if persisted != true {
@@ -113,7 +143,7 @@ func (d *Dispatcher) SSH(boxID string) uint {
   }
 }
 
-func (d *Dispatcher) _ssh(boxID string) uint {
+func (d *Dispatcher) _ssh(vmID string) uint {
 
   promise := make(chan FedopsAction)
   go d.Refresh(promise)
@@ -125,11 +155,21 @@ func (d *Dispatcher) _ssh(boxID string) uint {
 
   ip := ""
   providerName := ""
+
   warehouses := d.Config.Warehouses
   for wIndex, _ := range warehouses {
-    if warehouses[wIndex].WarehouseID == boxID {
+    if warehouses[wIndex].WarehouseID == vmID {
       ip = warehouses[wIndex].IPV4
       providerName = warehouses[wIndex].Provider
+      break
+    }
+  }
+
+  trucks := d.Config.Trucks
+  for tIndex, _ := range trucks {
+    if trucks[tIndex].TruckID == vmID {
+      ip = trucks[tIndex].IPV4
+      providerName = trucks[tIndex].Provider
       break
     }
   }
@@ -156,7 +196,7 @@ func (d *Dispatcher) _ssh(boxID string) uint {
   }
 
   if ip == "" {
-    fmt.Println("Could not find warehouse or truck with ID", boxID)
+    fmt.Println("Could not find warehouse or truck with ID", vmID)
     return FedopsError
   }
 

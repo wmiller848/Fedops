@@ -39,7 +39,7 @@ import (
 func commandInit(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
 		Name:      "init",
-		ShortName: "i",
+		// ShortName: "i",
 		Usage:     "create a new cluster",
 		Action: func(c *cli.Context) {
 			hasConfig := fedops.HasConfigFile(pwd)

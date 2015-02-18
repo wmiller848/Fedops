@@ -39,87 +39,84 @@ import (
 func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
 		Name:      "warehouse",
-		ShortName: "w",
-		Usage:     "create a new warehouse",
-		Action: func(c *cli.Context) {
+		// ShortName: "w",
+		Usage:     "manage fedops warehouses: create, destroy",
+    Subcommands: []cli.Command{
+      cli.Command{
+        Name: "create",
+        Action: func(c *cli.Context) {
+          providerName := "auto"
+          memSize := "auto"
+          diskSize := "auto"
+          numVcpus := "auto"
 
-			args := c.Args()
-			if len(args) == 0 {
-				fmt.Println("not enought arguments")
-				return
-			} else if len(args) > 1 {
-				fmt.Println("too many arguments")
-				return
-			}
+          fed, err := initFedops(pwd)
+          if err != nil {
+            fmt.Println("Incorrect Password")
+            return
+          }
+          promise := make(chan fedops.FedopsAction)
+          go fed.CreateWarehouse(promise, providerName, memSize, diskSize, numVcpus)
+          result := <- promise
+          switch result.Status {
+          case fedops.FedopsError:
+            fmt.Println("Error")
+          case fedops.FedopsOk:
+            //fmt.Println("Ok")
+          case fedops.FedopsUnknown:
+            fmt.Println("Unknown")
+          }
+        },
+      },
+      cli.Command{
+        Name: "destroy",
+        Action: func(c *cli.Context) {
+          fed, err := initFedops(pwd)
+          if err != nil {
+            fmt.Println("Incorrect Password")
+            return
+          }
 
-			providerName := "auto"
-			memSize := "auto"
-			diskSize := "auto"
-			numVcpus := "auto"
+          warehouseID := c.Args()[0] //c.String("warehouseID")
+          if warehouseID == "" {
+            fmt.Println("Supply a warehouse ID")
+            return
+          }
 
-			cmd := args[0]
-			switch cmd {
-			case "create":
-				fed, err := initFedops(pwd)
-				if err != nil {
-					fmt.Println("Incorrect Password")
-					return
-				}
-				promise := make(chan fedops.FedopsAction)
-				go fed.CreateWarehouse(promise, providerName, memSize, diskSize, numVcpus)
-				result := <-promise
-				switch result.Status {
-				case fedops.FedopsError:
-					fmt.Println("Error")
-				case fedops.FedopsOk:
-					//fmt.Println("Ok")
-				case fedops.FedopsUnknown:
-					fmt.Println("Unknown")
-				}
-      case "destory":
-        fed, err := initFedops(pwd)
-        if err != nil {
-          fmt.Println("Incorrect Password")
-          return
-        }
-
-
-        warehouseID := c.String("warehouseID")
-        promise := make(chan fedops.FedopsAction)
-        go fed.DestroyWarehouse(promise, warehouseID)
-        result := <-promise
-        switch result.Status {
-        case fedops.FedopsError:
-          fmt.Println("Error")
-        case fedops.FedopsOk:
-          //fmt.Println("Ok")
-        case fedops.FedopsUnknown:
-          fmt.Println("Unknown")
-        }
-			default:
-				fmt.Println("Unknown argument for 'fedops warehouse'")
-			}
-		},
+          promise := make(chan fedops.FedopsAction)
+          go fed.DestroyWarehouse(promise, warehouseID)
+          result := <- promise
+          switch result.Status {
+          case fedops.FedopsError:
+            // fmt.Println("Error")
+          case fedops.FedopsOk:
+            //fmt.Println("Ok")
+          case fedops.FedopsUnknown:
+            fmt.Println("Unknown")
+          }
+        },
+      },
+    },
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "provider",
-				Usage: "provider for warehouse, otherwise automatically selects an available provider",
+				Usage: "create : provider for warehouse, otherwise automatically selects an available provider",
 			},
 			cli.StringFlag{
 				Name:  "memory-size",
-				Usage: "memory size for warehouse, otherwise automatically selects default for provider",
+				Usage: "create : memory size for warehouse, otherwise automatically selects default for provider",
 			},
 			cli.StringFlag{
 				Name:  "disk-size",
-				Usage: "disk size for warehouse, otherwise automatically selects default for provider",
+				Usage: "create : disk size for warehouse, otherwise automatically selects default for provider",
 			},
 			cli.StringFlag{
 				Name:  "vcpus-size",
-				Usage: "number of vcpus for warehouse, otherwise automatically selects default for provider",
+				Usage: "create : number of vcpus for warehouse, otherwise automatically selects default for provider",
 			},
       cli.StringFlag{
         Name:  "warehouseID",
-        Usage: "warehouse ID",
+        Usage: "destory : warehouse ID",
       },
 		},
 		BashComplete: func(c *cli.Context) {

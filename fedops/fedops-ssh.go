@@ -39,7 +39,7 @@ import (
 func commandSSH(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
 		Name:      "ssh",
-		ShortName: "s",
+		// ShortName: "s",
 		Usage:     "ssh into a warehouse or truck given there ID",
 		Action: func(c *cli.Context) {
 			//fmt.Printf("%+v \r\n", c)
@@ -70,7 +70,7 @@ func commandSSH(stdin *bufio.Reader, pwd string) cli.Command {
 			if len(c.Args()) > 0 {
 				return
 			}
-			sshTasks := []string{"warehouse", "truck", "keys"}
+			sshTasks := []string{}
 			for _, t := range sshTasks {
 				fmt.Println(t)
 			}

@@ -39,7 +39,7 @@ import (
 func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
 		Name:      "info",
-		ShortName: "if",
+		// ShortName: "if",
 		Usage:     "get info on the cluster",
 		Action: func(c *cli.Context) {
 			hasConfig := fedops.HasConfigFile(pwd)

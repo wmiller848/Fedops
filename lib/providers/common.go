@@ -52,6 +52,9 @@ type Provider interface {
 	ListVM() (ProviderVM, error)
 	ListVMs() ([]ProviderVM, error)
 	CreateVM(string, ProviderSize, ProviderImage, []ProviderKeypair) (ProviderVM, error)
+
+  DestroyVM(ProviderVM) error
+
 	SnapShotVM(ProviderVM) (ProviderImage, error)
 }
 

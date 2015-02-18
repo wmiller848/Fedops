@@ -39,7 +39,7 @@ import (
 func commandLog(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
 		Name:      "log",
-		ShortName: "l",
+		// ShortName: "l",
 		Usage:     "output event stream logs",
 		Action: func(c *cli.Context) {
 			//fmt.Printf("%+v \r\n", c)

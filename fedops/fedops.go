@@ -76,6 +76,8 @@ func main() {
 
 	_cli := cli.NewApp()
 	_cli.Name = "FedOps"
+  _cli.Author = "W. Chase Miller"
+  _cli.Email = "wmiller.fedops@gmail.com"
 	_cli.Usage = "Docker continuous deployment and cloud management, see https://github.com/wmiller848/Fedops for guides"
 	_cli.Version = "0.0.1"
 	_cli.EnableBashCompletion = true
@@ -84,18 +86,13 @@ func main() {
 
 	// Register subcommands
 	commands = append(commands, commandConfig(stdin, pwd))
-	commands = append(commands, commandConnect(stdin, pwd))
-	commands = append(commands, commandDashboard(stdin, pwd))
-	commands = append(commands, commandEnv(stdin, pwd))
+  commands = append(commands, commandContainer(stdin, pwd))
 	commands = append(commands, commandInfo(stdin, pwd))
 	commands = append(commands, commandInit(stdin, pwd))
 	commands = append(commands, commandLog(stdin, pwd))
-	commands = append(commands, commandManifest(stdin, pwd))
-	commands = append(commands, commandService(stdin, pwd))
 	commands = append(commands, commandSession(stdin, pwd))
 	commands = append(commands, commandSSH(stdin, pwd))
 	commands = append(commands, commandTruck(stdin, pwd))
-	commands = append(commands, commandUse(stdin, pwd))
 	commands = append(commands, commandWarehouse(stdin, pwd))
 
 	_cli.Commands = commands

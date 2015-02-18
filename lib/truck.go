@@ -100,7 +100,7 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
 
   done := false
   for done == false {
-    time.Sleep(5 * time.Second)
+    time.Sleep(FedopsPoolTime * time.Second)
     fmt.Printf(".")
     // fmt.Println("Refreshing...")
     promise := make(chan FedopsAction)
@@ -124,12 +124,72 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
   fmt.Printf("\r\n")
 
   // Give the machine a few seconds to boot
-  time.Sleep(30 * time.Second)
+  time.Sleep(FedopsBootWaitTime * time.Second)
   d._bootstrap(truck.TruckID)
 
   return FedopsOk
 }
 
-func (d *Dispatcher) DestroyTruck(promise chan FedopsAction) {
+func (d *Dispatcher) DestroyTruck(promise chan FedopsAction, truckID string) {
 
+  var truck Truck
+  trucks := d.Config.Trucks
+  found := false
+  var tIndex int
+  for tIndex = range trucks {
+    if trucks[tIndex].TruckID == truckID {
+      truck = trucks[tIndex]
+      found = true
+      break
+    }
+  }
+
+  if !found {
+    fmt.Println("Unable to locate truck with ID " + truckID)
+    promise <- FedopsAction{
+      Status: FedopsError,
+    }
+    return
+  }
+
+  token := d.Config.Tokens[truck.Provider]
+
+  switch truck.Provider {
+    case fedops_provider.DigitalOceanName:
+      auth := fedops_provider.DigitalOceanAuth{
+        ApiKey: token.AccessToken,
+      }
+      provider := fedops_provider.DigitalOceanProvider(auth)
+      status := d._destroyTruck(&provider, truck)
+      if status == FedopsError {
+        promise <- FedopsAction{
+          Status: FedopsError,
+        }
+        return
+      }
+  }
+
+  d.Config.Trucks = append(d.Config.Trucks[:tIndex], d.Config.Trucks[tIndex+1:]...)
+
+  persisted := d.Unload()
+  if persisted != true {
+    promise <- FedopsAction{
+      Status: FedopsError,
+    }
+  }
+  promise <- FedopsAction{
+    Status: FedopsOk,
+  }
+}
+
+func (d *Dispatcher) _destroyTruck(provider fedops_provider.Provider, truck Truck) uint {
+  vm := fedops_provider.ProviderVM{
+    ID: truck.ID,
+  }
+  err := provider.DestroyVM(vm)
+  if err != nil {
+    fmt.Println(err.Error())
+    return FedopsError
+  }
+  return FedopsOk
 }

@@ -36,21 +36,27 @@ import (
 	_ "github.com/FedOps/lib"
 )
 
-func commandEnv(stdin *bufio.Reader, pwd string) cli.Command {
+func commandContainer(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
-		Name:      "env",
-		ShortName: "e",
-		Usage:     "create a new deployment env",
+		Name:      "container",
+		// ShortName: "cn",
+		Usage:     "manage containers: create, destroy",
 		Action: func(c *cli.Context) {
-			//fmt.Printf("%+v \r\n", c)
-			fmt.Println("Do the env thing...")
+			fed, err := initFedops(pwd)
+			if err != nil {
+				fmt.Println("Incorrect Password")
+				return
+			}
+
+      fmt.Println(fed)
 		},
 		BashComplete: func(c *cli.Context) {
 			// This will complete if no args are passed
 			if len(c.Args()) > 0 {
 				return
 			}
-			//for _, t := range tasks {
+			//warehouseTasks := []string{"create", "destroy"}
+			//for _, t := range warehouseTasks {
 			//  fmt.Println(t)
 			//}
 		},

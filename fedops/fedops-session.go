@@ -39,7 +39,7 @@ import (
 func commandSession(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
 		Name:      "session",
-		ShortName: "se",
+		// ShortName: "se",
 		Usage:     "output session key",
 		Action: func(c *cli.Context) {
 			hasConfig := fedops.HasConfigFile(pwd)

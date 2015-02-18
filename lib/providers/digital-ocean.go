@@ -25,7 +25,7 @@ package fedops_provider
 import (
 	"bytes"
 	"encoding/json"
-	_ "fmt"
+  _ "fmt"
 	_ "io/ioutil"
 	"net/http"
 	"strconv"
@@ -316,7 +316,13 @@ func (digo *DigitalOcean) ListVMs() ([]ProviderVM, error) {
 		id := vmvalue.(map[string]interface{})["id"]
 		networks := vmvalue.(map[string]interface{})["networks"].(map[string]interface{})
 		ipv4 := networks["v4"].([]interface{})
-		v4 := ipv4[0].(map[string]interface{})
+    var v4 map[string]interface{}
+    if len(ipv4) > 0 {
+      v4 = ipv4[0].(map[string]interface{})
+    } else {
+      v4 = make(map[string]interface{})
+      v4["ip_address"] = ""
+    }
 		//ipv6 := networks["v6"].([]interface{})
 		//v6 := ipv6[0].(map[string]interface{})
     status := vmvalue.(map[string]interface{})["status"]
@@ -401,6 +407,24 @@ func (digo *DigitalOcean) CreateVM(vmid string, size ProviderSize, image Provide
     Status: status.(string),
 	}
 	return pvm, nil
+}
+
+func (digo *DigitalOcean) DestroyVM(vm ProviderVM) error {
+  client := &http.Client{}
+  req, err := http.NewRequest("DELETE", digo.ApiEndpoint+digo.VM_URI+"/"+vm.ID[DigitalOceanName], nil)
+  req.Header.Add("X-FedOps-Provider", DigitalOceanName)
+  //req.Header.Add("Content-Type", "application/json")
+  req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
+  resp, err := client.Do(req)
+  if err != nil {
+    return err
+  }
+  defer resp.Body.Close()
+
+  //fmt.Println("Response Status:", resp.Status)
+  //fmt.Println("Response Headers:", resp.Header)
+
+  return nil
 }
 
 func (digo *DigitalOcean) SnapShotVM(ProviderVM) (ProviderImage, error) {
