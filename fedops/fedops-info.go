@@ -61,10 +61,11 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 			switch result.Status {
 			case fedops.FedopsError:
 				fmt.Println("Error")
+        return
 			case fedops.FedopsOk:
 				//fmt.Println("Ok")
 			case fedops.FedopsUnknown:
-				fmt.Println("Unknown")
+				// fmt.Println("Unknown")
 			}
 			//fmt.Printf("%+v \r\n", fed.Config)
 
