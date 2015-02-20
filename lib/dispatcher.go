@@ -60,6 +60,10 @@ const (
 	FedopsError   uint = 0
 	FedopsOk      uint = 1
 	FedopsUnknown uint = 2
+
+
+  FedopsTypeTruck uint = 0
+  FedopsTypeWarehouse uint = 1
 )
 
 type FedopsAction struct {

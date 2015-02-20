@@ -125,7 +125,7 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
 
   // Give the machine a few seconds to boot
   time.Sleep(FedopsBootWaitTime * time.Second)
-  d._bootstrap(truck.TruckID)
+  d._bootstrap(truck.TruckID, FedopsTypeTruck)
 
   return FedopsOk
 }

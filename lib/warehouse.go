@@ -135,7 +135,7 @@ func (d *Dispatcher) _createWarehouse(provider fedops_provider.Provider) uint {
     }
   }()
 
-  d._bootstrap(warehouse.WarehouseID)
+  d._bootstrap(warehouse.WarehouseID, FedopsTypeWarehouse)
   done = true
   fmt.Printf("\r\n")
 

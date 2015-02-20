@@ -32,7 +32,7 @@ import (
   // FedOps
 )
 
-func (d *Dispatcher) _bootstrap(vmID string) uint {
+func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   ip := ""
   providerName := ""
 
@@ -103,24 +103,23 @@ func (d *Dispatcher) _bootstrap(vmID string) uint {
   cmd += "sed --in-place=.bak 's/UsePAM\\ yes/UsePAM\\ no/' /etc/ssh/sshd_config"
   cmd += " && "
   cmd += "systemctl restart sshd"
-  // Install Docker
+  // Install Docker, git and vim
   cmd += " && "
-  cmd += "yum -y install docker"
+  cmd += "yum -y install docker git vim"
   cmd += " && "
   cmd += "systemctl start docker"
   cmd += " && "
   cmd += "systemctl enable docker"
   // Install Fedops
   cmd += " && "
-  cmd += " yum -y install git"
+  cmd += "docker build --no-cache=true --force-rm=true -t fedops github.com/wmiller848/Fedops"
   cmd += " && "
-  cmd += "git clone https://github.com/wmiller848/Fedops.git"
-  cmd += " && "
-  cmd += "docker build -t fedops/warehouse ./Fedops/fedops-warehouse"
-  cmd += " && "
-  cmd += "docker build -t fedops/truck ./Fedops/fedops-truck"
-  cmd += " && "
-  cmd += "docker run -d -u=warehouse -h=fedops -v=/opt/fedops:/opt/fedops fedops/warehouse"
+  if fedType == FedopsTypeTruck {
+    cmd += "docker run --privileged -d -v=/opt/fedops:/opt/fedops/ fedops fedops-truck"
+  } else if fedType == FedopsTypeWarehouse {
+    cmd += "docker run --privileged -d -v=/opt/fedops:/opt/fedops/ fedops fedops-warehouse"
+  }
+  
   // fmt.Println("Running", cmd)
   err = session.Run(cmd)
   if err != nil {
