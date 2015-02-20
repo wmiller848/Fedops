@@ -31,7 +31,7 @@ import (
 	"strings"
 	// 3rd Party
 	"github.com/codegangsta/cli"
-	"github.com/gopass"
+	"code.google.com/p/gopass"
 	// FedOps
 	"github.com/FedOps/lib"
 )
@@ -80,7 +80,7 @@ func commandInit(stdin *bufio.Reader, pwd string) cli.Command {
 			}
 
 			fmt.Printf("Cluster Config Password... ")
-			passwd := gopass.GetPasswd()
+			passwd, _ := gopass.GetPass("")
 
 			if len(passwd) < MinKeyLength {
 				fmt.Printf("Password to short, must be at least %v characters long \r\n", MinKeyLength)
@@ -88,7 +88,7 @@ func commandInit(stdin *bufio.Reader, pwd string) cli.Command {
 			}
 
 			fmt.Printf("Repeat... ")
-			passwdR := gopass.GetPasswd()
+			passwdR, _ := gopass.GetPass("")
 
 			if string(passwd) != string(passwdR) {
 				fmt.Println("Passwords don't match")
@@ -101,7 +101,7 @@ func commandInit(stdin *bufio.Reader, pwd string) cli.Command {
 				fmt.Println("Full disk encryption and iptables have been disabled")
 			}
 
-			fed, err := fedops.CreateDispatcher(passwd, pwd, false)
+			fed, err := fedops.CreateDispatcher([]byte(passwd), pwd, false)
 			if err != nil {
 				fmt.Println(err.Error())
 				return

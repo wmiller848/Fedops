@@ -31,7 +31,7 @@ import (
 	_ "strings"
 	// 3rd Party
 	"github.com/codegangsta/cli"
-	"github.com/gopass"
+	"code.google.com/p/gopass"
 	// FedOps
 	"github.com/FedOps/lib"
 )
@@ -54,8 +54,8 @@ func commandSession(stdin *bufio.Reader, pwd string) cli.Command {
 				fmt.Println("WARNING")
 				fmt.Println("This command will export the encoded key that encypts this config, use good judgment when using a session")
 				fmt.Printf("Cluster Config Password... ")
-				passwd := gopass.GetPasswd()
-				fed, err := fedops.CreateDispatcher(passwd, pwd, false)
+				passwd, _ := gopass.GetPass("")
+				fed, err := fedops.CreateDispatcher([]byte(passwd), pwd, false)
 				if err != nil {
 					fmt.Println("Incorrect Password")
 					return

@@ -30,7 +30,7 @@ import (
 	"runtime"
 	// 3rd Party
 	"github.com/codegangsta/cli"
-	"github.com/gopass"
+	"code.google.com/p/gopass"
 	// FedOps
 	"github.com/FedOps/lib"
 )
@@ -54,7 +54,8 @@ func initFedops(pwd string) (*fedops.Dispatcher, error) {
 		useSession = true
 	} else {
 		fmt.Printf("Cluster Config Password... ")
-		passwd = gopass.GetPasswd()
+		pass, _ := gopass.GetPass("")
+    passwd = []byte(pass)
 	}
 
 	fed, err := fedops.CreateDispatcher(passwd, pwd, useSession)
