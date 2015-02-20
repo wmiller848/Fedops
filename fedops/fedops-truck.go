@@ -26,12 +26,8 @@ import (
   // Standard
   "bufio"
   "fmt"
-  _ "os"
-  _ "runtime"
-  _ "strings"
   // 3rd Party
   "github.com/codegangsta/cli"
-  _ "github.com/gopass"
   // FedOps
   "github.com/FedOps/lib"
 )

@@ -26,8 +26,6 @@ import (
 	// Standard
 	"bufio"
 	"fmt"
-	_ "os"
-	_ "runtime"
 	"strings"
 	// 3rd Party
 	"github.com/codegangsta/cli"
