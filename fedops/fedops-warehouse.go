@@ -73,6 +73,11 @@ func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
             return
           }
 
+          if len (c.Args()) == 0 {
+            fmt.Println("Supply a warehouse ID") 
+            return
+          }
+
           warehouseID := c.Args()[0] //c.String("warehouseID")
           if warehouseID == "" {
             fmt.Println("Supply a warehouse ID")

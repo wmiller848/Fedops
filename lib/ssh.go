@@ -103,6 +103,10 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   cmd += "sed --in-place=.bak 's/UsePAM\\ yes/UsePAM\\ no/' /etc/ssh/sshd_config"
   cmd += " && "
   cmd += "systemctl restart sshd"
+  // Generate a new server cert pair
+  
+  // TODO :: fedops user
+  // Create a new fedops user, set sudoer settings
   // Install Docker, git and vim
   cmd += " && "
   cmd += "yum -y install docker git vim"
@@ -114,18 +118,20 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   cmd += " && "
   cmd += "docker build --no-cache=true --force-rm=true -t fedops github.com/wmiller848/Fedops"
   cmd += " && "
+  // TODO :: Set up persistant container data
   if fedType == FedopsTypeTruck {
     cmd += "docker run --privileged -d -v=/opt/fedops:/opt/fedops/ fedops fedops-truck"
   } else if fedType == FedopsTypeWarehouse {
     cmd += "docker run --privileged -d -v=/opt/fedops:/opt/fedops/ fedops fedops-warehouse"
   }
+
   
   // fmt.Println("Running", cmd)
   err = session.Run(cmd)
   if err != nil {
     fmt.Println(err.Error())
     return FedopsError
-  }
+  }  
 
   return FedopsOk
 }
@@ -250,16 +256,6 @@ func (d *Dispatcher) _ssh(vmID string) uint {
     fmt.Println(err.Error())
     return FedopsError
   }
-
-  // if err := session.Run("ip add"); err != nil {
-  //   // if the session terminated normally, err should be ExitError; in that
-  //   // case, return nil error and actual exit status of command
-  //   if exitErr, ok := err.(*ssh.ExitError); ok {
-  //     fmt.Printf("exit code: %#v\n", exitErr.ExitStatus())
-  //   } else {
-  //     fmt.Println(err.Error())
-  //   }
-  // }
 
   // Will return the status of the last command run
   err = session.Wait()

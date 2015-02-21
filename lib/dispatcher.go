@@ -36,6 +36,7 @@ import (
   _ "code.google.com/p/go.crypto/ssh/terminal"
 	// FedOps
 	"github.com/FedOps/lib/providers"
+  "github.com/Fedops/lib/encryption"
 )
 
 const (
@@ -210,7 +211,7 @@ func (d *Dispatcher) Info() {
 	fmt.Println("[WARNING] Fedops data is UNRECOVERABLE without knowning the encryption key")
 }
 
-func (d *Dispatcher) writeKeypair(sshKey fedops_provider.Keypair, provider fedops_provider.Provider) {
+func (d *Dispatcher) writeKeypair(sshKey fedops_encryption.Keypair, provider fedops_provider.Provider) {
 	//fmt.Println(d.PowerDirectory)
 	ioutil.WriteFile(d.PowerDirectory+"/"+provider.Name()+"_id_rsa.pub", sshKey.PublicPem, os.ModePerm)
 	ioutil.WriteFile(d.PowerDirectory+"/"+provider.Name()+"_id_rsa", sshKey.PrivatePem, os.ModePerm)
@@ -306,8 +307,8 @@ func (d *Dispatcher) InitCloudProvider(promise chan FedopsAction, provider strin
 
 func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) uint {
 
-	sshKeyConfig := fedops_provider.SSH_Config{Keysize: 4096}
-	sshKey := fedops_provider.GenerateKeypair(sshKeyConfig)
+	keypairConfig := fedops_encryption.Keypair_Config{Keysize: 4096}
+	sshKey := fedops_encryption.GenerateKeypair(keypairConfig)
 
 	keypair, err := provider.CreateKeypair(d.Config.ClusterID, sshKey)
 	if err != nil {

@@ -23,14 +23,8 @@
 package fedops_provider
 
 import (
-	_ "bytes"
-	"code.google.com/p/go.crypto/ssh"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	_ "encoding/base64"
-	"encoding/pem"
-	"fmt"
+	_ "fmt"
+  "github.com/Fedops/lib/encryption"
 )
 
 // The Provider interface describes the functionality required for fedops
@@ -39,7 +33,7 @@ import (
 type Provider interface {
 	Name() string
 
-	CreateKeypair(string, Keypair) (ProviderKeypair, error)
+	CreateKeypair(string, fedops_encryption.Keypair) (ProviderKeypair, error)
 
 	ListSize() (ProviderSize, error)
 	ListSizes() ([]ProviderSize, error)
@@ -62,7 +56,7 @@ type Provider interface {
 // and the keypair together
 type ProviderKeypair struct {
 	ID      map[string]string
-	Keypair Keypair
+	Keypair fedops_encryption.Keypair
 }
 
 // The ProviderSize describes an type of size that may be used
@@ -88,84 +82,4 @@ type ProviderVM struct {
 	IPV6     string
 	Provider string
 	Status   string
-}
-
-type SSH_Config struct {
-	Keysize int
-}
-
-func GenerateKeypair(sshKeyConfig SSH_Config) Keypair {
-	sshkey := Keypair{Keysize: sshKeyConfig.Keysize}
-	sshkey.Generate()
-	return sshkey
-}
-
-//
-//
-//
-type Keypair struct {
-	Keysize    int
-	PublicPem  []byte
-	PrivatePem []byte
-	PublicSSH  []byte
-}
-
-func (k *Keypair) Generate() {
-	priv, err := rsa.GenerateKey(rand.Reader, k.Keysize)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	err = priv.Validate()
-	if err != nil {
-		fmt.Println("Validation failed.", err)
-	}
-
-	// Get der format. priv_der []byte
-	priv_der := x509.MarshalPKCS1PrivateKey(priv)
-
-	// pem.Block
-	// blk pem.Block
-	priv_blk := pem.Block{
-		Type:    "RSA PRIVATE KEY",
-		Headers: nil,
-		Bytes:   priv_der,
-	}
-
-	// Resultant private key in PEM format.
-	// priv_pem string
-	//k.PrivatePem = bytes.Trim(pem.EncodeToMemory(&priv_blk), "\n")
-	k.PrivatePem = pem.EncodeToMemory(&priv_blk)
-
-	// Public Key generation
-	pub := priv.PublicKey
-	pub_der, err := x509.MarshalPKIXPublicKey(&pub)
-	if err != nil {
-		fmt.Println("Failed to get der format for PublicKey.", err)
-		return
-	}
-
-	pub_blk := pem.Block{
-		Type:    "PUBLIC KEY",
-		Headers: nil,
-		Bytes:   pub_der,
-	}
-	//k.PublicPem = bytes.Trim(pem.EncodeToMemory(&pub_blk), "\n")
-	k.PublicPem = pem.EncodeToMemory(&pub_blk)
-
-	pubssh, err := ssh.NewPublicKey(&pub)
-	if err != nil {
-		fmt.Println("Failed to get ssh format for PublicKey.", err)
-		return
-	}
-	//k.PublicSSH = bytes.Trim(ssh.MarshalAuthorizedKey(pubssh), "\n")
-	k.PublicSSH = ssh.MarshalAuthorizedKey(pubssh)
-}
-
-func (k *Keypair) ToArray() []byte {
-	return append(k.PrivatePem, k.PublicPem...)
-}
-
-func (k *Keypair) ToString() string {
-	return string(k.PrivatePem) + string(k.PublicPem)
 }

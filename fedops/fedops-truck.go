@@ -73,6 +73,11 @@ func commandTruck(stdin *bufio.Reader, pwd string) cli.Command {
             return
           }
 
+          if len (c.Args()) == 0 {
+            fmt.Println("Supply a truck ID") 
+            return
+          }
+
           warehouseID := c.Args()[0] //c.String("warehouseID")
           if warehouseID == "" {
             fmt.Println("Supply a truck ID")

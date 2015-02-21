@@ -29,6 +29,8 @@ import (
 	_ "io/ioutil"
 	"net/http"
 	"strconv"
+  //
+  "github.com/Fedops/lib/encryption"
 )
 
 const DigitalOceanName string = "DigitalOcean"
@@ -67,7 +69,7 @@ func (digo *DigitalOcean) Name() string {
 	return DigitalOceanName
 }
 
-func (digo *DigitalOcean) CreateKeypair(clusterid string, keypair Keypair) (ProviderKeypair, error) {
+func (digo *DigitalOcean) CreateKeypair(clusterid string, keypair fedops_encryption.Keypair) (ProviderKeypair, error) {
 	client := &http.Client{}
 	reqKey := digitalOceanKeyRequest{
 		Name:       "FedOps-ClusterKey-" + clusterid,
