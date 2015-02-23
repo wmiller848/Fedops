@@ -103,7 +103,8 @@ type DispatcherConfig struct {
 	ClusterID  string
 	Created    string
 	Modified   string
-	Keys       []fedops_provider.ProviderKeypair
+  Certs      []fedops_provider.ProviderCerts
+	SSHKeys    []fedops_provider.ProviderKeypair
 	Tokens     map[string]Tokens
 	Warehouses []Warehouse
 	Trucks     []Truck
@@ -315,7 +316,7 @@ func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) uint {
 		fmt.Println(err.Error())
 		return FedopsError
 	}
-	d.Config.Keys = append(d.Config.Keys, keypair)
+	d.Config.SSHKeys = append(d.Config.SSHKeys, keypair)
 	now := time.Now()
 	d.Config.Created = now.UTC().String()
 	d.Config.Modified = now.UTC().String()

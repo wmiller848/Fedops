@@ -84,7 +84,7 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
     fmt.Println(err.Error())
     return FedopsError
   }
-  vm, err := provider.CreateVM(vmid, size, image, d.Config.Keys)
+  vm, err := provider.CreateVM(vmid, size, image, d.Config.SSHKeys)
   if err != nil {
     fmt.Println(err.Error())
     return FedopsError

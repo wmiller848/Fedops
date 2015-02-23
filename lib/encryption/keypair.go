@@ -26,8 +26,10 @@ import (
   _ "bytes"
   "code.google.com/p/go.crypto/ssh"
   "crypto/rand"
-  "crypto/rsa"
+  _ "crypto/rsa"
   "crypto/x509"
+  "crypto/ecdsa"
+  "crypto/elliptic"
   _ "encoding/base64"
   "encoding/pem"
   "fmt"
@@ -54,30 +56,38 @@ type Keypair struct {
 }
 
 func (k *Keypair) Generate() {
-  priv, err := rsa.GenerateKey(rand.Reader, k.Keysize)
+  // priv, err := rsa.GenerateKey(rand.Reader, k.Keysize)
+  priv, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
   if err != nil {
     fmt.Println(err)
     return
   }
-  err = priv.Validate()
-  if err != nil {
-    fmt.Println("Validation failed.", err)
-  }
+  // RSA Validation
+  // err = priv.Validate()
+  // if err != nil {
+  //   fmt.Println("RSA Validation failed.", err)
+  // }
 
   // Get der format. priv_der []byte
-  priv_der := x509.MarshalPKCS1PrivateKey(priv)
+  // priv_der := x509.MarshalPKCS1PrivateKey(priv)
+  priv_der, err := x509.MarshalECPrivateKey(priv)
+  if err != nil {
+    fmt.Println(err)
+    return
+  }
 
   // pem.Block
   // blk pem.Block
   priv_blk := pem.Block{
-    Type:    "RSA PRIVATE KEY",
+    // Type:    "RSA PRIVATE KEY",
+    Type:    "EC PRIVATE KEY",
     Headers: nil,
     Bytes:   priv_der,
   }
 
   // Resultant private key in PEM format.
   // priv_pem string
-  //k.PrivatePem = bytes.Trim(pem.EncodeToMemory(&priv_blk), "\n")
+  // k.PrivatePem = bytes.Trim(pem.EncodeToMemory(&priv_blk), "\n")
   k.PrivatePem = pem.EncodeToMemory(&priv_blk)
 
   // Public Key generation

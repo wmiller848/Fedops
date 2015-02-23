@@ -55,7 +55,7 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   }
 
   index := 0
-  keys := d.Config.Keys
+  keys := d.Config.SSHKeys
   for kIndex, _ := range keys {
     if keys[kIndex].ID[providerName] != "" {
       index = kIndex
@@ -63,7 +63,7 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
     }
   }
 
-  key, err := ssh.ParsePrivateKey(d.Config.Keys[index].Keypair.PrivatePem)
+  key, err := ssh.ParsePrivateKey(d.Config.SSHKeys[index].Keypair.PrivatePem)
   if err != nil {
     fmt.Println(err.Error())
     return FedopsError
@@ -180,7 +180,7 @@ func (d *Dispatcher) _ssh(vmID string) uint {
   }
 
   index := 0
-  keys := d.Config.Keys
+  keys := d.Config.SSHKeys
   for kIndex, _ := range keys {
     if keys[kIndex].ID[providerName] != "" {
       index = kIndex
@@ -188,7 +188,7 @@ func (d *Dispatcher) _ssh(vmID string) uint {
     }
   }
 
-  key, err := ssh.ParsePrivateKey(d.Config.Keys[index].Keypair.PrivatePem)
+  key, err := ssh.ParsePrivateKey(d.Config.SSHKeys[index].Keypair.PrivatePem)
   if err != nil {
     fmt.Println(err.Error())
     return FedopsError

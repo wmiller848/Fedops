@@ -54,6 +54,13 @@ type Provider interface {
 
 // The ProviderKeypair describes an id map that links a given provider id
 // and the keypair together
+type ProviderCerts struct {
+  ID      map[string]string
+  Cert fedops_encryption.Cert
+}
+
+// The ProviderKeypair describes an id map that links a given provider id
+// and the keypair together
 type ProviderKeypair struct {
 	ID      map[string]string
 	Keypair fedops_encryption.Keypair
