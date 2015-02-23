@@ -36,11 +36,11 @@ import (
 )
 
 type Keypair_Config struct {
-  Keysize int
+
 }
 
 func GenerateKeypair(keypairConfig Keypair_Config) Keypair {
-  sshkey := Keypair{Keysize: keypairConfig.Keysize}
+  sshkey := Keypair{}
   sshkey.Generate()
   return sshkey
 }
@@ -49,7 +49,7 @@ func GenerateKeypair(keypairConfig Keypair_Config) Keypair {
 //
 //
 type Keypair struct {
-  Keysize    int
+  // Keysize    int
   PublicPem  []byte
   PrivatePem []byte
   PublicSSH  []byte

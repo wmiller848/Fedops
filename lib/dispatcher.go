@@ -65,6 +65,8 @@ const (
 
   FedopsTypeTruck uint = 0
   FedopsTypeWarehouse uint = 1
+
+  ConfigFileName string = "Fedops"
 )
 
 type FedopsAction struct {
@@ -103,7 +105,7 @@ type DispatcherConfig struct {
 	ClusterID  string
 	Created    string
 	Modified   string
-  Certs      []fedops_provider.ProviderCerts
+  Certs      []fedops_encryption.Cert
 	SSHKeys    []fedops_provider.ProviderKeypair
 	Tokens     map[string]Tokens
 	Warehouses []Warehouse
@@ -156,7 +158,7 @@ func CreateDispatcher(key []byte, pwd string, session bool) (*Dispatcher, error)
 }
 
 func HasConfigFile(pwd string) bool {
-	_, err := os.Stat(pwd + "/.fedops")
+	_, err := os.Stat(pwd + "/" + ConfigFileName)
 	if err != nil {
 		return false
 	}
@@ -164,7 +166,7 @@ func HasConfigFile(pwd string) bool {
 }
 
 func GetConfigFile(pwd string) ([]byte, error) {
-	return ioutil.ReadFile(pwd + "/.fedops")
+	return ioutil.ReadFile(pwd + "/" + ConfigFileName)
 }
 
 func GetSalt(pwd string) ([]byte, error) {
@@ -187,7 +189,7 @@ func loadConfig(cipherkey []byte, pwd string) (DispatcherConfig, error) {
 		return config, nil
 	}
 
-	// We found the config, now unecrypt it, base64 decode it, and then marshal from json
+	// We found the config, now unencrypt it, base64 decode it, and then marshal from json
 	decrypted, err := Decrypt(cipherkey, fdata)
 	if err != nil {
 		return config, err
@@ -241,7 +243,7 @@ func (d *Dispatcher) Unload() bool {
 		return false
 	}
 
-	err = ioutil.WriteFile(pwd+"/.fedops", encrypted, 0666)
+	err = ioutil.WriteFile(pwd+"/" + ConfigFileName, encrypted, 0666)
 	if err != nil {
 		fmt.Println(err.Error())
 		return false
@@ -308,7 +310,12 @@ func (d *Dispatcher) InitCloudProvider(promise chan FedopsAction, provider strin
 
 func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) uint {
 
-	keypairConfig := fedops_encryption.Keypair_Config{Keysize: 4096}
+  certConfig := fedops_encryption.Cert_Config{}
+  cert := fedops_encryption.GenerateCert(certConfig)
+
+  d.Config.Certs = append(d.Config.Certs, cert)
+
+	keypairConfig := fedops_encryption.Keypair_Config{}
 	sshKey := fedops_encryption.GenerateKeypair(keypairConfig)
 
 	keypair, err := provider.CreateKeypair(d.Config.ClusterID, sshKey)

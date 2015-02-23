@@ -54,21 +54,52 @@ func GenerateCert(certConfig Cert_Config) Cert {
 }
 
 type Cert struct {
-  host string
-  ValidFrom string
-  ValidTo string
-  CA bool
-  KeySize int
-  ECDSACurve string
+  // host string
+  // ValidFrom string
+  // ValidTo string
+  // CA bool
+  // KeySize int
+  CertificatePem []byte
+  PublicPem  []byte
+  PrivatePem []byte
 }
 
 func (c *Cert) Generate() {
   // TODO :: use the fedops keypair type
+  
+  // fmt.Println("Creating EC Key")
   priv, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
   if err != nil {
     fmt.Println(err)
     return
   }
+
+  priv_der, err := x509.MarshalECPrivateKey(priv)
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "Unable to marshal ECDSA private key: %v", err)
+    return
+  }
+  priv_blk := pem.Block{
+    // Type:    "RSA PRIVATE KEY",
+    Type:    "EC PRIVATE KEY",
+    Headers: nil,
+    Bytes:   priv_der,
+  }
+
+  // Public Key generation
+  pub := priv.PublicKey
+  pub_der, err := x509.MarshalPKIXPublicKey(&pub)
+  if err != nil {
+    fmt.Println("Failed to get der format for PublicKey.", err)
+    return
+  }
+
+  pub_blk := pem.Block{
+    Type:    "PUBLIC KEY",
+    Headers: nil,
+    Bytes:   pub_der,
+  }
+
   notBefore := time.Now()
   var validFor time.Duration
   validFor = 365 * 24 * time.Hour
@@ -81,53 +112,61 @@ func (c *Cert) Generate() {
   }
 
   template := x509.Certificate{
-    DNSNames: []string{"*"},
-    IPAddresses: []net.IP{net.IP("*")},
+    DNSNames: []string{"localhost"},
+    IPAddresses: []net.IP{net.IP("127.0.0.1")},
     SerialNumber: serialNumber,
     Subject: pkix.Name{
       Organization: []string{"Fedops Daemon Certificate"},
     },
     NotBefore: notBefore,
     NotAfter:  notAfter,
-
     KeyUsage: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
     ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
     BasicConstraintsValid: true,
     IsCA: true,
   }
 
-  derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, priv.PublicKey, priv)
+  derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
   if err != nil {
     log.Fatalf("Failed to create certificate: %s", err)
   }
 
-  certOut, err := os.Create("cert.pem")
-  if err != nil {
-    log.Fatalf("failed to open cert.pem for writing: %s", err)
+  cert_blk := pem.Block{
+    Type: "CERTIFICATE",
+    Bytes: derBytes,
   }
-  pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
-  certOut.Close()
-  log.Print("written cert.pem\n")
 
-  keyOut, err := os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-  if err != nil {
-    log.Print("failed to open key.pem for writing:", err)
-    return
-  }
-  priv_der, err := x509.MarshalECPrivateKey(priv)
-  if err != nil {
-    fmt.Fprintf(os.Stderr, "Unable to marshal ECDSA private key: %v", err)
-    return
-  }
-  priv_blk := pem.Block{
-    // Type:    "RSA PRIVATE KEY",
-    Type:    "EC PRIVATE KEY",
-    Headers: nil,
-    Bytes:   priv_der,
-  }
-  pem.Encode(keyOut, &priv_blk)
-  keyOut.Close()
-  log.Print("written key.pem\n")
+  //////////////////////////
+  // Write to memory
+  //////////////////////////
+
+  c.CertificatePem = pem.EncodeToMemory(&cert_blk)
+  c.PrivatePem = pem.EncodeToMemory(&priv_blk)
+  c.PublicPem = pem.EncodeToMemory(&pub_blk)
+
+  // //////////////////////////
+  // // Write to disk
+  // //////////////////////////
+  // os.Mkdir("./.security", 0777)
+  // fmt.Println("Writing Cert")
+  // certOut, err := os.Create("./.security/cert.pem")
+  // if err != nil {
+  //   log.Fatalf("failed to open cert.pem for writing: %s", err)
+  // }
+  // pem.Encode(certOut, &cert_blk)
+  // certOut.Close()
+  // log.Print("written cert.pem\n")
+
+  // fmt.Println("Writing Key")
+  // keyOut, err := os.OpenFile("./.security/key.pem", os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0600)
+  // if err != nil {
+  //   log.Print("failed to open key.pem for writing:", err)
+  //   return
+  // }
+
+  // pem.Encode(keyOut, &priv_blk)
+  // keyOut.Close()
+  // log.Print("written key.pem\n")
 }
 
 // var (

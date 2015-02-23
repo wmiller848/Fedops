@@ -52,8 +52,8 @@ type Provider interface {
 	SnapShotVM(ProviderVM) (ProviderImage, error)
 }
 
-// The ProviderKeypair describes an id map that links a given provider id
-// and the keypair together
+// The ProviderCert describes an id map that links a given provider id
+// and the cert together
 type ProviderCerts struct {
   ID      map[string]string
   Cert fedops_encryption.Cert
