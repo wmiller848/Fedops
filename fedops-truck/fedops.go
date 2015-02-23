@@ -48,9 +48,15 @@ func main() {
   // }
 
   pwd := os.Getenv("PWD")
+  hasConfig := fedops.HasConfigFile(pwd)
+  if hasConfig == false {
+    fmt.Println("FedOps cluster config file does not exist")
+    return
+  }
+
   session_key := os.Getenv("FEDOPS_SESSION_KEY")
   if session_key == "" {
-    fmt.Println("ERROR : The 'FEDOPS_SESSION_KEY' enviroment variable has been unset, please reset it")
+    fmt.Println("'FEDOPS_SESSION_KEY' enviroment variable has been unset, please reset it to match the session key for your cluster")
     return
   }
 
