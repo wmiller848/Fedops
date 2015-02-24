@@ -20,9 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Generate a self-signed X.509 certificate for a TLS server. Outputs to
-// 'cert.pem' and 'key.pem' and will overwrite existing files.
-
 package fedops_encryption
 
 import (
@@ -36,7 +33,7 @@ import (
   "fmt"
   "log"
   "math/big"
-  "net"
+  _ "net"
   "os"
   _ "strings"
   "time"
@@ -66,7 +63,6 @@ type Cert struct {
 
 func (c *Cert) Generate() {
   // TODO :: use the fedops keypair type
-  
   // fmt.Println("Creating EC Key")
   priv, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
   if err != nil {
@@ -112,8 +108,8 @@ func (c *Cert) Generate() {
   }
 
   template := x509.Certificate{
-    DNSNames: []string{"localhost"},
-    IPAddresses: []net.IP{net.IP("127.0.0.1")},
+    // DNSNames: []string{"localhost"},
+    // IPAddresses: []net.IP{net.IP("127.0.0.1")},
     SerialNumber: serialNumber,
     Subject: pkix.Name{
       Organization: []string{"Fedops Daemon Certificate"},

@@ -42,7 +42,7 @@ func main() {
 
   // config := tls.Config{RootCAs: CA_Pool}
 
-  // conn, err := tls.Dial("tcp", "127.0.0.1:8000", &config)
+  // conn, err := tls.Dial("tcp", "127.0.0.1:1337", &config)
   // if err != nil {
   //     log.Fatalf("client: dial: %s", err)
   // }

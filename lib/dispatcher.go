@@ -47,13 +47,11 @@ const (
 	OpenStack      uint = 4
 
 	SaltSize      int = 512
-	ClusterIDSize int = 8
-  WarehouseIDSize int = 8
-  TruckIDSize int = 8
 
-	// WarehouseStatusBooting string = "booting"
-	// WarehouseStatusUp      string = "up"
-	// WarehouseStatusDown    string = "down"
+	ClusterIDSize int = 32
+  WarehouseIDSize int = 16
+  TruckIDSize int = 16
+  ContainerIDSize int = 16
 
   FedopsPoolTime time.Duration = 5
   FedopsBootWaitTime time.Duration = 30
@@ -78,11 +76,11 @@ type Tokens struct {
 	SecurityToken string
 }
 
-type Services struct {
-	ID   string
-	Name string
-	Repo string
-}
+// type Services struct {
+// 	ID   string
+// 	Name string
+// 	Repo string
+// }
 
 
 //
@@ -110,6 +108,7 @@ type DispatcherConfig struct {
 	Tokens     map[string]Tokens
 	Warehouses []Warehouse
 	Trucks     []Truck
+  Containers []Container
 }
 
 type Dispatcher struct {

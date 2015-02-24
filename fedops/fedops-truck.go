@@ -79,10 +79,6 @@ func commandTruck(stdin *bufio.Reader, pwd string) cli.Command {
           }
 
           warehouseID := c.Args()[0] //c.String("warehouseID")
-          if warehouseID == "" {
-            fmt.Println("Supply a truck ID")
-            return
-          }
 
           promise := make(chan fedops.FedopsAction)
           go fed.DestroyTruck(promise, warehouseID)

@@ -34,7 +34,7 @@ import (
 type Warehouse struct {
   fedops_provider.ProviderVM
   WarehouseID string
-  Services    []Services
+  Containers    []string
 }
 
 func (d *Dispatcher) CreateWarehouse(promise chan FedopsAction, providerName, memSize, diskSize, numVcpus string) {

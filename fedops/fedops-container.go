@@ -29,7 +29,7 @@ import (
 	// 3rd Party
 	"github.com/codegangsta/cli"
 	// FedOps
-	_ "github.com/FedOps/lib"
+	"github.com/FedOps/lib"
 )
 
 func commandContainer(stdin *bufio.Reader, pwd string) cli.Command {
@@ -37,15 +37,66 @@ func commandContainer(stdin *bufio.Reader, pwd string) cli.Command {
 		Name:      "container",
 		// ShortName: "cn",
 		Usage:     "manage containers: create, destroy",
-		Action: func(c *cli.Context) {
-			fed, err := initFedops(pwd)
-			if err != nil {
-				fmt.Println("Incorrect Password")
-				return
-			}
+    Subcommands: []cli.Command{
+      cli.Command{
+        Name: "create",
+        Action: func(c *cli.Context) {
+          fed, err := initFedops(pwd)
+          if err != nil {
+            fmt.Println("Incorrect Password")
+            return
+          }
 
-      fmt.Println(fed)
-		},
+          if len (c.Args()) == 0 {
+            fmt.Println("Supply a container repo") 
+            return
+          }
+
+          repo := c.Args()[0] //c.String("warehouseID")
+
+          promise := make(chan fedops.FedopsAction)
+          go fed.CreateContainer(promise, repo)
+          result := <- promise
+          switch result.Status {
+          case fedops.FedopsError:
+            fmt.Println("Error")
+          case fedops.FedopsOk:
+            //fmt.Println("Ok")
+          case fedops.FedopsUnknown:
+            fmt.Println("Unknown")
+          }
+        },
+      },
+      cli.Command{
+        Name: "destroy",
+        Action: func(c *cli.Context) {
+          fed, err := initFedops(pwd)
+          if err != nil {
+            fmt.Println("Incorrect Password")
+            return
+          }
+
+          if len (c.Args()) == 0 {
+            fmt.Println("Supply a container id") 
+            return
+          }
+
+          containerID := c.Args()[0] //c.String("warehouseID")
+
+          promise := make(chan fedops.FedopsAction)
+          go fed.DestroyContainer(promise, containerID)
+          result := <- promise
+          switch result.Status {
+          case fedops.FedopsError:
+            fmt.Println("Error")
+          case fedops.FedopsOk:
+            //fmt.Println("Ok")
+          case fedops.FedopsUnknown:
+            fmt.Println("Unknown")
+          }
+        },
+      },
+    },
 		BashComplete: func(c *cli.Context) {
 			// This will complete if no args are passed
 			if len(c.Args()) > 0 {

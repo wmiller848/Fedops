@@ -34,7 +34,7 @@ import (
 type Truck struct {
   fedops_provider.ProviderVM
   TruckID  string
-  Services []Services
+  Containers []string
 }
 
 func (d *Dispatcher) CreateTruck(promise chan FedopsAction, provider, memSize, diskSize, numVcpus string) {

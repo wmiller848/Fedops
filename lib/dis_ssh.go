@@ -107,6 +107,8 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   
   // TODO :: fedops user
   // Create a new fedops user, set sudoer settings
+
+  //
   // Install Docker, git and vim
   cmd += " && "
   cmd += "yum -y install docker git vim"
@@ -114,17 +116,18 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   cmd += "systemctl start docker"
   cmd += " && "
   cmd += "systemctl enable docker"
+
+  //
   // Install Fedops
   cmd += " && "
   cmd += "docker build --no-cache=true --force-rm=true -t fedops github.com/wmiller848/Fedops"
   cmd += " && "
-  // TODO :: Set up persistant container data
+  // TODO :: Set up persistant data container instead of mounting a volume from the host
   if fedType == FedopsTypeTruck {
     cmd += "docker run --privileged -d -v=/opt/fedops:/opt/fedops/ fedops fedops-truck"
   } else if fedType == FedopsTypeWarehouse {
     cmd += "docker run --privileged -d -v=/opt/fedops:/opt/fedops/ fedops fedops-warehouse"
   }
-
   
   // fmt.Println("Running", cmd)
   err = session.Run(cmd)
