@@ -31,6 +31,8 @@ import (
 type Container struct {
   ContainerID  string
   Repo string
+  Warehouses []string
+  Trucks []string
 }
 
 func (d *Dispatcher) CreateContainer(promise chan FedopsAction, repo string) {

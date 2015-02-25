@@ -70,29 +70,33 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 			fmt.Println("Warehouses")
 			if len(fed.Config.Warehouses) > 0 {
 				for _, warehouse := range fed.Config.Warehouses {
-					fmt.Println("\t", " -", warehouse.WarehouseID, " | ", warehouse.IPV4, " | ", warehouse.Status)
+					fmt.Println("\t", "-", warehouse.WarehouseID, " | ", warehouse.IPV4, " | ", warehouse.Status)
 				}
 			} else {
 				fmt.Println("\t", "No warehouses available")
 				fmt.Println("\t", "Try 'fedops warehouse create'")
 			}
 
+      fmt.Printf("\r\n")
+
       // Trucks
 			fmt.Println("Trucks")
 			if len(fed.Config.Trucks) > 0 {
 				for _, truck := range fed.Config.Trucks {
-					fmt.Println("\t", " -", truck.TruckID, " | ", truck.IPV4, " | ", truck.Status)
+					fmt.Println("\t", "-", truck.TruckID, " | ", truck.IPV4, " | ", truck.Status)
 				}
 			} else {
 				fmt.Println("\t", "No trucks available")
 				fmt.Println("\t", "Try 'fedops truck create'")
 			}
 
+      fmt.Printf("\r\n")
+
       // Containers
       fmt.Println("Unshipped Containers")
       if len(fed.Config.Containers) > 0 {
         for _, container := range fed.Config.Containers {
-          fmt.Println("\t", " -", container.Repo + " | " + container.ContainerID)
+          fmt.Println("\t", "-", container.Repo + " | " + container.ContainerID)
         }
       } else {
         fmt.Println("\t", "No Ccntainers available")

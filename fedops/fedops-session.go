@@ -52,7 +52,7 @@ func commandSession(stdin *bufio.Reader, pwd string) cli.Command {
 			session_key := os.Getenv("FEDOPS_SESSION_KEY")
 			if session_key == "" {
 				fmt.Println("WARNING")
-				fmt.Println("This command will export the encoded key that encypts this config, use good judgment when using a session")
+				fmt.Println("This command will export the base64 encoded cipherkey that encrypts this config, use good judgment when using a session")
 				fmt.Printf("Cluster Config Password... ")
 				passwd, _ := gopass.GetPass("")
 				fed, err := fedops.CreateDispatcher([]byte(passwd), pwd, false)

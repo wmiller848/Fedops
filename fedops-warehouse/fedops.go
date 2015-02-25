@@ -25,8 +25,10 @@ package main
 import (
   "fmt"
   "os"
-  "github.com/Fedops/lib/dispatcher"
   "crypto/tls"
+  //
+  "github.com/Fedops/lib/dispatcher"
+  "github.com/Fedops/lib/encryption"
 )
 
 func main() {
@@ -60,7 +62,7 @@ func main() {
     return
   }
 
-  key, err := fedops.Decode([]byte(session_key))
+  key, err := fedops_encryption.Decode([]byte(session_key))
   if err != nil {
     fmt.Println(err.Error())
     return

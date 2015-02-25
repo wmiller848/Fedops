@@ -1,0 +1,9 @@
+cd fedops/ && go install
+
+cd ..
+
+cd fedops-warehouse/ && go install
+
+cd ..
+
+cd fedops-truck/ && go install

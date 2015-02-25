@@ -92,23 +92,31 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
     fmt.Println(err.Error())
     return FedopsError
   }
-  defer session.Close()
+  session.Stdout = os.Stdout
+  session.Stderr = os.Stderr
 
-  // TODO :: Make this an external config file
-  // Disable Password SSH login
+  // TODO :: Make this an external config files 
+
+  /////////////////
+  // Disable Password SSH login and change port to 61337
+  /////////////////
   cmd := "sed --in-place=.bak 's/ChallengeResponseAuthentication\\ yes/ChallengeResponseAuthentication\\ no/' /etc/ssh/sshd_config"
   cmd += " && "
   cmd += "sed --in-place=.bak 's/PasswordAuthentication\\ yes/PasswordAuthentication\\ no/' /etc/ssh/sshd_config"
   cmd += " && "
   cmd += "sed --in-place=.bak 's/UsePAM\\ yes/UsePAM\\ no/' /etc/ssh/sshd_config"
+  cmd += " && "
+  cmd += "sed --in-place=.bak 's/Port\\ 22/Port\\ 61337/' /etc/ssh/sshd_config"
   // Generate a new server cert pair
   
+  /////////////////
   // TODO :: fedops user
   // Create a new fedops user, set sudoer settings
-  
+  /////////////////
 
-  //
+  /////////////////
   // Install Docker, git, vim and sudo
+  /////////////////
   cmd += " && "
   cmd += "yum -y install docker git vim"
   cmd += " && "
@@ -116,8 +124,36 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   cmd += " && "
   cmd += "systemctl enable docker"
 
-  //
+  // fmt.Println("Running", cmd)
+  err = session.Run(cmd)
+  if err != nil {
+    fmt.Println(err.Error())
+    return FedopsError
+  }
+
+  session.Close()
+  session, err = conn.NewSession()
+  if err != nil {
+    fmt.Println(err.Error())
+    return FedopsError
+  }
+  defer session.Close()
+  session.Stdout = os.Stdout
+  session.Stderr = os.Stderr
+
+  /////////////////
   // Install Fedops
+  /////////////////
+  cmd = "mkdir -p /opt/fedops"
+  // Write the config file
+  configData := []byte("Amazing Config")
+  cmd += " && "
+  cmd += "echo -n '" + string(configData) + "' > /opt/fedops/Fedops-Runtime"
+  // Store the key
+  keydata := []byte("Amazing Key")
+  cmd += " && "
+  cmd += "echo -n '" + string(keydata) + "' > /opt/fedops/.fedops_key"
+  // Build fedops
   cmd += " && "
   cmd += "docker build --no-cache=true --force-rm=true -t fedops " + FedopsRepo
   cmd += " && "
@@ -128,9 +164,15 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
     cmd += "docker run --privileged -d -v=/opt/fedops:/opt/fedops/ fedops fedops-warehouse"
   }
 
+  /////////////////
+  // Finally Restart SSHD
+  /////////////////
   cmd += " && "
   cmd += "systemctl restart sshd"
   
+  /////////////////
+  // Execute the commands
+  /////////////////
   // fmt.Println("Running", cmd)
   err = session.Run(cmd)
   if err != nil {
@@ -210,7 +252,7 @@ func (d *Dispatcher) _ssh(vmID string) uint {
     return FedopsError
   }
 
-  conn, err := ssh.Dial("tcp", ip + ":22", config)
+  conn, err := ssh.Dial("tcp", ip + ":61337", config)
   if err != nil {
     fmt.Println(err.Error())
     return FedopsError
@@ -225,12 +267,12 @@ func (d *Dispatcher) _ssh(vmID string) uint {
   defer session.Close()
 
   fd := int(os.Stdin.Fd())
-  oldState, err := terminal.MakeRaw(fd)
+  userState, err := terminal.MakeRaw(fd)
   if err != nil {
     fmt.Println(err.Error())
     return FedopsError
   }
-  defer terminal.Restore(fd, oldState)
+  defer terminal.Restore(fd, userState)
 
   session.Stdout = os.Stdout
   session.Stderr = os.Stderr
