@@ -29,6 +29,7 @@ import (
   // 3rd Party
   // FedOps
   "github.com/Fedops/lib/providers"
+  "github.com/Fedops/lib/encryption"
 )
 
 type Truck struct {
@@ -79,7 +80,7 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
     return FedopsError
   }
   // See if there is a key for this provider
-  vmid, err := GenerateRandomHex(TruckIDSize)
+  vmid, err := fedops_encryption.GenerateRandomHex(TruckIDSize)
   if err != nil {
     fmt.Println(err.Error())
     return FedopsError

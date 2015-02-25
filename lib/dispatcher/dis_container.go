@@ -24,6 +24,8 @@ package fedops
 
 import (
   "fmt"
+  //
+  "github.com/Fedops/lib/encryption"
 )
 
 type Container struct {
@@ -32,7 +34,7 @@ type Container struct {
 }
 
 func (d *Dispatcher) CreateContainer(promise chan FedopsAction, repo string) {
-  containerID, _ := GenerateRandomHex(ContainerIDSize)
+  containerID, _ := fedops_encryption.GenerateRandomHex(ContainerIDSize)
 
   container := new(Container)
   container.Repo = repo

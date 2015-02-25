@@ -33,6 +33,7 @@ import (
 	"code.google.com/p/gopass"
 	// FedOps
 	"github.com/Fedops/lib/dispatcher"
+  "github.com/Fedops/lib/encryption"
 )
 
 const (
@@ -47,7 +48,7 @@ func initFedops(pwd string) (*fedops.Dispatcher, error) {
 		// The user has set the session key
 		// which is just the encoded cipherkey
 		var err error
-		passwd, err = fedops.Decode([]byte(session_key))
+		passwd, err = fedops_encryption.Decode([]byte(session_key))
 		if err != nil {
 			return nil, err
 		}

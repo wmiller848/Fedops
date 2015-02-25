@@ -131,7 +131,7 @@ func CreateDispatcher(key []byte, pwd string, session bool) (*Dispatcher, error)
 		var err error
 		salt, err = GetSalt(pwd)
 		if err != nil {
-			salt, err = GenerateRandomBytes(SaltSize)
+			salt, err = fedops_encryption.GenerateRandomBytes(SaltSize)
 			if err != nil {
 				return nil, err
 			}
@@ -139,7 +139,7 @@ func CreateDispatcher(key []byte, pwd string, session bool) (*Dispatcher, error)
 		cipherkey = make([]byte, len(salt)+len(key))
 		cipherkey = append(cipherkey, salt...)
 		cipherkey = append(cipherkey, key...)
-		cipherkey = Hashkey(cipherkey)
+		cipherkey = fedops_encryption.Hashkey(cipherkey)
 	}
 
 	config, err := loadConfig(cipherkey, pwd)
@@ -148,7 +148,7 @@ func CreateDispatcher(key []byte, pwd string, session bool) (*Dispatcher, error)
 	}
 
 	d := &Dispatcher{
-		Cipherkey:      Encode(cipherkey),
+		Cipherkey:      fedops_encryption.Encode(cipherkey),
 		Salt:           salt,
 		Config:         config,
 		Version:        "0.0.1",
@@ -180,7 +180,7 @@ func loadConfig(cipherkey []byte, pwd string) (DispatcherConfig, error) {
 	if err != nil {
 		//  We couldn't find the config file :(
 		//fmt.Println(err.Error())
-		cid, err := GenerateRandomHex(ClusterIDSize)
+		cid, err := fedops_encryption.GenerateRandomHex(ClusterIDSize)
 		if err != nil {
 			return config, err
 		}
@@ -191,7 +191,7 @@ func loadConfig(cipherkey []byte, pwd string) (DispatcherConfig, error) {
 	}
 
 	// We found the config, now unencrypt it, base64 decode it, and then marshal from json
-	decrypted, err := Decrypt(cipherkey, fdata)
+	decrypted, err := fedops_encryption.Decrypt(cipherkey, fdata)
 	if err != nil {
 		return config, err
 	}
@@ -232,13 +232,13 @@ func (d *Dispatcher) Unload() bool {
 		fmt.Println(err.Error())
 		return false
 	}
-	cipherkey, err := Decode(d.Cipherkey)
+	cipherkey, err := fedops_encryption.Decode(d.Cipherkey)
 	if err != nil {
 		fmt.Println(err.Error())
 		return false
 	}
 
-	encrypted, err := Encrypt(cipherkey, disjson)
+	encrypted, err := fedops_encryption.Encrypt(cipherkey, disjson)
 	if err != nil {
 		fmt.Println(err.Error())
 		return false
