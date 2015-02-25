@@ -25,7 +25,7 @@ package main
 import (
   "fmt"
   "os"
-  "github.com/FedOps/lib"
+  "github.com/Fedops/lib"
   "crypto/tls"
 )
 

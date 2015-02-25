@@ -28,7 +28,7 @@ import (
   "time"
   // 3rd Party
   // FedOps
-  "github.com/FedOps/lib/providers"
+  "github.com/Fedops/lib/providers"
 )
 
 type Truck struct {

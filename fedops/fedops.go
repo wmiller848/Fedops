@@ -32,7 +32,7 @@ import (
 	"github.com/codegangsta/cli"
 	"code.google.com/p/gopass"
 	// FedOps
-	"github.com/FedOps/lib"
+	"github.com/Fedops/lib"
 )
 
 const (

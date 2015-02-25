@@ -35,7 +35,7 @@ import (
   _ "code.google.com/p/go.crypto/ssh"
   _ "code.google.com/p/go.crypto/ssh/terminal"
 	// FedOps
-	"github.com/FedOps/lib/providers"
+	"github.com/Fedops/lib/providers"
   "github.com/Fedops/lib/encryption"
 )
 

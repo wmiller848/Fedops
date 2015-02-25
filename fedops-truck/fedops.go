@@ -27,7 +27,7 @@ import (
   "os"
   "crypto/tls"
   //
-  "github.com/FedOps/lib"
+  "github.com/Fedops/lib"
 )
 
 func main() {

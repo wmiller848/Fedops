@@ -29,7 +29,7 @@ import (
   // 3rd Party
   "github.com/codegangsta/cli"
   // FedOps
-  "github.com/FedOps/lib"
+  "github.com/Fedops/lib"
 )
 
 func commandTruck(stdin *bufio.Reader, pwd string) cli.Command {
