@@ -101,8 +101,6 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   cmd += "sed --in-place=.bak 's/PasswordAuthentication\\ yes/PasswordAuthentication\\ no/' /etc/ssh/sshd_config"
   cmd += " && "
   cmd += "sed --in-place=.bak 's/UsePAM\\ yes/UsePAM\\ no/' /etc/ssh/sshd_config"
-  cmd += " && "
-  cmd += "systemctl restart sshd"
   // Generate a new server cert pair
   
   // TODO :: fedops user
@@ -112,7 +110,7 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   //
   // Install Docker, git, vim and sudo
   cmd += " && "
-  cmd += "yum -y install docker git vim sudo"
+  cmd += "yum -y install docker git vim"
   cmd += " && "
   cmd += "systemctl start docker"
   cmd += " && "
@@ -129,8 +127,11 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   } else if fedType == FedopsTypeWarehouse {
     cmd += "docker run --privileged -d -v=/opt/fedops:/opt/fedops/ fedops fedops-warehouse"
   }
+
+  cmd += " && "
+  cmd += "systemctl restart sshd"
   
-  fmt.Println("Running", cmd)
+  // fmt.Println("Running", cmd)
   err = session.Run(cmd)
   if err != nil {
     fmt.Println(err.Error())

@@ -4,7 +4,7 @@ MAINTAINER W. Chase Miller
 
 USER root
 
-ADD ./ /go/src/github.com/FedOps
+ADD . /go/src/github.com/FedOps
 
 RUN go get code.google.com/p/go.crypto/ssh
 RUN go get github.com/codegangsta/cli
