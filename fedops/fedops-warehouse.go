@@ -93,6 +93,35 @@ func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
           }
         },
       },
+      cli.Command{
+        Name: "add",
+        Action: func(c *cli.Context) {
+          fed, err := initFedops(pwd)
+          if err != nil {
+            fmt.Println("Incorrect Password")
+            return
+          }
+
+          if len (c.Args()) == 0 {
+            fmt.Println("Supply a container ID") 
+            return
+          }
+
+          containerID := c.Args()[0] //c.String("warehouseID")
+
+          promise := make(chan fedops.FedopsAction)
+          go fed.ShipContainerToWarehouse(promise, containerID)
+          result := <- promise
+          switch result.Status {
+          case fedops.FedopsError:
+            // fmt.Println("Error")
+          case fedops.FedopsOk:
+            //fmt.Println("Ok")
+          case fedops.FedopsUnknown:
+            fmt.Println("Unknown")
+          }
+        },
+      },
     },
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -121,7 +150,7 @@ func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
 			if len(c.Args()) > 0 {
 				return
 			}
-			warehouseTasks := []string{"create", "destroy", "transfer"}
+			warehouseTasks := []string{"create", "destroy", "add"}
 			for _, t := range warehouseTasks {
 				fmt.Println(t)
 			}

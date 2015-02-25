@@ -82,3 +82,23 @@ func (d *Dispatcher) DestroyContainer(promise chan FedopsAction, containerID str
     Status: FedopsOk,
   }
 }
+
+// Ship a container to the warehouse for continuous deployment
+func (d *Dispatcher) ShipContainerToWarehouse(promise chan FedopsAction, containerID string) {
+  d.OpenConnection(containerID)
+
+  persisted := d.Unload()
+  if persisted != true {
+    promise <- FedopsAction{
+      Status: FedopsError,
+    }
+  }
+  promise <- FedopsAction{
+    Status: FedopsOk,
+  }
+}
+
+// Ship a containers image to a truck for execution
+func (d *Dispatcher) ShipContainerImageToTruck(promise chan FedopsAction, containerID string) {
+
+}

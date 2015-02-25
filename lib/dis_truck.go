@@ -96,7 +96,7 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
   truck.Provider = provider.Name()
   d.Config.Trucks = append(d.Config.Trucks, *truck)
 
-  fmt.Printf("Virtual machine is booting...")
+  fmt.Printf("Initializing...")
 
   done := false
   for done == false {
@@ -125,7 +125,19 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
 
   // Give the machine a few seconds to boot
   time.Sleep(FedopsBootWaitTime * time.Second)
+
+  fmt.Printf("Bootstrapping...")
+  done = false
+  go func() {
+    for done == false {
+      time.Sleep(FedopsPoolTime * time.Second)
+      fmt.Printf(".")
+    }
+  }()
+
   d._bootstrap(truck.TruckID, FedopsTypeTruck)
+  done = true
+  fmt.Printf("\r\n")
 
   return FedopsOk
 }

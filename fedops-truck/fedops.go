@@ -25,8 +25,9 @@ package main
 import (
   "fmt"
   "os"
-  "github.com/FedOps/lib"
   "crypto/tls"
+  //
+  "github.com/FedOps/lib"
 )
 
 func main() {

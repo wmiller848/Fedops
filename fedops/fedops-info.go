@@ -66,6 +66,7 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 			//fmt.Printf("%+v \r\n", fed.Config)
 
 			//fmt.Println("ClusterID | " + fed.Config.ClusterID)
+      // Warehouses
 			fmt.Println("Warehouses")
 			if len(fed.Config.Warehouses) > 0 {
 				for _, warehouse := range fed.Config.Warehouses {
@@ -76,6 +77,7 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 				fmt.Println("\t", "Try 'fedops warehouse create'")
 			}
 
+      // Trucks
 			fmt.Println("Trucks")
 			if len(fed.Config.Trucks) > 0 {
 				for _, truck := range fed.Config.Trucks {
@@ -85,6 +87,17 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 				fmt.Println("\t", "No trucks available")
 				fmt.Println("\t", "Try 'fedops truck create'")
 			}
+
+      // Containers
+      fmt.Println("Unshipped Containers")
+      if len(fed.Config.Containers) > 0 {
+        for _, container := range fed.Config.Containers {
+          fmt.Println("\t", " -", container.Repo + " | " + container.ContainerID)
+        }
+      } else {
+        fmt.Println("\t", "No Ccntainers available")
+        fmt.Println("\t", "Try 'fedops containers create :GIT_REPO'")
+      }
 		},
 		BashComplete: func(c *cli.Context) {
 			// This will complete if no args are passed

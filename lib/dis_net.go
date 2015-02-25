@@ -22,22 +22,32 @@
 
 package fedops
 
+import (
+  "fmt"
+  "crypto/tls"
+  "crypto/x509"
+  //
+)
 
-// server cert is self signed -> server_cert == ca_cert
-// CA_Pool := x509.NewCertPool()
-// severCert, err := ioutil.ReadFile("./cert.pem")
-// if err != nil {
-//     log.Fatal("Could not load server certificate!")
-// }
-// CA_Pool.AppendCertsFromPEM(severCert)
+func (d *Dispatcher) OpenConnection(vmID string) *tls.Conn {
+  // server cert is self signed -> server_cert == ca_cert
+  certPool := x509.NewCertPool()
 
-// config := tls.Config{RootCAs: CA_Pool}
+  // severCert, err := ioutil.ReadFile("./cert.pem")
+  // if err != nil {
+  //     log.Fatal("Could not load server certificate!")
+  // }
 
-// conn, err := tls.Dial("tcp", "127.0.0.1:1337", &config)
-// if err != nil {
-//     log.Fatalf("client: dial: %s", err)
-// }
+  fed_certs := d.Config.Certs
+  certPool.AppendCertsFromPEM(fed_certs[0].CertificatePem)
 
-func (d *Dispatcher) OpenConnection() {
+  config := tls.Config{RootCAs: certPool}
 
+  conn, err := tls.Dial("tcp", "127.0.0.1:1337", &config)
+  if err != nil {
+      fmt.Println("client: dial:", err.Error())
+      return nil
+  }
+  // defer conn.Close()
+  return conn
 }

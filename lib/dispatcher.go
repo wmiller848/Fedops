@@ -64,6 +64,8 @@ const (
   FedopsTypeTruck uint = 0
   FedopsTypeWarehouse uint = 1
 
+
+  FedopsRepo string = "github.com/wmiller848/Fedops"
   ConfigFileName string = "Fedops"
 )
 
