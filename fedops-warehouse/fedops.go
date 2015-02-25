@@ -25,7 +25,7 @@ package main
 import (
   "fmt"
   "os"
-  "github.com/Fedops/lib"
+  "github.com/Fedops/lib/dispatcher"
   "crypto/tls"
 )
 

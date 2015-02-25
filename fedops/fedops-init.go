@@ -31,7 +31,7 @@ import (
 	"github.com/codegangsta/cli"
 	"code.google.com/p/gopass"
 	// FedOps
-	"github.com/Fedops/lib"
+	"github.com/Fedops/lib/dispatcher"
 )
 
 func commandInit(stdin *bufio.Reader, pwd string) cli.Command {

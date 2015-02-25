@@ -27,7 +27,7 @@ import (
   "os"
   "crypto/tls"
   //
-  "github.com/Fedops/lib"
+  "github.com/Fedops/lib/dispatcher"
 )
 
 func main() {

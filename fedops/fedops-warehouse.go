@@ -29,7 +29,7 @@ import (
 	// 3rd Party
 	"github.com/codegangsta/cli"
 	// FedOps
-	"github.com/Fedops/lib"
+	"github.com/Fedops/lib/dispatcher"
 )
 
 func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
