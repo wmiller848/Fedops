@@ -6,12 +6,13 @@ USER root
 
 ADD . /go/src/github.com/Fedops
 
-RUN go get code.google.com/p/go.crypto/ssh
-RUN go get github.com/codegangsta/cli
-RUN go get code.google.com/p/gopass
+RUN go get -u github.com/codegangsta/cli
+RUN go get -u code.google.com/p/gopass
+RUN go get -u golang.org/x/crypto/ssh
 
-RUN go install github.com/Fedops/fedops-truck
-RUN go install github.com/Fedops/fedops-warehouse
 RUN go install github.com/Fedops/fedops
+RUN go install github.com/Fedops/fedops-warehouse
+RUN go install github.com/Fedops/fedops-truck
 
 VOLUME /opt/fedops
+WORKDIR /opt/fedops
