@@ -59,7 +59,7 @@ fedops container create https://github.com/wmiller848/amazing_example
 fedops warehouse ship [warehouseID] [containerID]
 ```
 
-### deliver a container for running ###
+### Deliver a container for running ###
 ```
 fedops truck deliver [truckID] [containerID]
 ```
