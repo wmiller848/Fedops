@@ -29,14 +29,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	_ "strings"
+	// _ "strings"
 	"time"
 	// 3rd Party
-  _ "code.google.com/p/go.crypto/ssh"
-  _ "code.google.com/p/go.crypto/ssh/terminal"
+  // _ "code.google.com/p/go.crypto/ssh"
+  // _ "code.google.com/p/go.crypto/ssh/terminal"
 	// FedOps
 	"github.com/Fedops/lib/providers"
   "github.com/Fedops/lib/encryption"
+  "github.com/Fedops/lib/engine/container"
+  "github.com/Fedops/lib/engine/truck"
+  "github.com/Fedops/lib/engine/warehouse"
 )
 
 const (
@@ -108,9 +111,9 @@ type DispatcherConfig struct {
   Certs      []fedops_encryption.Cert
 	SSHKeys    []fedops_provider.ProviderKeypair
 	Tokens     map[string]Tokens
-	Warehouses []Warehouse
-	Trucks     []Truck
-  Containers []Container
+	Warehouses []fedops_warehouse.Warehouse
+	Trucks     []fedops_truck.Truck
+  Containers []fedops_container.Container
 }
 
 type Dispatcher struct {

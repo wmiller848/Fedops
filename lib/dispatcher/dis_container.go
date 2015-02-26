@@ -26,19 +26,20 @@ import (
   "fmt"
   //
   "github.com/Fedops/lib/encryption"
+  "github.com/Fedops/lib/engine/container"
 )
 
-type Container struct {
-  ContainerID  string
-  Repo string
-  Warehouses []string
-  Trucks []string
-}
+// type Container struct {
+//   ContainerID  string
+//   Repo string
+//   Warehouses []string
+//   Trucks []string
+// }
 
 func (d *Dispatcher) CreateContainer(promise chan FedopsAction, repo string) {
   containerID, _ := fedops_encryption.GenerateRandomHex(ContainerIDSize)
 
-  container := new(Container)
+  container := new(fedops_container.Container)
   container.Repo = repo
   container.ContainerID = containerID
   

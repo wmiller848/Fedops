@@ -29,21 +29,21 @@ import (
   "fmt"
   "io/ioutil"
   "os"
-  _ "strings"
+  // _ "strings"
   "time"
   // 3rd Party
-  _ "code.google.com/p/go.crypto/ssh"
-  _ "code.google.com/p/go.crypto/ssh/terminal"
+  // _ "code.google.com/p/go.crypto/ssh"
+  // _ "code.google.com/p/go.crypto/ssh/terminal"
   // FedOps
-  _ "github.com/Fedops/lib/providers"
-  "github.com/Fedops/lib/dispatcher"
+  // "github.com/Fedops/lib/providers"
+  // "github.com/Fedops/lib/dispatcher"
   "github.com/Fedops/lib/encryption"
+  "github.com/Fedops/lib/engine/container"
 )
 
 const (
   ConfigFileName string = "Fedops-Runtime"
 )
-
 
 //
 //
@@ -65,7 +65,7 @@ type ClusterConfig struct {
   ClusterID  string
   Modified   string
   Certs      []fedops_encryption.Cert
-  Containers []fedops.Container
+  Containers []fedops_container.Container
 }
 
 type Runtime struct {
@@ -146,7 +146,6 @@ func (r *Runtime) Info() {
 // }
 
 func (r *Runtime) Unload() bool {
-
   now := time.Now()
   r.Config.Modified = now.UTC().String()
 
@@ -174,4 +173,28 @@ func (r *Runtime) Unload() bool {
     return false
   }
   return true
+}
+
+func (r *Runtime) UnloadToMemory() []byte {
+  now := time.Now()
+  r.Config.Modified = now.UTC().String()
+
+  disjson, err := json.Marshal(r.Config)
+  if err != nil {
+    fmt.Println(err.Error())
+    return nil
+  }
+  cipherkey, err := fedops_encryption.Decode(r.Cipherkey)
+  if err != nil {
+    fmt.Println(err.Error())
+    return nil
+  }
+
+  encrypted, err := fedops_encryption.Encrypt(cipherkey, disjson)
+  if err != nil {
+    fmt.Println(err.Error())
+    return nil
+  }
+
+  return encrypted
 }

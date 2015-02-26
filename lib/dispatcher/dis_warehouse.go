@@ -30,13 +30,14 @@ import (
   // FedOps
   "github.com/Fedops/lib/providers"
   "github.com/Fedops/lib/encryption"
+  "github.com/Fedops/lib/engine/warehouse"
 )
 
-type Warehouse struct {
-  fedops_provider.ProviderVM
-  WarehouseID string
-  Containers    []string
-}
+// type Warehouse struct {
+//   fedops_provider.ProviderVM
+//   WarehouseID string
+//   Containers    []string
+// }
 
 func (d *Dispatcher) CreateWarehouse(promise chan FedopsAction, providerName, memSize, diskSize, numVcpus string) {
   // Cycle through all the provider tokens
@@ -91,7 +92,7 @@ func (d *Dispatcher) _createWarehouse(provider fedops_provider.Provider) uint {
     return FedopsError
   }
 
-  warehouse := new(Warehouse)
+  warehouse := new(fedops_warehouse.Warehouse)
   warehouse.WarehouseID = vmid
   warehouse.ID = vm.ID
   warehouse.Provider = provider.Name()
@@ -124,9 +125,6 @@ func (d *Dispatcher) _createWarehouse(provider fedops_provider.Provider) uint {
   }
   fmt.Printf("\r\n")
 
-  // Give the machine a few seconds to boot
-  time.Sleep(FedopsBootWaitTime * time.Second)
-
   fmt.Printf("Bootstrapping...")
   done = false
   go func() {
@@ -135,6 +133,9 @@ func (d *Dispatcher) _createWarehouse(provider fedops_provider.Provider) uint {
       fmt.Printf(".")
     }
   }()
+
+  // Give the machine a few seconds to boot
+  time.Sleep(FedopsBootWaitTime * time.Second)
 
   d._bootstrap(warehouse.WarehouseID, FedopsTypeWarehouse)
   done = true
@@ -145,7 +146,7 @@ func (d *Dispatcher) _createWarehouse(provider fedops_provider.Provider) uint {
 
 func (d *Dispatcher) DestroyWarehouse(promise chan FedopsAction, warehouseID string) {
 
-  var warehouse Warehouse
+  var warehouse fedops_warehouse.Warehouse
   warehouses := d.Config.Warehouses
   found := false
   var wIndex int
@@ -195,7 +196,7 @@ func (d *Dispatcher) DestroyWarehouse(promise chan FedopsAction, warehouseID str
   }
 }
 
-func (d *Dispatcher) _destroyWarehouse(provider fedops_provider.Provider, warehouse Warehouse) uint {
+func (d *Dispatcher) _destroyWarehouse(provider fedops_provider.Provider, warehouse fedops_warehouse.Warehouse) uint {
   vm := fedops_provider.ProviderVM{
     ID: warehouse.ID,
   }

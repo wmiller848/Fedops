@@ -24,7 +24,7 @@ package fedops_encryption
 
 import (
   _ "bytes"
-  "code.google.com/p/go.crypto/ssh"
+  "golang.org/x/crypto/ssh"
   "crypto/rand"
   _ "crypto/rsa"
   "crypto/x509"

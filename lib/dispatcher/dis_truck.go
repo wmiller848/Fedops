@@ -30,13 +30,14 @@ import (
   // FedOps
   "github.com/Fedops/lib/providers"
   "github.com/Fedops/lib/encryption"
+  "github.com/Fedops/lib/engine/truck"
 )
 
-type Truck struct {
-  fedops_provider.ProviderVM
-  TruckID  string
-  Containers []string
-}
+// type Truck struct {
+//   fedops_provider.ProviderVM
+//   TruckID  string
+//   Containers []string
+// }
 
 func (d *Dispatcher) CreateTruck(promise chan FedopsAction, provider, memSize, diskSize, numVcpus string) {
   // Cycle through all the provider tokens
@@ -91,7 +92,7 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
     return FedopsError
   }
 
-  truck := new(Truck)
+  truck := new(fedops_truck.Truck)
   truck.TruckID = vmid
   truck.ID = vm.ID
   truck.Provider = provider.Name()
@@ -124,9 +125,6 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
   }
   fmt.Printf("\r\n")
 
-  // Give the machine a few seconds to boot
-  time.Sleep(FedopsBootWaitTime * time.Second)
-
   fmt.Printf("Bootstrapping...")
   done = false
   go func() {
@@ -135,6 +133,9 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
       fmt.Printf(".")
     }
   }()
+
+  // Give the machine a few seconds to boot
+  time.Sleep(FedopsBootWaitTime * time.Second)
 
   d._bootstrap(truck.TruckID, FedopsTypeTruck)
   done = true
@@ -145,7 +146,7 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
 
 func (d *Dispatcher) DestroyTruck(promise chan FedopsAction, truckID string) {
 
-  var truck Truck
+  var truck fedops_truck.Truck
   trucks := d.Config.Trucks
   found := false
   var tIndex int
@@ -195,7 +196,7 @@ func (d *Dispatcher) DestroyTruck(promise chan FedopsAction, truckID string) {
   }
 }
 
-func (d *Dispatcher) _destroyTruck(provider fedops_provider.Provider, truck Truck) uint {
+func (d *Dispatcher) _destroyTruck(provider fedops_provider.Provider, truck fedops_truck.Truck) uint {
   vm := fedops_provider.ProviderVM{
     ID: truck.ID,
   }
