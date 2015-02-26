@@ -141,9 +141,10 @@ fedops help [subcommand]
 
 Fedops uses a push based architecture, after a warehouse is established it will poll source control. From there it will push events to the relevant trucks via secure tcp listeners.
 
-By defualt all nodes on any provider are fodora images with SELinux installed/enabled
+By defualt all nodes on any provider are fedora images with SELinux installed/enabled
 
 See https://getfedora.org/
+
 See http://en.wikipedia.org/wiki/Security-Enhanced_Linux
 
 Bootstrapping is done at machine creation time and uses ssh for file transfer and passing commands.
