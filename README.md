@@ -59,9 +59,9 @@ fedops container create https://github.com/wmiller848/amazing_example
 fedops warehouse ship [warehouseID] [containerID]
 ```
 
-### Deliever a container for running ###
+### deliver a container for running ###
 ```
-fedops truck deliever [truckID] [containerID]
+fedops truck deliver [truckID] [containerID]
 ```
 
 ### List cluster information ###
@@ -100,7 +100,7 @@ Unshipped Containers
 Ship it to antother truck
 ```
 fedops truck create
-fedops truck deliever [truckID] [containerID]
+fedops truck deliver [truckID] [containerID]
 ```
 
 If we looked now
