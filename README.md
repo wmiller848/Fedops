@@ -19,7 +19,8 @@ Machines that receive and run shipped containers are called trucks
 
 Fedops believes in robust security, the 'init' command will walk you through configuring a new cluster.
 After you have configured the new cluster Fedops will create an encrypted configuration file for the cluster.
-This is important as your configuration file will store sensative information about your account for a given cloud provider.
+This is important as your configuration file will store sensative information about your account for a given cloud provider, ssh keypairs and tls certifcates keypairs.
+
 You should treat the 'Fedops' file with care, this contains vital information on your stack.
 
 Fedops operates like git, vagrant, or grunt in the sense that it is directory based, see usage for an example
