@@ -9,7 +9,7 @@
 
 Fedops is a cloud vps manager and contionous intigration tool designed to easilty and securely manage shipping docker containers. Fedops initigrates very tightly with docker, and the docker registery.
 
-You can use Fedops to create a cluster of machines that will poll source control, build, test, and deploy to any number of servers you define.
+You can use Fedops to create a cluster of machines that will poll source control, build, test, and deploy to any number of machines you define.
 
 The developer is referred to as the dispatcher
 
@@ -19,7 +19,7 @@ Machines that receive and run shipped containers are called trucks
 
 Fedops believes in robust security, the 'init' command will walk you through configuring a new cluster.
 After you have configured the new cluster Fedops will create an encrypted configuration file for the cluster.
-This is important as your configuration file will store sensative information about your account for a given cloud provider, ssh keypairs and tls certifcates keypairs.
+This is important as your configuration file will store sensative information about your account for a given cloud provider,ssh key pairs, and tls certificate key pairs.
 
 You should treat the 'Fedops' file with care, this contains vital information on your stack.
 
