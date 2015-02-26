@@ -19,13 +19,12 @@ Machines that receive and run shipped containers are called trucks
 
 Fedops believes in robust security, the 'init' command will walk you through configuring a new cluster.
 After you have configured the new cluster Fedops will create an encrypted configuration file for the cluster.
-This is important as your configuration file will store sensative information about your account for a given cloud provider,ssh key pairs, and tls certificate key pairs.
+This is important as your configuration file will store sensative information about your account for a given cloud provider, ssh key pairs, and tls certificate key pairs.
 
-You should treat the 'Fedops' file with care, this contains vital information on your stack.
-
-Fedops operates like git, vagrant, or grunt in the sense that it is directory based, see usage for an example
+You should treat the 'Fedops' file with care.
 
 ## Usage ##
+Fedops operates like git, vagrant, or grunt in the sense that it is directory based, see usage for an example
 
 ### Setup ###
 Move into a clean folder
@@ -38,7 +37,14 @@ cd ~/clusters/example
 fedops init
 ```
 Follow the prompts
-
+```
+ls -la ./
+```
+You should see two files
+```
+Fedops
+.fedops-salt
+```
 
 ### Create a new warehouse ###
 ```
@@ -130,6 +136,28 @@ fedops ssh [warehouseID or truckID]
 fedops help
 fedops help [subcommand]
 ```
+
+## Architecture ##
+
+Fedops uses a push based architecture, after a warehouse is established it will poll source control. From there it will push events to the relevant trucks via secure tcp listeners.
+
+By defualt all nodes on any provider are fodora images with SELinux installed/enabled
+
+See https://getfedora.org/
+See http://en.wikipedia.org/wiki/Security-Enhanced_Linux
+
+Bootstrapping is done at machine creation time and uses ssh for file transfer and passing commands.
+After a fedops node comes online communication is secured via a tls tcp connection, the clusterID is used to further encrypt all commands as an additonal layer on top of tls.
+
+Fedops makes use of golang's standard implementations of crypto and ssh
+
+See https://godoc.org/golang.org/x/crypto
+
+Fedops produces '521 Elliptic Curve' based private keys that are equilvant to 15360 bit RSA keys
+
+See https://www.nsa.gov/business/programs/elliptic_curve.shtml
+
+ALL DATA at rest and/or on the wire is encypted at least once in additon to any transport encryption
 
 ## Liceneces ##
 
