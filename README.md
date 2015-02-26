@@ -97,7 +97,7 @@ Unshipped Containers
   none
 ```
 
-Ship it to antother truck
+Ship it to another truck
 ```
 fedops truck create
 fedops truck deliver [truckID] [containerID]
@@ -117,6 +117,11 @@ Trucks
   
 Unshipped Containers
   none
+```
+
+### SSH into a machine ###
+```
+fedops ssh [warehouseID or truckID]
 ```
 
 ### Help ###
