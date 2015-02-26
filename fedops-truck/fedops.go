@@ -37,14 +37,18 @@ func main() {
   runtime.GOMAXPROCS(numCpus)
 
   pwd := os.Getenv("PWD")
-  password := os.Getenv("FEDOPS_RUNTIME_KEY")
+
+  if !fedops_runtime.HasKeyFile(pwd) {
+    fmt.Println("No key file located in", pwd)
+    return
+  }
 
   if !fedops_runtime.HasConfigFile(pwd) {
     fmt.Println("No config file located in", pwd)
     return
   }
 
-  fed, err := fedops_runtime.CreateRuntime([]byte(password), pwd)
+  fed, err := fedops_runtime.CreateRuntime(pwd)
   if err != nil {
     fmt.Println(err.Error())
     return

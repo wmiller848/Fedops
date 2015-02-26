@@ -168,12 +168,20 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   // Install Fedops
   /////////////////
   // Write the config file
-  keydata := []byte("091u190u09xh1h1hi1hu1obh18h10hd0")
+  keydata, err := fedops_encryption.GenerateRandomBytes(FedopsRemoteKeySize)
+  if err != nil {
+    fmt.Println(err.Error())
+    return FedopsError
+  }
+
+  pwd := "/opt/fedops"
   r := &fedops_runtime.Runtime{
     Cipherkey:      fedops_encryption.Encode(keydata),
-    Config:         fedops_runtime.ClusterConfig{},
+    Config:         fedops_runtime.ClusterConfig{
+      ClusterID: d.Config.ClusterID,
+    },
     Version:        "0.0.1",
-    PowerDirectory: "/opt/fedops",
+    PowerDirectory: pwd,
   }
   configData := r.UnloadToMemory()
 
@@ -183,13 +191,13 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
     return FedopsError
   }
 
-  err = sftpClient.Mkdir("/opt/fedops")
+  err = sftpClient.Mkdir(pwd)
   if err != nil {
     fmt.Println(err.Error())
     return FedopsError
   }
 
-  configFile, err := sftpClient.Create("/opt/fedops/Fedops-Runtime")
+  configFile, err := sftpClient.Create(pwd + "/" + fedops_runtime.ConfigFileName)
   if err != nil {
     fmt.Println(err.Error())
     return FedopsError
@@ -202,7 +210,7 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   }
   configFile.Close()
 
-  keyFile, err := sftpClient.Create("/opt/fedops/.fedops_key")
+  keyFile, err := sftpClient.Create(pwd + "/" + fedops_runtime.KeyFileName)
   if err != nil {
     fmt.Println(err.Error())
     return FedopsError
@@ -215,8 +223,6 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   }
   keyFile.Close()
 
-  // Build fedops
-  // session.Close()
   sftpClient.Close()
   conn.Close()
 
@@ -234,6 +240,7 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   }
   defer session.Close()
 
+  // Build fedops
   cmd = "docker build --no-cache=true --force-rm=true -t fedops " + FedopsRepo
   cmd += " && "
   // TODO :: Set up persistant data container instead of mounting a volume from the host

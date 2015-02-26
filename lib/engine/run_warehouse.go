@@ -20,14 +20,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package fedops_warehouse
-
-import(
-  "github.com/Fedops/lib/providers"
-)
-
-type Warehouse struct {
-  fedops_provider.ProviderVM
-  WarehouseID string
-  Containers  []string
-}
+package fedops_runtime

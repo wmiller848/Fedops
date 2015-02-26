@@ -42,6 +42,7 @@ import (
 )
 
 const (
+  KeyFileName string =  ".fedops_key"
   ConfigFileName string = "Fedops-Runtime"
 )
 
@@ -63,6 +64,7 @@ func (err *RuntimeError) setMsg(msg string) {
 // This config is stored encrypted on disk
 type ClusterConfig struct {
   ClusterID  string
+  Created    string
   Modified   string
   Certs      []fedops_encryption.Cert
   Containers []fedops_container.Container
@@ -75,19 +77,37 @@ type Runtime struct {
   Config         ClusterConfig
 }
 
-func CreateRuntime(key []byte, pwd string) (*Runtime, error) {
-  config, err := loadConfig(key, pwd)
+func CreateRuntime(pwd string) (*Runtime, error) {
+  cipherkey, err := GetKeyFile(pwd)
+  if err != nil {
+    //  We couldn't find the key file :(
+    return nil, err
+  }
+
+  config, err := loadConfig(cipherkey, pwd)
   if err != nil {
     return nil, err
   }
 
   r := &Runtime{
-    Cipherkey:      fedops_encryption.Encode(key),
+    Cipherkey:      fedops_encryption.Encode(cipherkey),
     Config:         config,
     Version:        "0.0.1",
     PowerDirectory: pwd,
   }
   return r, nil
+}
+
+func HasKeyFile(pwd string) bool {
+  _, err := os.Stat(pwd + "/" + KeyFileName)
+  if err != nil {
+    return false
+  }
+  return true
+}
+
+func GetKeyFile(pwd string) ([]byte, error) {
+  return ioutil.ReadFile(pwd + "/" + KeyFileName)
 }
 
 func HasConfigFile(pwd string) bool {
@@ -107,15 +127,15 @@ func GetConfigFile(pwd string) ([]byte, error) {
 // }
 
 func loadConfig(cipherkey []byte, pwd string) (ClusterConfig, error) {
-  fdata, err := GetConfigFile(pwd)
   var config ClusterConfig
+  cdata, err := GetConfigFile(pwd)
   if err != nil {
     //  We couldn't find the config file :(
     return config, err
   }
 
   // We found the config, now unencrypt it, base64 decode it, and then marshal from json
-  decrypted, err := fedops_encryption.Decrypt(cipherkey, fdata)
+  decrypted, err := fedops_encryption.Decrypt(cipherkey, cdata)
   if err != nil {
     return config, err
   }

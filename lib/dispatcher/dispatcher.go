@@ -56,13 +56,14 @@ const (
   TruckIDSize int = 16
   ContainerIDSize int = 16
 
+  FedopsRemoteKeySize int = 1024
+
   FedopsPoolTime time.Duration = 5
   FedopsBootWaitTime time.Duration = 30
 
 	FedopsError   uint = 0
 	FedopsOk      uint = 1
 	FedopsUnknown uint = 2
-
 
   FedopsTypeTruck uint = 0
   FedopsTypeWarehouse uint = 1
@@ -178,8 +179,8 @@ func GetSalt(pwd string) ([]byte, error) {
 }
 
 func loadConfig(cipherkey []byte, pwd string) (DispatcherConfig, error) {
-	fdata, err := GetConfigFile(pwd)
 	var config DispatcherConfig
+  cdata, err := GetConfigFile(pwd)
 	if err != nil {
 		//  We couldn't find the config file :(
 		//fmt.Println(err.Error())
@@ -194,7 +195,7 @@ func loadConfig(cipherkey []byte, pwd string) (DispatcherConfig, error) {
 	}
 
 	// We found the config, now unencrypt it, base64 decode it, and then marshal from json
-	decrypted, err := fedops_encryption.Decrypt(cipherkey, fdata)
+	decrypted, err := fedops_encryption.Decrypt(cipherkey, cdata)
 	if err != nil {
 		return config, err
 	}
