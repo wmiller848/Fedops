@@ -56,7 +56,7 @@ const (
   TruckIDSize int = 16
   ContainerIDSize int = 16
 
-  FedopsRemoteKeySize int = 1024
+  FedopsRemoteKeySize int = 32
 
   FedopsPoolTime time.Duration = 5
   FedopsBootWaitTime time.Duration = 30
