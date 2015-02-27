@@ -179,6 +179,7 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
     Cipherkey:      fedops_encryption.Encode(keydata),
     Config:         fedops_runtime.ClusterConfig{
       ClusterID: d.Config.ClusterID,
+      Certs: d.Config.Certs,
     },
     Version:        "0.0.1",
     PowerDirectory: pwd,

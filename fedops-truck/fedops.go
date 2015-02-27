@@ -54,7 +54,7 @@ func main() {
     return
   }
 
-  fmt.Println(fed)
+  fmt.Printf("%+v\r\n", fed)
 
   // server cert is self signed -> server_cert == ca_cert
   // CA_Pool := x509.NewCertPool()
