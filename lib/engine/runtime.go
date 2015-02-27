@@ -42,7 +42,7 @@ import (
 )
 
 const (
-  KeyFileName string =  ".fedops_key"
+  KeyFileName string =  ".fedops-key"
   ConfigFileName string = "Fedops-Runtime"
 )
 

@@ -245,9 +245,9 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   cmd += " && "
   // TODO :: Set up persistant data container instead of mounting a volume from the host
   if fedType == FedopsTypeTruck {
-    cmd += "docker run --privileged -d -v=/opt/fedops:/opt/fedops/ fedops fedops-truck"
+    cmd += "docker run -d -v=/opt/fedops/:/opt/fedops/ fedops fedops-truck"
   } else if fedType == FedopsTypeWarehouse {
-    cmd += "docker run --privileged -d -v=/opt/fedops:/opt/fedops/ fedops fedops-warehouse"
+    cmd += "docker run -d -v=/opt/fedops/:/opt/fedops/ fedops fedops-warehouse"
   }
   
   /////////////////
