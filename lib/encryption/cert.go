@@ -33,20 +33,19 @@ import (
   "fmt"
   "log"
   "math/big"
-  // _ "net"
+  "net"
   "os"
-  // _ "strings"
   "time"
 )
 
 
 type Cert_Config struct {
-
+  IP string
 }
 
 func GenerateCert(certConfig Cert_Config) Cert {
   cert := Cert{}
-  cert.Generate()
+  cert.Generate(certConfig)
   return cert
 }
 
@@ -61,7 +60,7 @@ type Cert struct {
   PrivatePem []byte
 }
 
-func (c *Cert) Generate() {
+func (c *Cert) Generate(certConfig Cert_Config) {
   // TODO :: use the fedops keypair type
   // fmt.Println("Creating EC Key")
   priv, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
@@ -108,8 +107,8 @@ func (c *Cert) Generate() {
   }
 
   template := x509.Certificate{
-    DNSNames: []string{"localhost"},
-    // IPAddresses: []net.IP{net.IP("127.0.0.1")},
+    DNSNames: []string{"*"},
+    IPAddresses: []net.IP{net.IP(certConfig.IP)},
     SerialNumber: serialNumber,
     Subject: pkix.Name{
       Organization: []string{"Fedops Daemon Certificate"},

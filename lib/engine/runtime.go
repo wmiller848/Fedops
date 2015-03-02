@@ -58,7 +58,7 @@ type ClusterConfig struct {
   MemberID   string
   Created    string
   Modified   string
-  Certs      []fedops_encryption.Cert
+  Cert      fedops_encryption.Cert
   Containers []fedops_container.Container
 }
 

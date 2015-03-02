@@ -312,10 +312,10 @@ func (d *Dispatcher) InitCloudProvider(promise chan FedopsAction, provider strin
 
 func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) uint {
 
-  certConfig := fedops_encryption.Cert_Config{}
-  cert := fedops_encryption.GenerateCert(certConfig)
+  // certConfig := fedops_encryption.Cert_Config{}
+  // cert := fedops_encryption.GenerateCert(certConfig)
 
-  d.Config.Certs = append(d.Config.Certs, cert)
+  // d.Config.Certs = append(d.Config.Certs, cert)
 
 	keypairConfig := fedops_encryption.Keypair_Config{}
 	sshKey := fedops_encryption.GenerateKeypair(keypairConfig)

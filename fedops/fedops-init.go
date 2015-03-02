@@ -93,11 +93,11 @@ func commandInit(stdin *bufio.Reader, pwd string) cli.Command {
 				return
 			}
 
-			if c.Bool("no-harden") == true {
-				fmt.Println("WARNING")
-				fmt.Println("This cluster's base image will NOT be hardened")
-				fmt.Println("Full disk encryption and iptables have been disabled")
-			}
+			// if c.Bool("no-harden") == true {
+			// 	fmt.Println("WARNING")
+			// 	fmt.Println("This cluster's base image will NOT be hardened")
+			// 	fmt.Println("Full disk encryption and iptables have been disabled")
+			// }
 
 			fed, err := fedops.CreateDispatcher([]byte(passwd), pwd, false)
 			if err != nil {

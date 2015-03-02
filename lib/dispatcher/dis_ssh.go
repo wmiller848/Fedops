@@ -174,12 +174,17 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
     return FedopsError
   }
 
+  certConfig := fedops_encryption.Cert_Config{IP:ip}
+  cert := fedops_encryption.GenerateCert(certConfig)
+
+  d.Config.Certs = append(d.Config.Certs, cert)
+
   pwd := "/opt/fedops"
   r := &fedops_runtime.Runtime{
     Cipherkey:      fedops_encryption.Encode(keydata),
     Config:         fedops_runtime.ClusterConfig{
       ClusterID: d.Config.ClusterID,
-      Certs: d.Config.Certs,
+      Cert: cert,
     },
     Version:        "0.0.1",
     PowerDirectory: pwd,

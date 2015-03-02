@@ -73,10 +73,17 @@ func handleConnection(conn net.Conn) {
 }
 
 func (d *TruckDaemon) Listen() {
-  fed_certs := d.Config.Certs
+  // config := &ssh.ServerConfig{}
+  // private, err := ssh.ParsePrivateKey(d.Config.)
+  // if err != nil {
+  //   log.Fatal("Failed to parse private key")
+  // }
+ 
+  // config.AddHostKey(private)
 
+  fed_cert := d.Config.Cert
   // cert, err := tls.LoadX509KeyPair("./cert.pem", "./key.pem")
-  cert, err := tls.X509KeyPair(fed_certs[0].CertificatePem, fed_certs[0].PrivatePem)
+  cert, err := tls.X509KeyPair(fed_cert.CertificatePem, fed_cert.PrivatePem)
   if err != nil {
     fmt.Println(err.Error())
     return
@@ -98,5 +105,4 @@ func (d *TruckDaemon) Listen() {
       fmt.Println(conn.RemoteAddr(), "Connected")
       go handleConnection(conn)
   }
-
 }
