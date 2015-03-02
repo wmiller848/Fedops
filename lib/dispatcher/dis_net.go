@@ -33,20 +33,16 @@ func (d *Dispatcher) OpenConnection(vmID string) *tls.Conn {
   // server cert is self signed -> server_cert == ca_cert
   certPool := x509.NewCertPool()
 
-  // severCert, err := ioutil.ReadFile("./cert.pem")
-  // if err != nil {
-  //     log.Fatal("Could not load server certificate!")
-  // }
-
   fed_certs := d.Config.Certs
   certPool.AppendCertsFromPEM(fed_certs[0].CertificatePem)
 
   config := tls.Config{RootCAs: certPool}
 
-  conn, err := tls.Dial("tcp", "127.0.0.1:13371", &config)
+  ip := "127.0.0.1"
+  conn, err := tls.Dial("tcp", ip + ":13371", &config)
   if err != nil {
-      fmt.Println("client: dial:", err.Error())
-      return nil
+    fmt.Println("client: dial:", err.Error())
+    return nil
   }
   // defer conn.Close()
   return conn

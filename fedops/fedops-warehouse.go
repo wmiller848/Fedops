@@ -94,7 +94,7 @@ func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
         },
       },
       cli.Command{
-        Name: "add",
+        Name: "package",
         Action: func(c *cli.Context) {
           fed, err := initFedops(pwd)
           if err != nil {
@@ -150,7 +150,7 @@ func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
 			if len(c.Args()) > 0 {
 				return
 			}
-			warehouseTasks := []string{"create", "destroy", "add"}
+			warehouseTasks := []string{"create", "destroy", "package"}
 			for _, t := range warehouseTasks {
 				fmt.Println(t)
 			}

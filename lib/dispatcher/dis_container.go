@@ -91,6 +91,7 @@ func (d *Dispatcher) DestroyContainer(promise chan FedopsAction, containerID str
 // Ship a container to the warehouse for continuous deployment
 func (d *Dispatcher) ShipContainerToWarehouse(promise chan FedopsAction, containerID string) {
   conn := d.OpenConnection(containerID)
+  conn.Write([]byte("Way cool!"))
   conn.Close()
 
   persisted := d.Unload()

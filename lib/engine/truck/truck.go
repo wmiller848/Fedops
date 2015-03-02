@@ -27,6 +27,7 @@ import (
   "fmt"
   "os"
   "regexp"
+  "net"
   "crypto/tls"
   //
   "github.com/Fedops/lib/providers"
@@ -53,6 +54,22 @@ func CreateDaemon() *TruckDaemon{
   return &truckDaemon
 }
 
+// Handles incoming requests.
+func handleConnection(conn net.Conn) {
+  // Make a buffer to hold incoming data.
+  buf := make([]byte, 1024)
+  // Read the incoming connection into the buffer.
+  reqLen, err := conn.Read(buf)
+  if err != nil {
+    fmt.Println("Error reading:", err.Error())
+  }
+  fmt.Println(reqLen, buf)
+  // Send a response back to person contacting us.
+  conn.Write([]byte("Message received"))
+  // Close the connection when you're done with it.
+  conn.Close()
+}
+
 func (d *TruckDaemon) Listen() {
   fed_certs := d.Config.Certs
 
@@ -73,11 +90,11 @@ func (d *TruckDaemon) Listen() {
   for {
       conn, err := listener.Accept()
       if err != nil {
-        fmt.Println("server: accept: %s", err)
+        fmt.Println(err.Error())
         break
       }
-      fmt.Println("server: accepted from %s", conn.RemoteAddr())
-      // go handleConnection(conn)
+      fmt.Println(conn.RemoteAddr(), "Connected")
+      go handleConnection(conn)
   }
 
 }
