@@ -22,12 +22,31 @@
 
 package fedops_truck
 
-import(
+import (
+  //
+  "os"
+  "regexp"
+  //
   "github.com/Fedops/lib/providers"
+  "github.com/Fedops/lib/engine"
 )
 
 type Truck struct {
   fedops_provider.ProviderVM
   TruckID  string
   Containers []string
+}
+
+type TruckDaemon struct {
+  fedops_runtime.Runtime
+  Muxer regexp.Regexp
+}
+
+func CreateDaemon() *TruckDaemon{
+  pwd := os.Getenv("PWD")
+
+  truckDaemon := TruckDaemon{}
+  truckDaemon.Configure(pwd)
+
+  return &truckDaemon
 }

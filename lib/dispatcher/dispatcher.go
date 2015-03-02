@@ -29,11 +29,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	// _ "strings"
 	"time"
 	// 3rd Party
-  // _ "code.google.com/p/go.crypto/ssh"
-  // _ "code.google.com/p/go.crypto/ssh/terminal"
 	// FedOps
 	"github.com/Fedops/lib/providers"
   "github.com/Fedops/lib/encryption"

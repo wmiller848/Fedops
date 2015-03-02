@@ -29,14 +29,9 @@ import (
   "fmt"
   "io/ioutil"
   "os"
-  // _ "strings"
   "time"
   // 3rd Party
-  // _ "code.google.com/p/go.crypto/ssh"
-  // _ "code.google.com/p/go.crypto/ssh/terminal"
   // FedOps
-  // "github.com/Fedops/lib/providers"
-  // "github.com/Fedops/lib/dispatcher"
   "github.com/Fedops/lib/encryption"
   "github.com/Fedops/lib/engine/container"
 )
@@ -52,18 +47,15 @@ type RuntimeError struct {
   msg string
 }
 
-func (err *RuntimeError) Error() string {
+func (err RuntimeError) Error() string {
   return err.msg
-}
-
-func (err *RuntimeError) setMsg(msg string) {
-  err.msg = msg
 }
 
 //
 // This config is stored encrypted on disk
 type ClusterConfig struct {
   ClusterID  string
+  MemberID   string
   Created    string
   Modified   string
   Certs      []fedops_encryption.Cert
@@ -77,28 +69,35 @@ type Runtime struct {
   Config         ClusterConfig
 }
 
-func CreateRuntime(pwd string) (*Runtime, error) {
-  cipherkey, err := GetKeyFile(pwd)
+func (r *Runtime) Configure(pwd string) error {
+  if !r.HasKeyFile(pwd) {
+    return RuntimeError{msg:"No key file located in " + pwd}
+  }
+
+  if !r.HasConfigFile(pwd) {
+    return RuntimeError{msg:"No config file located in " + pwd}
+  }
+
+  cipherkey, err := r.GetKeyFile(pwd)
   if err != nil {
     //  We couldn't find the key file :(
-    return nil, err
+    return err
   }
 
-  config, err := loadConfig(cipherkey, pwd)
+  config, err := r.Load(cipherkey, pwd)
   if err != nil {
-    return nil, err
+    return err
   }
 
-  r := &Runtime{
-    Cipherkey:      fedops_encryption.Encode(cipherkey),
-    Config:         config,
-    Version:        "0.0.1",
-    PowerDirectory: pwd,
-  }
-  return r, nil
+  r.Cipherkey = fedops_encryption.Encode(cipherkey)
+  r.Config = config
+  r.Version = "0.0.1"
+  r.PowerDirectory = pwd
+  
+  return nil
 }
 
-func HasKeyFile(pwd string) bool {
+func (r *Runtime) HasKeyFile(pwd string) bool {
   _, err := os.Stat(pwd + "/" + KeyFileName)
   if err != nil {
     return false
@@ -106,11 +105,11 @@ func HasKeyFile(pwd string) bool {
   return true
 }
 
-func GetKeyFile(pwd string) ([]byte, error) {
+func (r *Runtime) GetKeyFile(pwd string) ([]byte, error) {
   return ioutil.ReadFile(pwd + "/" + KeyFileName)
 }
 
-func HasConfigFile(pwd string) bool {
+func (r *Runtime) HasConfigFile(pwd string) bool {
   _, err := os.Stat(pwd + "/" + ConfigFileName)
   if err != nil {
     return false
@@ -118,17 +117,24 @@ func HasConfigFile(pwd string) bool {
   return true
 }
 
-func GetConfigFile(pwd string) ([]byte, error) {
+func (r *Runtime) GetConfigFile(pwd string) ([]byte, error) {
   return ioutil.ReadFile(pwd + "/" + ConfigFileName)
 }
 
-// func GetSalt(pwd string) ([]byte, error) {
-//   return ioutil.ReadFile(pwd + "/.fedops-salt")
-// }
+//
+//
+func (r *Runtime) Error() *RuntimeError {
+  return &RuntimeError{}
+}
 
-func loadConfig(cipherkey []byte, pwd string) (ClusterConfig, error) {
+func (r *Runtime) Info() {
+  fmt.Println("[WARNING] Fedops encrypts all information you provide to it...")
+  fmt.Println("[WARNING] Fedops data is UNRECOVERABLE without knowning the encryption key")
+}
+
+func (r *Runtime) Load(cipherkey []byte, pwd string) (ClusterConfig, error) {
   var config ClusterConfig
-  cdata, err := GetConfigFile(pwd)
+  cdata, err := r.GetConfigFile(pwd)
   if err != nil {
     //  We couldn't find the config file :(
     return config, err
@@ -147,23 +153,6 @@ func loadConfig(cipherkey []byte, pwd string) (ClusterConfig, error) {
 
   return config, nil
 }
-
-//
-//
-func (r *Runtime) error() RuntimeError {
-  return RuntimeError{}
-}
-
-func (r *Runtime) Info() {
-  fmt.Println("[WARNING] Fedops encrypts all information you provide to it...")
-  fmt.Println("[WARNING] Fedops data is UNRECOVERABLE without knowning the encryption key")
-}
-
-// func (r *Runtime) writeKeypair(sshKey fedops_encryption.Keypair, provider fedops_provider.Provider) {
-//   //fmt.Println(r.PowerDirectory)
-//   ioutil.WriteFile(r.PowerDirectory+"/"+provider.Name()+"_id_rsa.pub", sshKey.PublicPem, os.ModePerm)
-//   ioutil.WriteFile(r.PowerDirectory+"/"+provider.Name()+"_id_rsa", sshKey.PrivatePem, os.ModePerm)
-// }
 
 func (r *Runtime) Unload() bool {
   now := time.Now()

@@ -25,10 +25,10 @@ package main
 import (
   "fmt"
   "runtime"
-  "os"
+  _ "os"
   _ "crypto/tls"
   //
-  "github.com/Fedops/lib/engine"
+  "github.com/Fedops/lib/engine/truck"
 )
 
 func main() {
@@ -36,25 +36,8 @@ func main() {
   numCpus := runtime.NumCPU()
   runtime.GOMAXPROCS(numCpus)
 
-  pwd := os.Getenv("PWD")
-
-  if !fedops_runtime.HasKeyFile(pwd) {
-    fmt.Println("No key file located in", pwd)
-    return
-  }
-
-  if !fedops_runtime.HasConfigFile(pwd) {
-    fmt.Println("No config file located in", pwd)
-    return
-  }
-
-  fed, err := fedops_runtime.CreateRuntime(pwd)
-  if err != nil {
-    fmt.Println(err.Error())
-    return
-  }
-
-  fmt.Printf("%+v\r\n", fed)
+  daemon := fedops_truck.CreateDaemon()
+  fmt.Println(daemon)
 
   // server cert is self signed -> server_cert == ca_cert
   // CA_Pool := x509.NewCertPool()
