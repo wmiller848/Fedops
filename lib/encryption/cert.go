@@ -26,16 +26,16 @@ import (
   "crypto/ecdsa"
   "crypto/elliptic"
   "crypto/rand"
-  _ "crypto/rsa"
+  // _ "crypto/rsa"
   "crypto/x509"
   "crypto/x509/pkix"
   "encoding/pem"
   "fmt"
   "log"
   "math/big"
-  _ "net"
+  // _ "net"
   "os"
-  _ "strings"
+  // _ "strings"
   "time"
 )
 
@@ -108,7 +108,7 @@ func (c *Cert) Generate() {
   }
 
   template := x509.Certificate{
-    // DNSNames: []string{"localhost"},
+    DNSNames: []string{"localhost"},
     // IPAddresses: []net.IP{net.IP("127.0.0.1")},
     SerialNumber: serialNumber,
     Subject: pkix.Name{
