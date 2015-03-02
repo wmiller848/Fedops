@@ -108,7 +108,7 @@ func (c *Cert) Generate(certConfig Cert_Config) {
 
   template := x509.Certificate{
     DNSNames: []string{"*"},
-    IPAddresses: []net.IP{net.IP(certConfig.IP)},
+    IPAddresses: []net.IP{net.ParseIP(certConfig.IP)},
     SerialNumber: serialNumber,
     Subject: pkix.Name{
       Organization: []string{"Fedops Daemon Certificate"},
