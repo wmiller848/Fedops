@@ -43,7 +43,7 @@ func (d *Dispatcher) OpenConnection(vmID string) *tls.Conn {
 
   config := tls.Config{RootCAs: certPool}
 
-  conn, err := tls.Dial("tcp", "127.0.0.1:1337", &config)
+  conn, err := tls.Dial("tcp", "127.0.0.1:13371", &config)
   if err != nil {
       fmt.Println("client: dial:", err.Error())
       return nil

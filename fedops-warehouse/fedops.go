@@ -83,7 +83,7 @@ func main() {
   }
 
   config := tls.Config{Certificates: []tls.Certificate{cert}}
-  listener, err := tls.Listen("tcp", ":1337", &config)
+  listener, err := tls.Listen("tcp", ":13371", &config)
   if err != nil {
     fmt.Println(err.Error())
     return

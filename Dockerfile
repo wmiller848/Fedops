@@ -16,4 +16,5 @@ RUN go install github.com/Fedops/fedops-warehouse
 RUN go install github.com/Fedops/fedops-truck
 
 VOLUME /opt/fedops
+EXPOSE 13371
 WORKDIR /opt/fedops

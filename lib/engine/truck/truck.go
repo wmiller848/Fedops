@@ -24,8 +24,10 @@ package fedops_truck
 
 import (
   //
+  "fmt"
   "os"
   "regexp"
+  "crypto/tls"
   //
   "github.com/Fedops/lib/providers"
   "github.com/Fedops/lib/engine"
@@ -46,7 +48,36 @@ func CreateDaemon() *TruckDaemon{
   pwd := os.Getenv("PWD")
 
   truckDaemon := TruckDaemon{}
+  // Set up the default runtime
   truckDaemon.Configure(pwd)
-
   return &truckDaemon
+}
+
+func (d *TruckDaemon) Listen() {
+  fed_certs := d.Config.Certs
+
+  // cert, err := tls.LoadX509KeyPair("./cert.pem", "./key.pem")
+  cert, err := tls.X509KeyPair(fed_certs[0].CertificatePem, fed_certs[0].PrivatePem)
+  if err != nil {
+    fmt.Println(err.Error())
+    return
+  }
+
+  config := tls.Config{Certificates: []tls.Certificate{cert}}
+  listener, err := tls.Listen("tcp", ":13371", &config)
+  if err != nil {
+    fmt.Println(err.Error())
+    return
+  }
+
+  for {
+      conn, err := listener.Accept()
+      if err != nil {
+        fmt.Println("server: accept: %s", err)
+        break
+      }
+      fmt.Println("server: accepted from %s", conn.RemoteAddr())
+      // go handleConnection(conn)
+  }
+
 }
