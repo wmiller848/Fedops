@@ -56,10 +56,24 @@ func CreateDaemon() *TruckDaemon{
   // Set up the default runtime
   truckDaemon.Configure(pwd)
   // Set up the routes for network calls
-  truckDaemon.AddRoute("container", truckDaemon.CreateContainer)
+  truckDaemon.AddRoute("container", truckDaemon.ShipContainer)
+  truckDaemon.AddRoute("container\\/[A-Za-z0-9]+", truckDaemon.UnshipContainer)
   return &truckDaemon
 }
 
+func (d *TruckDaemon) ShipContainer(req fedops_network.FedopsRequest) error {
+  fmt.Println("SHIP", req)
+  return nil
+}
+
+func (d *TruckDaemon) UnshipContainer(req fedops_network.FedopsRequest) error {
+  fmt.Println("UNSHIP", req)
+  return nil
+}
+
+///////
+// TODO :: move into runtime
+///////
 func (d *TruckDaemon) AddRoute(route string, handle fedops_network.HandleRoute) error {
   rgx, err := regexp.Compile(route)
   if err != nil {
@@ -70,11 +84,6 @@ func (d *TruckDaemon) AddRoute(route string, handle fedops_network.HandleRoute) 
     Handle: handle,
   }
   d.Routes = append(d.Routes, fedRoute)
-  return nil
-}
-
-func (d *TruckDaemon) CreateContainer(req fedops_network.FedopsRequest) error {
-  fmt.Println(req)
   return nil
 }
 
@@ -111,13 +120,12 @@ func (d *TruckDaemon) HandleConnection(conn net.Conn) {
     fmt.Println("Route", string(req.Route))
 
     for i := range d.Routes {
-      fmt.Println(d.Routes[i])
       if d.Routes[i].Route.Match(req.Route) {
         err = d.Routes[i].Handle(req)
         if err != nil {
           fmt.Println(err.Error())
-          break
         }
+        break
       }
     }
   }
