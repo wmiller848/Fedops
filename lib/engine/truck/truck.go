@@ -73,21 +73,22 @@ func (d *TruckDaemon) handleConnection(conn net.Conn) {
   // }
   // Send a response back to person contacting us.
   // conn.Write([]byte("Message received"))
+  defer conn.Close()
   dec := gob.NewDecoder(conn)
   var req fedops_network.FedopsRequest
   err := dec.Decode(&req)
   if err != nil {
-    fmt.Println("Error reading:", err.Error())
+    fmt.Println(err.Error())
     return
   }
   err = bcrypt.CompareHashAndPassword(req.Authorization, []byte(d.Config.ClusterID))
   if err != nil {
-    fmt.Println("Error decrypting:", err.Error())
+    fmt.Println("Authorization not accepted", err.Error())
     return
+  } else {
+     fmt.Println("Authorization accepted")
+     fmt.Printf("%+v\r\n", req)
   }
-  fmt.Printf("%+v\r\n", req)
-  // Close the connection when you're done with it.
-  conn.Close()
 }
 
 func (d *TruckDaemon) Listen() {
