@@ -24,6 +24,7 @@ package fedops_network
 
 import (
   //
+  "regexp"
   //
 )
 
@@ -36,4 +37,12 @@ type FedopsRequest struct {
   Authorization []byte
   Method uint
   Route []byte
+}
+
+
+type HandleRoute func (req FedopsRequest) error
+
+type FedopsRoute struct {
+  Route *regexp.Regexp
+  Handle HandleRoute
 }

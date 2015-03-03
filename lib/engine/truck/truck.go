@@ -46,7 +46,7 @@ type Truck struct {
 
 type TruckDaemon struct {
   fedops_runtime.Runtime
-  Muxer regexp.Regexp
+  Routes []fedops_network.FedopsRoute
 }
 
 func CreateDaemon() *TruckDaemon{
@@ -55,11 +55,31 @@ func CreateDaemon() *TruckDaemon{
   truckDaemon := TruckDaemon{}
   // Set up the default runtime
   truckDaemon.Configure(pwd)
+  // Set up the routes for network calls
+  truckDaemon.AddRoute("container", truckDaemon.CreateContainer)
   return &truckDaemon
 }
 
+func (d *TruckDaemon) AddRoute(route string, handle fedops_network.HandleRoute) error {
+  rgx, err := regexp.Compile(route)
+  if err != nil {
+    return err
+  }
+  fedRoute := fedops_network.FedopsRoute{
+    Route: rgx,
+    Handle: handle,
+  }
+  d.Routes = append(d.Routes, fedRoute)
+  return nil
+}
+
+func (d *TruckDaemon) CreateContainer(req fedops_network.FedopsRequest) error {
+  fmt.Println(req)
+  return nil
+}
+
 // Handles incoming requests.
-func (d *TruckDaemon) handleConnection(conn net.Conn) {
+func (d *TruckDaemon) HandleConnection(conn net.Conn) {
   // Make a buffer to hold incoming data.
   // buf := make([]byte, 1024)
   // Read the incoming connection into the buffer.
@@ -89,6 +109,17 @@ func (d *TruckDaemon) handleConnection(conn net.Conn) {
     fmt.Println("Authorization accepted")
     fmt.Println("Method", req.Method)
     fmt.Println("Route", string(req.Route))
+
+    for i := range d.Routes {
+      fmt.Println(d.Routes[i])
+      if d.Routes[i].Route.Match(req.Route) {
+        err = d.Routes[i].Handle(req)
+        if err != nil {
+          fmt.Println(err.Error())
+          break
+        }
+      }
+    }
   }
   conn.Write([]byte("ok"))
 }
@@ -124,6 +155,6 @@ func (d *TruckDaemon) Listen() {
         break
       }
       fmt.Println(conn.RemoteAddr(), "Connected")
-      go d.handleConnection(conn)
+      go d.HandleConnection(conn)
   }
 }
