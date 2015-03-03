@@ -55,5 +55,15 @@ func (d *Dispatcher) WriteToConn(conn *tls.Conn, req *fedops_network.FedopsReque
   if err != nil {
     return err
   }
+
+  buf := make([]byte, 1024)
+  reqLen, err := conn.Read(buf)
+  if err != nil {
+    return err
+  }
+  if reqLen > 0 {
+    fmt.Println(string(buf))
+  }
+
   return nil
 }

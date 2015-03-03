@@ -86,9 +86,11 @@ func (d *TruckDaemon) handleConnection(conn net.Conn) {
     fmt.Println("Authorization not accepted", err.Error())
     return
   } else {
-     fmt.Println("Authorization accepted")
-     fmt.Printf("%+v\r\n", req)
+    fmt.Println("Authorization accepted")
+    fmt.Println("Method", req.Method)
+    fmt.Println("Route", string(req.Route))
   }
+  conn.Write([]byte("ok"))
 }
 
 func (d *TruckDaemon) Listen() {
