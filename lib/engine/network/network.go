@@ -33,7 +33,7 @@ const (
 )
 
 type FedopsRequest struct {
+  Authorization []byte
   Method uint
   Route []byte
-  Data interface{}
 }

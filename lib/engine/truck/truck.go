@@ -31,6 +31,8 @@ import (
   "crypto/tls"
   "encoding/gob"
   //
+  "golang.org/x/crypto/bcrypt"
+  //
   "github.com/Fedops/lib/providers"
   "github.com/Fedops/lib/engine"
   "github.com/Fedops/lib/engine/network"
@@ -57,7 +59,7 @@ func CreateDaemon() *TruckDaemon{
 }
 
 // Handles incoming requests.
-func handleConnection(conn net.Conn) {
+func (d *TruckDaemon) handleConnection(conn net.Conn) {
   // Make a buffer to hold incoming data.
   // buf := make([]byte, 1024)
   // Read the incoming connection into the buffer.
@@ -76,6 +78,11 @@ func handleConnection(conn net.Conn) {
   err := dec.Decode(&req)
   if err != nil {
     fmt.Println("Error reading:", err.Error())
+    return
+  }
+  err = bcrypt.CompareHashAndPassword(req.Authorization, []byte(d.Config.ClusterID))
+  if err != nil {
+    fmt.Println("Error decrypting:", err.Error())
     return
   }
   fmt.Printf("%+v\r\n", req)
@@ -114,6 +121,6 @@ func (d *TruckDaemon) Listen() {
         break
       }
       fmt.Println(conn.RemoteAddr(), "Connected")
-      go handleConnection(conn)
+      go d.handleConnection(conn)
   }
 }

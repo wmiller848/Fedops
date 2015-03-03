@@ -25,6 +25,8 @@ package fedops
 import (
   "fmt"
   //
+  "golang.org/x/crypto/bcrypt"
+  //
   "github.com/Fedops/lib/encryption"
   "github.com/Fedops/lib/engine/container"
   "github.com/Fedops/lib/engine/network"
@@ -155,11 +157,18 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
   conn := d.OpenConnection(ip)
   defer conn.Close()
 
+  auth, err := bcrypt.GenerateFromPassword([]byte(d.Config.ClusterID), AuthorizationCost)
+  if err != nil {
+    fmt.Println(err.Error()) 
+    return FedopsError
+  }
+
   req := fedops_network.FedopsRequest{
+    Authorization: auth,
     Method: fedops_network.FedopsRequestCreate,
     Route: []byte("container"),
   }
-  err := d.WriteToConn(conn, &req)
+  err = d.WriteToConn(conn, &req)
   if err != nil {
     fmt.Println(err.Error()) 
     return FedopsError
