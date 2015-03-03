@@ -27,6 +27,7 @@ import (
   //
   "github.com/Fedops/lib/encryption"
   "github.com/Fedops/lib/engine/container"
+  "github.com/Fedops/lib/engine/network"
 )
 
 // type Container struct {
@@ -88,24 +89,95 @@ func (d *Dispatcher) DestroyContainer(promise chan FedopsAction, containerID str
   }
 }
 
-// Ship a container to the warehouse for continuous deployment
-func (d *Dispatcher) ShipContainerToWarehouse(promise chan FedopsAction, containerID string) {
-  conn := d.OpenConnection(containerID)
-  conn.Write([]byte("Way cool!"))
-  conn.Close()
 
-  persisted := d.Unload()
-  if persisted != true {
-    promise <- FedopsAction{
-      Status: FedopsError,
+// Ship a container to the warehouse for continuous deployment
+func (d *Dispatcher) _shipContainerToWarehouse(containerID, warehouseID string) uint {
+  ip := ""
+  warehouses := d.Config.Warehouses
+  for wIndex, _ := range warehouses {
+    if warehouses[wIndex].WarehouseID == warehouseID {
+      ip = warehouses[wIndex].IPV4
+      break
     }
   }
-  promise <- FedopsAction{
-    Status: FedopsOk,
+
+  if ip == "" {
+    fmt.Println("Could not find warehouse with ID", warehouseID)
+    return FedopsError
   }
+
+  conn := d.OpenConnection(ip)
+  defer conn.Close()
+
+  req := fedops_network.FedopsRequest{
+    Method: fedops_network.FedopsRequestCreate,
+    Route: []byte("container"),
+  }
+  err := d.WriteToConn(conn, &req)
+  if err != nil {
+    fmt.Println(err.Error()) 
+    return FedopsError
+  }
+
+  return FedopsOk
 }
 
-// Ship a containers image to a truck for execution
-func (d *Dispatcher) ShipContainerImageToTruck(promise chan FedopsAction, containerID string) {
+func (d *Dispatcher) ShipContainerToWarehouse(promise chan FedopsAction, containerID, warehouseID string) {
 
+    success := d._shipContainerToWarehouse(containerID, warehouseID)
+    persisted := d.Unload()
+    if persisted != true || success == FedopsError {
+      promise <- FedopsAction{
+        Status: FedopsError,
+      }
+    }
+    promise <- FedopsAction{
+      Status: FedopsOk,
+    }
+}
+
+// Ship a container to the warehouse for continuous deployment
+func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uint {
+  ip := ""
+  trucks := d.Config.Trucks
+  for tIndex, _ := range trucks {
+    if trucks[tIndex].TruckID == truckID {
+      ip = trucks[tIndex].IPV4
+      break
+    }
+  }
+
+  if ip == "" {
+    fmt.Println("Could not find truck with ID", truckID)
+    return FedopsError
+  }
+
+  conn := d.OpenConnection(ip)
+  defer conn.Close()
+
+  req := fedops_network.FedopsRequest{
+    Method: fedops_network.FedopsRequestCreate,
+    Route: []byte("container"),
+  }
+  err := d.WriteToConn(conn, &req)
+  if err != nil {
+    fmt.Println(err.Error()) 
+    return FedopsError
+  }
+
+  return FedopsOk
+}
+
+func (d *Dispatcher) ShipContainerImageToTruck(promise chan FedopsAction, containerID, truckID string) {
+
+    success := d._shipContainerImageToTruck(containerID, truckID)
+    persisted := d.Unload()
+    if persisted != true || success == FedopsError {
+      promise <- FedopsAction{
+        Status: FedopsError,
+      }
+    }
+    promise <- FedopsAction{
+      Status: FedopsOk,
+    }
 }

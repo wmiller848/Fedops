@@ -102,15 +102,16 @@ func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
             return
           }
 
-          if len (c.Args()) == 0 {
-            fmt.Println("Supply a container ID") 
+          if len (c.Args()) <= 1 {
+            fmt.Println("Supply a container ID and warehouseID") 
             return
           }
 
           containerID := c.Args()[0] //c.String("warehouseID")
+          warehouseID := c.Args()[1]
 
           promise := make(chan fedops.FedopsAction)
-          go fed.ShipContainerToWarehouse(promise, containerID)
+          go fed.ShipContainerToWarehouse(promise, containerID, warehouseID)
           result := <- promise
           switch result.Status {
           case fedops.FedopsError:

@@ -20,40 +20,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package fedops
+package fedops_network
 
 import (
-  "fmt"
-  "crypto/tls"
-  "crypto/x509"
-  "encoding/gob"
   //
-  "github.com/Fedops/lib/engine/network"
+  //
 )
 
-func (d *Dispatcher) OpenConnection(vmIP string) *tls.Conn {
-  // server cert is self signed -> server_cert == ca_cert
-  certPool := x509.NewCertPool()
+const (
+  FedopsRequestCreate uint = 0
+  FedopsRequestDestroy uint = 1
+)
 
-  fed_certs := d.Config.Certs
-  certPool.AppendCertsFromPEM(fed_certs[0].CertificatePem)
-
-  config := tls.Config{RootCAs: certPool}
-
-  conn, err := tls.Dial("tcp", vmIP + ":13371", &config)
-  if err != nil {
-    fmt.Println("client: dial:", err.Error())
-    return nil
-  }
-  // defer conn.Close()
-  return conn
-}
-
-func (d *Dispatcher) WriteToConn(conn *tls.Conn, req *fedops_network.FedopsRequest) error {
-  enc := gob.NewEncoder(conn)
-  err := enc.Encode(req)
-  if err != nil {
-    return err
-  }
-  return nil
+type FedopsRequest struct {
+  Method uint
+  Route []byte
+  Data interface{}
 }

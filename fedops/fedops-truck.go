@@ -94,7 +94,7 @@ func commandTruck(stdin *bufio.Reader, pwd string) cli.Command {
         },
       },
       cli.Command{
-        Name: "add",
+        Name: "deliver",
         Action: func(c *cli.Context) {
           fed, err := initFedops(pwd)
           if err != nil {
@@ -102,23 +102,25 @@ func commandTruck(stdin *bufio.Reader, pwd string) cli.Command {
             return
           }
 
-          containerID := c.Args()[0] //c.String("warehouseID")
-          if containerID == "" {
-            fmt.Println("Supply a container ID", fed)
+          if len (c.Args()) <= 1 {
+            fmt.Println("Supply a container ID and truckID") 
             return
           }
 
-          // promise := make(chan fedops.FedopsAction)
-          // go fed.DestroyTruck(promise, warehouseID)
-          // result := <- promise
-          // switch result.Status {
-          // case fedops.FedopsError:
-          //   // fmt.Println("Error")
-          // case fedops.FedopsOk:
-          //   //fmt.Println("Ok")
-          // case fedops.FedopsUnknown:
-          //   fmt.Println("Unknown")
-          // }
+          containerID := c.Args()[0] //c.String("warehouseID")
+          truckID := c.Args()[1]
+
+          promise := make(chan fedops.FedopsAction)
+          go fed.ShipContainerImageToTruck(promise, containerID, truckID)
+          result := <- promise
+          switch result.Status {
+          case fedops.FedopsError:
+            // fmt.Println("Error")
+          case fedops.FedopsOk:
+            //fmt.Println("Ok")
+          case fedops.FedopsUnknown:
+            fmt.Println("Unknown")
+          }
         },
       },
     },

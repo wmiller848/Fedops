@@ -29,9 +29,11 @@ import (
   "regexp"
   "net"
   "crypto/tls"
+  "encoding/gob"
   //
   "github.com/Fedops/lib/providers"
   "github.com/Fedops/lib/engine"
+  "github.com/Fedops/lib/engine/network"
 )
 
 type Truck struct {
@@ -57,17 +59,25 @@ func CreateDaemon() *TruckDaemon{
 // Handles incoming requests.
 func handleConnection(conn net.Conn) {
   // Make a buffer to hold incoming data.
-  buf := make([]byte, 1024)
+  // buf := make([]byte, 1024)
   // Read the incoming connection into the buffer.
-  reqLen, err := conn.Read(buf)
+  // reqLen, err := conn.Read(buf)
+  // if err != nil {
+  //   fmt.Println("Error reading:", err.Error())
+  //   return
+  // }
+  // if reqLen > 0 {
+  //   fmt.Println(buf)
+  // }
+  // Send a response back to person contacting us.
+  // conn.Write([]byte("Message received"))
+  dec := gob.NewDecoder(conn)
+  var req fedops_network.FedopsRequest
+  err := dec.Decode(&req)
   if err != nil {
     fmt.Println("Error reading:", err.Error())
+    return
   }
-  if reqLen > 0 {
-    fmt.Println(buf)
-  }
-  // Send a response back to person contacting us.
-  conn.Write([]byte("Message received"))
   // Close the connection when you're done with it.
   conn.Close()
 }
