@@ -53,7 +53,7 @@ const (
   TruckIDSize int = 16
   ContainerIDSize int = 16
 
-  AuthorizationCost int = 16
+  AuthorizationCost int = 10
 
   FedopsRemoteKeySize int = 32
 
