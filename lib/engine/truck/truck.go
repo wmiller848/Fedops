@@ -78,6 +78,7 @@ func handleConnection(conn net.Conn) {
     fmt.Println("Error reading:", err.Error())
     return
   }
+  fmt.Printf("%+v\r\n", req)
   // Close the connection when you're done with it.
   conn.Close()
 }
