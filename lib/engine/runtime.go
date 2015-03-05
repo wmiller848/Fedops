@@ -30,10 +30,16 @@ import (
   "io/ioutil"
   "os"
   "time"
+  "regexp"
+  "net"
+  "crypto/tls"
+  "encoding/gob"
   // 3rd Party
+  "golang.org/x/crypto/bcrypt"
   // FedOps
   "github.com/Fedops/lib/encryption"
   "github.com/Fedops/lib/engine/container"
+  "github.com/Fedops/lib/engine/network"
 )
 
 const (
@@ -67,6 +73,7 @@ type Runtime struct {
   Version        string
   PowerDirectory string
   Config         ClusterConfig
+  Routes []fedops_network.FedopsRoute
 }
 
 func (r *Runtime) Configure(pwd string) error {
@@ -206,4 +213,97 @@ func (r *Runtime) UnloadToMemory() []byte {
   }
 
   return encrypted
+}
+
+func (r *Runtime) AddRoute(route string, handle fedops_network.HandleRoute) error {
+  rgx, err := regexp.Compile(route)
+  if err != nil {
+    return err
+  }
+  fedRoute := fedops_network.FedopsRoute{
+    Route: rgx,
+    Handle: handle,
+  }
+  r.Routes = append(r.Routes, fedRoute)
+  return nil
+}
+
+// Handles incoming requests.
+func (r *Runtime) HandleConnection(conn net.Conn) {
+  // Make a buffer to hold incoming data.
+  // buf := make([]byte, 1024)
+  // Read the incoming connection into the buffer.
+  // reqLen, err := conn.Read(buf)
+  // if err != nil {
+  //   fmt.Println("Error reading:", err.Error())
+  //   return
+  // }
+  // if reqLen > 0 {
+  //   fmt.Println(buf)
+  // }
+  // Send a response back to person contacting us.
+  // conn.Write([]byte("Message received"))
+  defer conn.Close()
+  dec := gob.NewDecoder(conn)
+  var req fedops_network.FedopsRequest
+  err := dec.Decode(&req)
+  if err != nil {
+    fmt.Println(err.Error())
+    return
+  }
+  err = bcrypt.CompareHashAndPassword(req.Authorization, []byte(r.Config.ClusterID))
+  if err != nil {
+    fmt.Println("Authorization not accepted", err.Error())
+    return
+  } else {
+    fmt.Println("Authorization accepted")
+    fmt.Println("Method", req.Method)
+    fmt.Println("Route", string(req.Route))
+
+    for i := range r.Routes {
+      if r.Routes[i].Route.Match(req.Route) {
+        err = r.Routes[i].Handle(req)
+        if err != nil {
+          fmt.Println(err.Error())
+        }
+        break
+      }
+    }
+  }
+  conn.Write([]byte("ok"))
+}
+
+func (r *Runtime) Listen() {
+  // config := &ssh.ServerConfig{}
+  // private, err := ssh.ParsePrivateKey(d.Config.)
+  // if err != nil {
+  //   log.Fatal("Failed to parse private key")
+  // }
+
+  // config.AddHostKey(private)
+
+  fed_cert := r.Config.Cert
+  // cert, err := tls.LoadX509KeyPair("./cert.pem", "./key.pem")
+  cert, err := tls.X509KeyPair(fed_cert.CertificatePem, fed_cert.PrivatePem)
+  if err != nil {
+    fmt.Println(err.Error())
+    return
+  }
+
+  config := tls.Config{Certificates: []tls.Certificate{cert}}
+  listener, err := tls.Listen("tcp", ":13371", &config)
+  if err != nil {
+    fmt.Println(err.Error())
+    return
+  }
+
+  for {
+      conn, err := listener.Accept()
+      if err != nil {
+        fmt.Println(err.Error())
+        break
+      }
+      fmt.Println(conn.RemoteAddr(), "Connected")
+      go r.HandleConnection(conn)
+  }
 }

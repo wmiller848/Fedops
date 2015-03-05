@@ -166,7 +166,7 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
   req := fedops_network.FedopsRequest{
     Authorization: auth,
     Method: fedops_network.FedopsRequestCreate,
-    Route: []byte("container/" + truckID),
+    Route: []byte("/container/" + truckID),
   }
   err = d.WriteToConn(conn, &req)
   if err != nil {
