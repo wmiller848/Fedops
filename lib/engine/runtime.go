@@ -274,14 +274,6 @@ func (r *Runtime) HandleConnection(conn net.Conn) {
 }
 
 func (r *Runtime) Listen() {
-  // config := &ssh.ServerConfig{}
-  // private, err := ssh.ParsePrivateKey(d.Config.)
-  // if err != nil {
-  //   log.Fatal("Failed to parse private key")
-  // }
-
-  // config.AddHostKey(private)
-
   fed_cert := r.Config.Cert
   // cert, err := tls.LoadX509KeyPair("./cert.pem", "./key.pem")
   cert, err := tls.X509KeyPair(fed_cert.CertificatePem, fed_cert.PrivatePem)

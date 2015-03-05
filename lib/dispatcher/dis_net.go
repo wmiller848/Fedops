@@ -62,7 +62,7 @@ func (d *Dispatcher) WriteToConn(conn *tls.Conn, req *fedops_network.FedopsReque
     return err
   }
   if reqLen > 0 {
-    fmt.Println(string(buf))
+    fmt.Println(buf, string(buf))
   }
 
   return nil
