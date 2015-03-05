@@ -56,8 +56,8 @@ func CreateDaemon() *TruckDaemon{
   // Set up the default runtime
   truckDaemon.Configure(pwd)
   // Set up the routes for network calls
-  truckDaemon.AddRoute("container", truckDaemon.ShipContainer)
-  truckDaemon.AddRoute("container\\/[A-Za-z0-9]+", truckDaemon.UnshipContainer)
+  truckDaemon.AddRoute("^/container$", truckDaemon.ShipContainer)
+  truckDaemon.AddRoute("^/container/[A-Za-z0-9]+$", truckDaemon.UnshipContainer)
   return &truckDaemon
 }
 
