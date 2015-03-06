@@ -157,6 +157,8 @@ func (d *Dispatcher) _shipContainerToWarehouse(containerID, warehouseID string) 
       fmt.Println(err.Error()) 
       return FedopsError
     }
+
+    container.Warehouse = warehouseID
   }
 
   return FedopsOk
@@ -249,6 +251,8 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
       fmt.Println(err.Error()) 
       return FedopsError
     }
+
+    container.Trucks = append(container.Trucks, truckID)
   }
 
   return FedopsOk
