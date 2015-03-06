@@ -252,6 +252,11 @@ func (r *Runtime) HandleConnection(conn net.Conn) {
     fmt.Println(err.Error())
     return
   }
+
+  res := fedops_network.FedopsResponse{
+    Success: true,
+  }
+
   err = bcrypt.CompareHashAndPassword(req.Authorization, []byte(r.Config.ClusterID))
   if err != nil {
     fmt.Println("Authorization not accepted", err.Error())
@@ -265,6 +270,8 @@ func (r *Runtime) HandleConnection(conn net.Conn) {
       if r.Routes[i].Method == req.Method && r.Routes[i].Route.Match(req.Route) {
         err = r.Routes[i].Handle(req)
         if err != nil {
+          res.Success = false
+          res.Error = []byte(err.Error())
           fmt.Println(err.Error())
         }
         break
@@ -272,9 +279,6 @@ func (r *Runtime) HandleConnection(conn net.Conn) {
     }
   }
 
-  res := fedops_network.FedopsResponse{
-    Success: true,
-  }
   enc := gob.NewEncoder(conn)
   err = enc.Encode(res)
   if err != nil {

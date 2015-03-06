@@ -24,6 +24,7 @@ package fedops
 
 import (
   "fmt"
+  "errors"
   "crypto/tls"
   "crypto/x509"
   "encoding/gob"
@@ -63,7 +64,9 @@ func (d *Dispatcher) WriteToConn(conn *tls.Conn, req fedops_network.FedopsReques
     return err
   }
 
-  fmt.Printf("%+v\r\n", res)
+  if !res.Success {
+    return errors.New("Remote returned " + string(res.Error))
+  }
 
   return nil
 }

@@ -243,8 +243,6 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
       Route: []byte("/container/" + containerID),
     }
 
-    fmt.Printf("Sending %+v\r\n", req)
-
     conn := d.OpenConnection(truck.IPV4)
     defer conn.Close()
 
@@ -256,9 +254,6 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
 
     container.Trucks = append(container.Trucks, truckID)
   }
-
-  fmt.Println(container)
-  fmt.Println(d.Config.Containers[containerID])
 
   return FedopsOk
 }
