@@ -30,6 +30,7 @@ import (
   //
   "github.com/Fedops/lib/providers"
   "github.com/Fedops/lib/engine"
+  "github.com/Fedops/lib/engine/container"
   "github.com/Fedops/lib/engine/network"
 )
 
@@ -73,7 +74,14 @@ func (d *TruckDaemon) ListContainers(req *fedops_network.FedopsRequest, res *fed
 
 func (d *TruckDaemon) ShipContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
   args := bytes.Split(req.Route, []byte("/"))
-  fmt.Println("SHIP", string(req.Data), args)
+  containerID := string(args[1])
+  dataArgs := bytes.Split(req.Data, []byte(":"))
+  warehouseID := string(dataArgs[1])
+  fmt.Println("SHIP", containerID, warehouseID)
+
+  d.Config.Containers[containerID] = fedops_container.Container{
+    ContainerID: containerID,
+  }
   return nil
 }
 

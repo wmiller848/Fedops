@@ -70,6 +70,8 @@ func (d *Dispatcher) DestroyContainer(promise chan FedopsAction, containerID str
     return
   }
 
+  // TODO :: UNSHIP CONTAINER
+
   d.Config.Containers[containerID] = nil
 
   persisted := d.Unload()
