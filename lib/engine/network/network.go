@@ -47,7 +47,7 @@ type FedopsResponse struct {
   Error []byte
 }
 
-type HandleRoute func (req FedopsRequest) error
+type HandleRoute func (req *FedopsRequest, res *FedopsResponse) error
 
 type FedopsRoute struct {
   Method uint

@@ -50,7 +50,7 @@ func (d *Dispatcher) OpenConnection(vmIP string) *tls.Conn {
   return conn
 }
 
-func (d *Dispatcher) WriteToConn(conn *tls.Conn, req fedops_network.FedopsRequest) error {
+func (d *Dispatcher) WriteToConn(conn *tls.Conn, req *fedops_network.FedopsRequest) error {
   enc := gob.NewEncoder(conn)
   err := enc.Encode(req)
   if err != nil {

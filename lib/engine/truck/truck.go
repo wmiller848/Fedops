@@ -26,6 +26,7 @@ import (
   //
   "fmt"
   "os"
+  "bytes"
   //
   "github.com/Fedops/lib/providers"
   "github.com/Fedops/lib/engine"
@@ -64,17 +65,20 @@ func CreateDaemon() *TruckDaemon{
   return &truckDaemon
 }
 
-func (d *TruckDaemon) ListContainers(req fedops_network.FedopsRequest) error {
-  fmt.Println("LIST", string(req.Data))
+func (d *TruckDaemon) ListContainers(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+  args := bytes.Split(req.Route, []byte("/"))
+  fmt.Println("LIST", string(req.Data), args)
   return nil
 }
 
-func (d *TruckDaemon) ShipContainer(req fedops_network.FedopsRequest) error {
-  fmt.Println("SHIP", string(req.Data))
+func (d *TruckDaemon) ShipContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+  args := bytes.Split(req.Route, []byte("/"))
+  fmt.Println("SHIP", string(req.Data), args)
   return nil
 }
 
-func (d *TruckDaemon) UnshipContainer(req fedops_network.FedopsRequest) error {
-  fmt.Println("UNSHIP", string(req.Data))
+func (d *TruckDaemon) UnshipContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+  args := bytes.Split(req.Route, []byte("/"))
+  fmt.Println("UNSHIP", string(req.Data), args)
   return nil
 }

@@ -268,7 +268,7 @@ func (r *Runtime) HandleConnection(conn net.Conn) {
 
     for i := range r.Routes {
       if r.Routes[i].Method == req.Method && r.Routes[i].Route.Match(req.Route) {
-        err = r.Routes[i].Handle(req)
+        err = r.Routes[i].Handle(&req, &res)
         if err != nil {
           res.Success = false
           res.Error = []byte(err.Error())
