@@ -147,6 +147,7 @@ func (d *Dispatcher) _shipContainerToWarehouse(containerID, warehouseID string) 
       Authorization: auth,
       Method: fedops_network.FedopsRequestCreate,
       Route: []byte("/container/" + containerID),
+      Data: []byte(""),
     }
 
     conn := d.OpenConnection(warehouse.IPV4)
@@ -241,6 +242,7 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
       Authorization: auth,
       Method: fedops_network.FedopsRequestCreate,
       Route: []byte("/container/" + containerID),
+      Data: []byte(""),
     }
 
     conn := d.OpenConnection(truck.IPV4)
@@ -254,6 +256,9 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
 
     container.Trucks = append(container.Trucks, truckID)
   }
+
+  fmt.Println(container)
+  fmt.Println(d.Config.Containers[containerID])
 
   return FedopsOk
 }

@@ -115,7 +115,7 @@ func commandTruck(stdin *bufio.Reader, pwd string) cli.Command {
           result := <- promise
           switch result.Status {
           case fedops.FedopsError:
-            // fmt.Println("Error")
+            fmt.Println("Error")
           case fedops.FedopsOk:
             //fmt.Println("Ok")
           case fedops.FedopsUnknown:
