@@ -271,7 +271,17 @@ func (r *Runtime) HandleConnection(conn net.Conn) {
       }
     }
   }
-  conn.Write([]byte("ok"))
+
+  res := fedops_network.FedopsResponse{
+    Success: true,
+  }
+  enc := gob.NewEncoder(conn)
+  err = enc.Encode(res)
+  if err != nil {
+    fmt.Println(err.Error())
+    return
+  }
+  // conn.Write([]byte("ok"))
 }
 
 func (r *Runtime) Listen() {

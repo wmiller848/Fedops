@@ -118,7 +118,7 @@ func (d *Dispatcher) _shipContainerToWarehouse(containerID, warehouseID string) 
       }
 
       conn := d.OpenConnection(warehouse.IPV4)
-      err = d.WriteToConn(conn, &req)
+      err = d.WriteToConn(conn, req)
       if err != nil {
         fmt.Println(err.Error()) 
         return FedopsError
@@ -134,7 +134,7 @@ func (d *Dispatcher) _shipContainerToWarehouse(containerID, warehouseID string) 
       }
 
       conn = d.OpenConnection(truck.IPV4)
-      err = d.WriteToConn(conn, &req)
+      err = d.WriteToConn(conn, req)
       if err != nil {
         fmt.Println(err.Error()) 
         return FedopsError
@@ -147,13 +147,12 @@ func (d *Dispatcher) _shipContainerToWarehouse(containerID, warehouseID string) 
       Authorization: auth,
       Method: fedops_network.FedopsRequestCreate,
       Route: []byte("/container/" + containerID),
-      Data: []byte(""),
     }
 
     conn := d.OpenConnection(warehouse.IPV4)
     defer conn.Close()
 
-    err = d.WriteToConn(conn, &req)
+    err = d.WriteToConn(conn, req)
     if err != nil {
       fmt.Println(err.Error()) 
       return FedopsError
@@ -211,7 +210,7 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
     }
 
     conn := d.OpenConnection(truck.IPV4)
-    err = d.WriteToConn(conn, &req)
+    err = d.WriteToConn(conn, req)
     if err != nil {
       fmt.Println(err.Error()) 
       return FedopsError
@@ -231,7 +230,7 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
     warehouse := d.Config.Warehouses[container.Warehouse]
     conn = d.OpenConnection(warehouse.IPV4)
     defer conn.Close()
-    err = d.WriteToConn(conn, &req)
+    err = d.WriteToConn(conn, req)
     if err != nil {
       fmt.Println(err.Error()) 
       return FedopsError
@@ -242,13 +241,14 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
       Authorization: auth,
       Method: fedops_network.FedopsRequestCreate,
       Route: []byte("/container/" + containerID),
-      Data: []byte(""),
     }
+
+    fmt.Printf("Sending %+v\r\n", req)
 
     conn := d.OpenConnection(truck.IPV4)
     defer conn.Close()
 
-    err = d.WriteToConn(conn, &req)
+    err = d.WriteToConn(conn, req)
     if err != nil {
       fmt.Println(err.Error()) 
       return FedopsError

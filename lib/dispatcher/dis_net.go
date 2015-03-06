@@ -49,21 +49,21 @@ func (d *Dispatcher) OpenConnection(vmIP string) *tls.Conn {
   return conn
 }
 
-func (d *Dispatcher) WriteToConn(conn *tls.Conn, req *fedops_network.FedopsRequest) error {
+func (d *Dispatcher) WriteToConn(conn *tls.Conn, req fedops_network.FedopsRequest) error {
   enc := gob.NewEncoder(conn)
   err := enc.Encode(req)
   if err != nil {
     return err
   }
 
-  buf := make([]byte, 1024)
-  reqLen, err := conn.Read(buf)
+  dec := gob.NewDecoder(conn)
+  var res fedops_network.FedopsResponse
+  err = dec.Decode(&res)
   if err != nil {
     return err
   }
-  if reqLen > 0 {
-    fmt.Println(buf, string(buf))
-  }
+
+  fmt.Printf("%+v\r\n", res)
 
   return nil
 }

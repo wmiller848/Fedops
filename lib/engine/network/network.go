@@ -42,6 +42,10 @@ type FedopsRequest struct {
   Data []byte
 }
 
+type FedopsResponse struct {
+  Success bool
+  Error []byte
+}
 
 type HandleRoute func (req FedopsRequest) error
 
