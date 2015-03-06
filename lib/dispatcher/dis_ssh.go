@@ -39,22 +39,34 @@ func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
   ip := ""
   providerName := ""
 
-  warehouses := d.Config.Warehouses
-  for wIndex, _ := range warehouses {
-    if warehouses[wIndex].WarehouseID == vmID {
-      ip = warehouses[wIndex].IPV4
-      providerName = warehouses[wIndex].Provider
-      break
-    }
+  // warehouses := d.Config.Warehouses
+  // for wIndex, _ := range warehouses {
+  //   if warehouses[wIndex].WarehouseID == vmID {
+  //     ip = warehouses[wIndex].IPV4
+  //     providerName = warehouses[wIndex].Provider
+  //     break
+  //   }
+  // }
+
+  // trucks := d.Config.Trucks
+  // for tIndex, _ := range trucks {
+  //   if trucks[tIndex].TruckID == vmID {
+  //     ip = trucks[tIndex].IPV4
+  //     providerName = trucks[tIndex].Provider
+  //     break
+  //   }
+  // }
+
+  warehouse, ok := d.Config.Warehouses[vmID]
+  if ok {
+    ip = warehouse.IPV4
+    providerName = warehouse.Provider
   }
 
-  trucks := d.Config.Trucks
-  for tIndex, _ := range trucks {
-    if trucks[tIndex].TruckID == vmID {
-      ip = trucks[tIndex].IPV4
-      providerName = trucks[tIndex].Provider
-      break
-    }
+  truck, ok := d.Config.Trucks[vmID]
+  if ok {
+    ip = truck.IPV4
+    providerName = truck.Provider
   }
 
   index := 0
@@ -294,22 +306,34 @@ func (d *Dispatcher) _ssh(vmID string) uint {
   ip := ""
   providerName := ""
 
-  warehouses := d.Config.Warehouses
-  for wIndex, _ := range warehouses {
-    if warehouses[wIndex].WarehouseID == vmID {
-      ip = warehouses[wIndex].IPV4
-      providerName = warehouses[wIndex].Provider
-      break
-    }
+  // warehouses := d.Config.Warehouses
+  // for wIndex, _ := range warehouses {
+  //   if warehouses[wIndex].WarehouseID == vmID {
+  //     ip = warehouses[wIndex].IPV4
+  //     providerName = warehouses[wIndex].Provider
+  //     break
+  //   }
+  // }
+
+  // trucks := d.Config.Trucks
+  // for tIndex, _ := range trucks {
+  //   if trucks[tIndex].TruckID == vmID {
+  //     ip = trucks[tIndex].IPV4
+  //     providerName = trucks[tIndex].Provider
+  //     break
+  //   }
+  // }
+
+  warehouse, ok := d.Config.Warehouses[vmID]
+  if ok {
+    ip = warehouse.IPV4
+    providerName = warehouse.Provider
   }
 
-  trucks := d.Config.Trucks
-  for tIndex, _ := range trucks {
-    if trucks[tIndex].TruckID == vmID {
-      ip = trucks[tIndex].IPV4
-      providerName = trucks[tIndex].Provider
-      break
-    }
+  truck, ok := d.Config.Trucks[vmID]
+  if ok {
+    ip = truck.IPV4
+    providerName = truck.Provider
   }
 
   index := 0

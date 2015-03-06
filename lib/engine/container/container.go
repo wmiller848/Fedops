@@ -25,6 +25,6 @@ package fedops_container
 type Container struct {
   ContainerID  string
   Repo string
-  Warehouses []string
+  Warehouse string
   Trucks []string
 }

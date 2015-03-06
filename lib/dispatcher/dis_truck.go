@@ -96,7 +96,7 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
   truck.TruckID = vmid
   truck.ID = vm.ID
   truck.Provider = provider.Name()
-  d.Config.Trucks = append(d.Config.Trucks, *truck)
+  d.Config.Trucks[vmid] = truck
 
   fmt.Printf("Initializing...")
 
@@ -113,15 +113,9 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
       return FedopsError
     }
 
-    trucks := d.Config.Trucks
-    for tIndex, _ := range trucks {
-      if trucks[tIndex].TruckID == truck.TruckID {
-        if trucks[tIndex].Status == "up" {
-          done = true
-          break 
-        }      
-      }
-    }
+    if d.Config.Trucks[vmid].Status == "up" {
+      done = true
+    } 
   }
   fmt.Printf("\r\n")
 
@@ -145,20 +139,9 @@ func (d *Dispatcher) _createTruck(provider fedops_provider.Provider) uint {
 }
 
 func (d *Dispatcher) DestroyTruck(promise chan FedopsAction, truckID string) {
+  truck, ok := d.Config.Trucks[truckID]
 
-  var truck fedops_truck.Truck
-  trucks := d.Config.Trucks
-  found := false
-  var tIndex int
-  for tIndex = range trucks {
-    if trucks[tIndex].TruckID == truckID {
-      truck = trucks[tIndex]
-      found = true
-      break
-    }
-  }
-
-  if !found {
+  if !ok {
     fmt.Println("Unable to locate truck with ID " + truckID)
     promise <- FedopsAction{
       Status: FedopsError,
@@ -174,7 +157,7 @@ func (d *Dispatcher) DestroyTruck(promise chan FedopsAction, truckID string) {
         ApiKey: token.AccessToken,
       }
       provider := fedops_provider.DigitalOceanProvider(auth)
-      status := d._destroyTruck(&provider, truck)
+      status := d._destroyTruck(&provider, *truck)
       if status == FedopsError {
         promise <- FedopsAction{
           Status: FedopsError,
@@ -183,7 +166,7 @@ func (d *Dispatcher) DestroyTruck(promise chan FedopsAction, truckID string) {
       }
   }
 
-  d.Config.Trucks = append(d.Config.Trucks[:tIndex], d.Config.Trucks[tIndex+1:]...)
+  d.Config.Trucks[truckID] = nil
 
   persisted := d.Unload()
   if persisted != true {

@@ -31,18 +31,22 @@ import (
 const (
   FedopsRequestCreate uint = 0
   FedopsRequestDestroy uint = 1
+  FedopsRequestUpdate uint = 2
+  FedopsRequestInfo uint = 3
 )
 
 type FedopsRequest struct {
   Authorization []byte
   Method uint
   Route []byte
+  Data []byte
 }
 
 
 type HandleRoute func (req FedopsRequest) error
 
 type FedopsRoute struct {
+  Method uint
   Route *regexp.Regexp
   Handle HandleRoute
 }

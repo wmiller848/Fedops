@@ -65,7 +65,7 @@ type ClusterConfig struct {
   Created    string
   Modified   string
   Cert      fedops_encryption.Cert
-  Containers []fedops_container.Container
+  Containers map[string]fedops_container.Container
 }
 
 type Runtime struct {
@@ -215,12 +215,13 @@ func (r *Runtime) UnloadToMemory() []byte {
   return encrypted
 }
 
-func (r *Runtime) AddRoute(route string, handle fedops_network.HandleRoute) error {
+func (r *Runtime) AddRoute(method uint, route string, handle fedops_network.HandleRoute) error {
   rgx, err := regexp.Compile(route)
   if err != nil {
     return err
   }
   fedRoute := fedops_network.FedopsRoute{
+    Method: method,
     Route: rgx,
     Handle: handle,
   }
@@ -261,7 +262,7 @@ func (r *Runtime) HandleConnection(conn net.Conn) {
     fmt.Println("Route", string(req.Route))
 
     for i := range r.Routes {
-      if r.Routes[i].Route.Match(req.Route) {
+      if r.Routes[i].Method == req.Method && r.Routes[i].Route.Match(req.Route) {
         err = r.Routes[i].Handle(req)
         if err != nil {
           fmt.Println(err.Error())

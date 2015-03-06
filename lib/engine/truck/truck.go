@@ -49,17 +49,32 @@ func CreateDaemon() *TruckDaemon{
   // Set up the default runtime
   truckDaemon.Configure(pwd)
   // Set up the routes for network calls
-  truckDaemon.AddRoute("^/container$", truckDaemon.ShipContainer)
-  truckDaemon.AddRoute("^/container/[A-Za-z0-9]+$", truckDaemon.UnshipContainer)
+  err := truckDaemon.AddRoute(fedops_network.FedopsRequestInfo, "^/container$", truckDaemon.ShipContainer)
+  if err != nil {
+    fmt.Println(err.Error())
+  }
+  err = truckDaemon.AddRoute(fedops_network.FedopsRequestCreate, "^/container/[A-Za-z0-9]+$", truckDaemon.ShipContainer)
+  if err != nil {
+    fmt.Println(err.Error())
+  }
+  err = truckDaemon.AddRoute(fedops_network.FedopsRequestDestroy, "^/container/[A-Za-z0-9]+$", truckDaemon.UnshipContainer)
+  if err != nil {
+    fmt.Println(err.Error())
+  }
   return &truckDaemon
 }
 
+func (d *TruckDaemon) ListContainers(req fedops_network.FedopsRequest) error {
+  fmt.Println("LIST", string(req.Data))
+  return nil
+}
+
 func (d *TruckDaemon) ShipContainer(req fedops_network.FedopsRequest) error {
-  fmt.Println("SHIP", req)
+  fmt.Println("SHIP", string(req.Data))
   return nil
 }
 
 func (d *TruckDaemon) UnshipContainer(req fedops_network.FedopsRequest) error {
-  fmt.Println("UNSHIP", req)
+  fmt.Println("UNSHIP", string(req.Data))
   return nil
 }

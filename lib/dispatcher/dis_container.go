@@ -46,7 +46,7 @@ func (d *Dispatcher) CreateContainer(promise chan FedopsAction, repo string) {
   container.Repo = repo
   container.ContainerID = containerID
   
-  d.Config.Containers = append(d.Config.Containers, *container)
+  d.Config.Containers[containerID] = container
 
   persisted := d.Unload()
   if persisted != true {
@@ -60,17 +60,9 @@ func (d *Dispatcher) CreateContainer(promise chan FedopsAction, repo string) {
 }
 
 func (d *Dispatcher) DestroyContainer(promise chan FedopsAction, containerID string) {
-  containers := d.Config.Containers
-  found := false
-  var cIndex int
-  for cIndex = range containers {
-    if containers[cIndex].ContainerID == containerID {
-      found = true
-      break 
-    }
-  }
+  _, ok := d.Config.Containers[containerID]
 
-  if !found {
+  if !ok {
     fmt.Println("Unable to locate container with ID " + containerID)
     promise <- FedopsAction{
       Status: FedopsError,
@@ -78,7 +70,7 @@ func (d *Dispatcher) DestroyContainer(promise chan FedopsAction, containerID str
     return
   }
 
-  d.Config.Containers = append(d.Config.Containers[:cIndex], d.Config.Containers[cIndex+1:]...)
+  d.Config.Containers[containerID] = nil
 
   persisted := d.Unload()
   if persisted != true {
@@ -94,31 +86,77 @@ func (d *Dispatcher) DestroyContainer(promise chan FedopsAction, containerID str
 
 // Ship a container to the warehouse for continuous deployment
 func (d *Dispatcher) _shipContainerToWarehouse(containerID, warehouseID string) uint {
-  ip := ""
-  warehouses := d.Config.Warehouses
-  for wIndex, _ := range warehouses {
-    if warehouses[wIndex].WarehouseID == warehouseID {
-      ip = warehouses[wIndex].IPV4
-      break
-    }
+
+  container, ok := d.Config.Containers[containerID]
+  if !ok {
+    fmt.Println("Could not find container with ID", containerID)
+    return FedopsError
   }
 
-  if ip == "" {
+  warehouse, ok := d.Config.Warehouses[warehouseID]
+  if !ok {
     fmt.Println("Could not find warehouse with ID", warehouseID)
     return FedopsError
   }
 
-  conn := d.OpenConnection(ip)
-  defer conn.Close()
-
-  req := fedops_network.FedopsRequest{
-    Method: fedops_network.FedopsRequestCreate,
-    Route: []byte("container"),
-  }
-  err := d.WriteToConn(conn, &req)
+  auth, err := bcrypt.GenerateFromPassword([]byte(d.Config.ClusterID), AuthorizationCost)
   if err != nil {
     fmt.Println(err.Error()) 
     return FedopsError
+  }
+
+  // Find the state of this container
+  // Does it already have any trucks
+  if len(container.Trucks) > 0 {
+    for key := range container.Trucks {
+      truck := d.Config.Trucks[container.Trucks[key]]
+      req := fedops_network.FedopsRequest{
+        Authorization: auth,
+        Method: fedops_network.FedopsRequestUpdate,
+        Route: []byte("/container/" + containerID),
+        Data: []byte("truck:" + container.Trucks[key]),
+      }
+
+      conn := d.OpenConnection(warehouse.IPV4)
+      err = d.WriteToConn(conn, &req)
+      if err != nil {
+        fmt.Println(err.Error()) 
+        return FedopsError
+      }
+      conn.Close()
+
+      // Update the warehouse
+      req = fedops_network.FedopsRequest{
+        Authorization: auth,
+        Method: fedops_network.FedopsRequestCreate,
+        Route: []byte("/container/" + containerID),
+        Data: []byte("warehouse:" + warehouseID),
+      }
+
+      conn = d.OpenConnection(truck.IPV4)
+      err = d.WriteToConn(conn, &req)
+      if err != nil {
+        fmt.Println(err.Error()) 
+        return FedopsError
+      }
+      conn.Close()
+    }
+    container.Warehouse = warehouseID
+  } else {
+    req := fedops_network.FedopsRequest{
+      Authorization: auth,
+      Method: fedops_network.FedopsRequestCreate,
+      Route: []byte("/container/" + containerID),
+    }
+
+    conn := d.OpenConnection(warehouse.IPV4)
+    defer conn.Close()
+
+    err = d.WriteToConn(conn, &req)
+    if err != nil {
+      fmt.Println(err.Error()) 
+      return FedopsError
+    }
   }
 
   return FedopsOk
@@ -140,22 +178,18 @@ func (d *Dispatcher) ShipContainerToWarehouse(promise chan FedopsAction, contain
 
 // Ship a container to the warehouse for continuous deployment
 func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uint {
-  ip := ""
-  trucks := d.Config.Trucks
-  for tIndex, _ := range trucks {
-    if trucks[tIndex].TruckID == truckID {
-      ip = trucks[tIndex].IPV4
-      break
-    }
-  }
 
-  if ip == "" {
-    fmt.Println("Could not find truck with ID", truckID)
+  container, ok := d.Config.Containers[containerID]
+  if !ok {
+    fmt.Println("Could not find container with ID", containerID)
     return FedopsError
   }
 
-  conn := d.OpenConnection(ip)
-  defer conn.Close()
+  truck, ok := d.Config.Trucks[truckID]
+  if !ok {
+    fmt.Println("Could not find truck with ID", truckID)
+    return FedopsError
+  }
 
   auth, err := bcrypt.GenerateFromPassword([]byte(d.Config.ClusterID), AuthorizationCost)
   if err != nil {
@@ -163,15 +197,58 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
     return FedopsError
   }
 
-  req := fedops_network.FedopsRequest{
-    Authorization: auth,
-    Method: fedops_network.FedopsRequestCreate,
-    Route: []byte("/container/" + truckID),
-  }
-  err = d.WriteToConn(conn, &req)
-  if err != nil {
-    fmt.Println(err.Error()) 
-    return FedopsError
+  // Find the state of this container
+  // Does it already have a warehouse
+  if container.Warehouse != "" {
+    req := fedops_network.FedopsRequest{
+      Authorization: auth,
+      Method: fedops_network.FedopsRequestCreate,
+      Route: []byte("/container/" + containerID),
+      Data: []byte("warehouse:" + container.Warehouse),
+    }
+
+    conn := d.OpenConnection(truck.IPV4)
+    err = d.WriteToConn(conn, &req)
+    if err != nil {
+      fmt.Println(err.Error()) 
+      return FedopsError
+    }
+    conn.Close()
+
+    // Update the warehouse
+    req = fedops_network.FedopsRequest{
+      Authorization: auth,
+      Method: fedops_network.FedopsRequestCreate,
+      Route: []byte("/container/" + containerID),
+      Data: []byte("truck:" + truckID),
+    }
+
+    container.Trucks = append(container.Trucks, truckID)
+
+    warehouse := d.Config.Warehouses[container.Warehouse]
+    conn = d.OpenConnection(warehouse.IPV4)
+    defer conn.Close()
+    err = d.WriteToConn(conn, &req)
+    if err != nil {
+      fmt.Println(err.Error()) 
+      return FedopsError
+    }
+    
+  } else {
+    req := fedops_network.FedopsRequest{
+      Authorization: auth,
+      Method: fedops_network.FedopsRequestCreate,
+      Route: []byte("/container/" + containerID),
+    }
+
+    conn := d.OpenConnection(truck.IPV4)
+    defer conn.Close()
+
+    err = d.WriteToConn(conn, &req)
+    if err != nil {
+      fmt.Println(err.Error()) 
+      return FedopsError
+    }
   }
 
   return FedopsOk

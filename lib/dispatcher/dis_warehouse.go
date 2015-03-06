@@ -96,7 +96,7 @@ func (d *Dispatcher) _createWarehouse(provider fedops_provider.Provider) uint {
   warehouse.WarehouseID = vmid
   warehouse.ID = vm.ID
   warehouse.Provider = provider.Name()
-  d.Config.Warehouses = append(d.Config.Warehouses, *warehouse)
+  d.Config.Warehouses[vmid] = warehouse
 
   fmt.Printf("Initializing...")
 
@@ -113,15 +113,9 @@ func (d *Dispatcher) _createWarehouse(provider fedops_provider.Provider) uint {
       return FedopsError
     }
 
-    warehouses := d.Config.Warehouses
-    for wIndex, _ := range warehouses {
-      if warehouses[wIndex].WarehouseID == warehouse.WarehouseID {
-        if warehouses[wIndex].Status == "up" {
-          done = true
-          break 
-        }      
-      }
-    }
+    if d.Config.Warehouses[vmid].Status == "up" {
+      done = true
+    } 
   }
   fmt.Printf("\r\n")
 
@@ -146,19 +140,9 @@ func (d *Dispatcher) _createWarehouse(provider fedops_provider.Provider) uint {
 
 func (d *Dispatcher) DestroyWarehouse(promise chan FedopsAction, warehouseID string) {
 
-  var warehouse fedops_warehouse.Warehouse
-  warehouses := d.Config.Warehouses
-  found := false
-  var wIndex int
-  for wIndex = range warehouses {
-    if warehouses[wIndex].WarehouseID == warehouseID {
-      warehouse = warehouses[wIndex]
-      found = true
-      break
-    }
-  }
+  warehouse, ok := d.Config.Warehouses[warehouseID]
 
-  if !found {
+  if !ok {
     fmt.Println("Unable to locate warehouse with ID " + warehouseID)
     promise <- FedopsAction{
       Status: FedopsError,
@@ -174,7 +158,7 @@ func (d *Dispatcher) DestroyWarehouse(promise chan FedopsAction, warehouseID str
         ApiKey: token.AccessToken,
       }
       provider := fedops_provider.DigitalOceanProvider(auth)
-      status := d._destroyWarehouse(&provider, warehouse)
+      status := d._destroyWarehouse(&provider, *warehouse)
       if status == FedopsError {
         promise <- FedopsAction{
           Status: FedopsError,
@@ -183,7 +167,7 @@ func (d *Dispatcher) DestroyWarehouse(promise chan FedopsAction, warehouseID str
       }
   }
 
-  d.Config.Warehouses = append(d.Config.Warehouses[:wIndex], d.Config.Warehouses[wIndex+1:]...)
+  d.Config.Warehouses[warehouseID] = nil
 
   persisted := d.Unload()
   if persisted != true {

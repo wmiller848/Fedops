@@ -111,9 +111,9 @@ type DispatcherConfig struct {
   Certs      []fedops_encryption.Cert
 	SSHKeys    []fedops_provider.ProviderKeypair
 	Tokens     map[string]Tokens
-	Warehouses []fedops_warehouse.Warehouse
-	Trucks     []fedops_truck.Truck
-  Containers []fedops_container.Container
+	Warehouses map[string]*fedops_warehouse.Warehouse
+	Trucks     map[string]*fedops_truck.Truck
+  Containers map[string]*fedops_container.Container
 }
 
 type Dispatcher struct {
@@ -272,6 +272,9 @@ func (d *Dispatcher) InitCloudProvider(promise chan FedopsAction, provider strin
 		}
 		digo := fedops_provider.DigitalOceanProvider(auth)
 		d.Config.Tokens = make(map[string]Tokens)
+    d.Config.Warehouses = make(map[string]*fedops_warehouse.Warehouse)
+    d.Config.Trucks = make(map[string]*fedops_truck.Truck)
+    d.Config.Containers = make(map[string]*fedops_container.Container)
 		d.Config.Tokens[fedops_provider.DigitalOceanName] = tokens
 		promise <- FedopsAction{
 			Status: d._initProvider(&digo),
