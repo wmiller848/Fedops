@@ -39,7 +39,16 @@ func (d *Dispatcher) OpenConnection(vmIP string) *tls.Conn {
   fed_certs := d.Config.Certs
   certPool.AppendCertsFromPEM(fed_certs[0].CertificatePem)
 
-  config := tls.Config{RootCAs: certPool}
+  config := tls.Config{
+    RootCAs: certPool,
+    PreferServerCipherSuites: true,
+    SessionTicketsDisabled: true,
+    CipherSuites: []uint16{
+      tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+      tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+    },
+    CurvePreferences: []tls.CurveID{tls.CurveP521},
+  }
 
   conn, err := tls.Dial("tcp", vmIP + ":13371", &config)
   if err != nil {
