@@ -80,6 +80,7 @@ func (d *TruckDaemon) ShipContainer(req *fedops_network.FedopsRequest, res *fedo
     containerID = string(args[1])
   }
   dataArgs := bytes.Split(req.Data, []byte(":"))
+  fmt.Println(dataArgs)
   if len(dataArgs) > 0 {
     warehouseID = string(dataArgs[1])
   }
