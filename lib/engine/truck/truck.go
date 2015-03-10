@@ -76,7 +76,7 @@ func (d *TruckDaemon) ListContainers(req *fedops_network.FedopsRequest, res *fed
 func (d *TruckDaemon) ShipContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
   var containerID, warehouseID string
   args := bytes.Split(req.Route, []byte("/"))
-  if len(args) > 0 {
+  if len(args) > 1 {
     containerID = string(args[1])
   }
   dataArgs := bytes.Split(req.Data, []byte(":"))

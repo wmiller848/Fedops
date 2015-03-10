@@ -265,6 +265,7 @@ func (r *Runtime) HandleConnection(conn net.Conn) {
     fmt.Println("Authorization accepted")
     fmt.Println("Method", req.Method)
     fmt.Println("Route", string(req.Route))
+    fmt.Println("Data", string(req.Data))
 
     for i := range r.Routes {
       if r.Routes[i].Method == req.Method && r.Routes[i].Route.Match(req.Route) {
