@@ -84,6 +84,8 @@ func (d *TruckDaemon) ShipContainer(req *fedops_network.FedopsRequest, res *fedo
     warehouseID = string(dataArgs[1])
   }
   
+  fmt.Println(args, dataArgs)
+
   if containerID == "" {
     return errors.New("Bad ContainerID")
   }
