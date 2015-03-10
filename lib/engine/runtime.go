@@ -100,6 +100,10 @@ func (r *Runtime) Configure(pwd string) error {
   r.Config = config
   r.Version = "0.0.1"
   r.PowerDirectory = pwd
+
+  if r.Config.Containers == nil {
+    r.Config.Containers = make(map[string]fedops_container.Container)
+  }
   
   return nil
 }
