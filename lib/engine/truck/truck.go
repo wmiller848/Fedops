@@ -60,6 +60,10 @@ func CreateDaemon() *TruckDaemon{
   if err != nil {
     fmt.Println(err.Error())
   }
+  err = truckDaemon.AddRoute(fedops_network.FedopsRequestUpdate, "^/container/[A-Za-z0-9]+$", truckDaemon.UpdateContainer)
+  if err != nil {
+    fmt.Println(err.Error())
+  }
   err = truckDaemon.AddRoute(fedops_network.FedopsRequestDestroy, "^/container/[A-Za-z0-9]+$", truckDaemon.UnshipContainer)
   if err != nil {
     fmt.Println(err.Error())
@@ -83,7 +87,7 @@ func (d *TruckDaemon) ShipContainer(req *fedops_network.FedopsRequest, res *fedo
   if len(dataArgs) >= 2 {
     warehouseID = string(dataArgs[1])
   }
-  
+
   fmt.Println(args, dataArgs)
 
   if containerID == "" {
@@ -93,12 +97,48 @@ func (d *TruckDaemon) ShipContainer(req *fedops_network.FedopsRequest, res *fedo
 
   d.Config.Containers[containerID] = fedops_container.Container{
     ContainerID: containerID,
+    Warehouse: warehouseID,
   }
   return nil
 }
 
-func (d *TruckDaemon) UnshipContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+func  (d *TruckDaemon) UpdateContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+  var containerID, warehouseID string
   args := bytes.Split(req.Route, []byte("/"))
-  fmt.Println("UNSHIP", string(req.Data), args)
+  if len(args) >= 3 {
+    containerID = string(args[2])
+  }
+  dataArgs := bytes.Split(req.Data, []byte(":"))
+  if len(dataArgs) >= 2 {
+    warehouseID = string(dataArgs[1])
+  }
+
+  fmt.Println(args, dataArgs)
+
+  if containerID == "" {
+    return errors.New("Bad ContainerID")
+  }
+  fmt.Println("UPDATE", containerID, warehouseID)
+
+  container := d.Config.Containers[containerID]
+  container.Warehouse = warehouseID
+  return nil
+}
+
+func (d *TruckDaemon) UnshipContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+  var containerID string
+  args := bytes.Split(req.Route, []byte("/"))
+  if len(args) >= 3 {
+    containerID = string(args[2])
+  }
+
+  fmt.Println(args)
+
+  if containerID == "" {
+    return errors.New("Bad ContainerID")
+  }
+  fmt.Println("UNSHIP", containerID)
+
+  delete(d.Config.Containers, containerID)
   return nil
 }

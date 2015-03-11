@@ -290,6 +290,11 @@ func (r *Runtime) HandleConnection(conn net.Conn) {
     fmt.Println(err.Error())
     return
   }
+  
+  persisted := r.Unload()
+  if persisted != true {
+    fmt.Println("Error saving to disk")
+  }
   // conn.Write([]byte("ok"))
 }
 
