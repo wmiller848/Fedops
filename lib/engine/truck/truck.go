@@ -68,6 +68,12 @@ func CreateDaemon() *TruckDaemon{
   if err != nil {
     fmt.Println(err.Error())
   }
+
+
+  err = truckDaemon.AddRoute(fedops_network.FedopsRequestCreate, "^/container/[A-Za-z0-9]+/[A-Za-z0-9]+$", truckDaemon.ShipContainerImage)
+  if err != nil {
+    fmt.Println(err.Error())
+  }
   return &truckDaemon
 }
 
@@ -140,5 +146,11 @@ func (d *TruckDaemon) UnshipContainer(req *fedops_network.FedopsRequest, res *fe
   fmt.Println("UNSHIP", containerID)
 
   delete(d.Config.Containers, containerID)
+  return nil
+}
+
+func (d *TruckDaemon) ShipContainerImage(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+  args := bytes.Split(req.Route, []byte("/"))
+  fmt.Println("LIST", string(req.Data), args)
   return nil
 }
