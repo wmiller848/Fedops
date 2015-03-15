@@ -167,6 +167,7 @@ func (d *Dispatcher) DestroyTruck(promise chan FedopsAction, truckID string) {
   }
 
   d.Config.Trucks[truckID] = nil
+  delete(d.Config.Trucks, truckID)
 
   persisted := d.Unload()
   if persisted != true {

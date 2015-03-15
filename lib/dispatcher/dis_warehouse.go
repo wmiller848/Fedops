@@ -168,6 +168,7 @@ func (d *Dispatcher) DestroyWarehouse(promise chan FedopsAction, warehouseID str
   }
 
   d.Config.Warehouses[warehouseID] = nil
+  delete(d.Config.Warehouses, warehouseID)
 
   persisted := d.Unload()
   if persisted != true {
