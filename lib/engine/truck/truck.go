@@ -50,9 +50,13 @@ func CreateDaemon() *TruckDaemon {
 
 	truckDaemon := TruckDaemon{}
 	// Set up the default runtime
-	truckDaemon.Configure(pwd)
+	err := truckDaemon.Configure(pwd)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil
+	}
 	// Set up the routes for network calls
-	err := truckDaemon.AddRoute(fedops_network.FedopsRequestInfo, "^/containers$", truckDaemon.ListContainers)
+	err = truckDaemon.AddRoute(fedops_network.FedopsRequestInfo, "^/containers$", truckDaemon.ListContainers)
 	if err != nil {
 		fmt.Println(err.Error())
 	}

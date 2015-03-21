@@ -37,7 +37,9 @@ func main() {
 	runtime.GOMAXPROCS(numCpus)
 
 	daemon := fedops_truck.CreateDaemon()
-	daemon.Listen()
+	if daemon != nil {
+		daemon.Listen()
+	}
 	// server cert is self signed -> server_cert == ca_cert
 	// CA_Pool := x509.NewCertPool()
 	// severCert, err := ioutil.ReadFile("./cert.pem")
