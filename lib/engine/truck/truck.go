@@ -23,134 +23,133 @@
 package fedops_truck
 
 import (
-  //
-  "fmt"
-  "os"
-  "bytes"
-  "errors"
-  //
-  "github.com/Fedops/lib/providers"
-  "github.com/Fedops/lib/engine"
-  "github.com/Fedops/lib/engine/container"
-  "github.com/Fedops/lib/engine/network"
+	//
+	"bytes"
+	"errors"
+	"fmt"
+	"os"
+	//
+	"github.com/wmiller848/Fedops/lib/engine"
+	"github.com/wmiller848/Fedops/lib/engine/container"
+	"github.com/wmiller848/Fedops/lib/engine/network"
+	"github.com/wmiller848/Fedops/lib/providers"
 )
 
 type Truck struct {
-  fedops_provider.ProviderVM
-  TruckID  string
-  Containers []string
+	fedops_provider.ProviderVM
+	TruckID    string
+	Containers []string
 }
 
 type TruckDaemon struct {
-  fedops_runtime.Runtime
+	fedops_runtime.Runtime
 }
 
-func CreateDaemon() *TruckDaemon{
-  pwd := os.Getenv("PWD")
+func CreateDaemon() *TruckDaemon {
+	pwd := os.Getenv("PWD")
 
-  truckDaemon := TruckDaemon{}
-  // Set up the default runtime
-  truckDaemon.Configure(pwd)
-  // Set up the routes for network calls
-  err := truckDaemon.AddRoute(fedops_network.FedopsRequestInfo, "^/container$", truckDaemon.ShipContainer)
-  if err != nil {
-    fmt.Println(err.Error())
-  }
-  err = truckDaemon.AddRoute(fedops_network.FedopsRequestCreate, "^/container/[A-Za-z0-9]+$", truckDaemon.ShipContainer)
-  if err != nil {
-    fmt.Println(err.Error())
-  }
-  err = truckDaemon.AddRoute(fedops_network.FedopsRequestUpdate, "^/container/[A-Za-z0-9]+$", truckDaemon.UpdateContainer)
-  if err != nil {
-    fmt.Println(err.Error())
-  }
-  err = truckDaemon.AddRoute(fedops_network.FedopsRequestDestroy, "^/container/[A-Za-z0-9]+$", truckDaemon.UnshipContainer)
-  if err != nil {
-    fmt.Println(err.Error())
-  }
+	truckDaemon := TruckDaemon{}
+	// Set up the default runtime
+	truckDaemon.Configure(pwd)
+	// Set up the routes for network calls
+	err := truckDaemon.AddRoute(fedops_network.FedopsRequestInfo, "^/containers$", truckDaemon.ListContainers)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	err = truckDaemon.AddRoute(fedops_network.FedopsRequestCreate, "^/container/[A-Za-z0-9]+$", truckDaemon.ShipContainer)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	err = truckDaemon.AddRoute(fedops_network.FedopsRequestUpdate, "^/container/[A-Za-z0-9]+$", truckDaemon.UpdateContainer)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	err = truckDaemon.AddRoute(fedops_network.FedopsRequestDestroy, "^/container/[A-Za-z0-9]+$", truckDaemon.UnshipContainer)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 
-
-  err = truckDaemon.AddRoute(fedops_network.FedopsRequestCreate, "^/container/[A-Za-z0-9]+/[A-Za-z0-9]+$", truckDaemon.ShipContainerImage)
-  if err != nil {
-    fmt.Println(err.Error())
-  }
-  return &truckDaemon
+	err = truckDaemon.AddRoute(fedops_network.FedopsRequestCreate, "^/container/[A-Za-z0-9]+/[A-Za-z0-9]+$", truckDaemon.ShipContainerImage)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	return &truckDaemon
 }
 
 func (d *TruckDaemon) ListContainers(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
-  args := bytes.Split(req.Route, []byte("/"))
-  fmt.Println("LIST", string(req.Data), args)
-  return nil
+	args := bytes.Split(req.Route, []byte("/"))
+	fmt.Println("ListContainers", string(req.Data), args)
+	return nil
 }
 
 func (d *TruckDaemon) ShipContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
-  var containerID, warehouseID string
-  args := bytes.Split(req.Route, []byte("/"))
-  if len(args) >= 3 {
-    containerID = string(args[2])
-  }
-  dataArgs := bytes.Split(req.Data, []byte(":"))
-  if len(dataArgs) >= 2 {
-    warehouseID = string(dataArgs[1])
-  }
+	var containerID, warehouseID string
+	args := bytes.Split(req.Route, []byte("/"))
+	if len(args) >= 3 {
+		containerID = string(args[2])
+	}
+	dataArgs := bytes.Split(req.Data, []byte(":"))
+	if len(dataArgs) >= 2 {
+		warehouseID = string(dataArgs[1])
+	}
 
-  fmt.Println(args, dataArgs)
+	fmt.Println(args, dataArgs)
 
-  if containerID == "" {
-    return errors.New("Bad ContainerID")
-  }
-  fmt.Println("SHIP", containerID, warehouseID)
+	if containerID == "" {
+		return errors.New("Bad ContainerID")
+	}
+	fmt.Println("ShipContainer", containerID, warehouseID)
 
-  d.Config.Containers[containerID] = fedops_container.Container{
-    ContainerID: containerID,
-    Warehouse: warehouseID,
-  }
-  return nil
+	d.Config.Containers[containerID] = fedops_container.Container{
+		ContainerID: containerID,
+		Warehouse:   warehouseID,
+	}
+	return nil
 }
 
-func  (d *TruckDaemon) UpdateContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
-  var containerID, warehouseID string
-  args := bytes.Split(req.Route, []byte("/"))
-  if len(args) >= 3 {
-    containerID = string(args[2])
-  }
-  dataArgs := bytes.Split(req.Data, []byte(":"))
-  if len(dataArgs) >= 2 {
-    warehouseID = string(dataArgs[1])
-  }
+func (d *TruckDaemon) UpdateContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+	var containerID, warehouseID string
+	args := bytes.Split(req.Route, []byte("/"))
+	if len(args) >= 3 {
+		containerID = string(args[2])
+	}
+	dataArgs := bytes.Split(req.Data, []byte(":"))
+	if len(dataArgs) >= 2 {
+		warehouseID = string(dataArgs[1])
+	}
 
-  fmt.Println(args, dataArgs)
+	fmt.Println(args, dataArgs)
 
-  if containerID == "" {
-    return errors.New("Bad ContainerID")
-  }
-  fmt.Println("UPDATE", containerID, warehouseID)
+	if containerID == "" {
+		return errors.New("Bad ContainerID")
+	}
+	fmt.Println("UpdateContainer", containerID, warehouseID)
 
-  container := d.Config.Containers[containerID]
-  container.Warehouse = warehouseID
-  return nil
+	container := d.Config.Containers[containerID]
+	container.Warehouse = warehouseID
+	return nil
 }
 
 func (d *TruckDaemon) UnshipContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
-  var containerID string
-  args := bytes.Split(req.Route, []byte("/"))
-  if len(args) >= 3 {
-    containerID = string(args[2])
-  }
+	var containerID string
+	args := bytes.Split(req.Route, []byte("/"))
+	if len(args) >= 3 {
+		containerID = string(args[2])
+	}
 
-  fmt.Println(args)
+	fmt.Println(args)
 
-  if containerID == "" {
-    return errors.New("Bad ContainerID")
-  }
-  fmt.Println("UNSHIP", containerID)
+	if containerID == "" {
+		return errors.New("Bad ContainerID")
+	}
+	fmt.Println("UnshipContainer", containerID)
 
-  delete(d.Config.Containers, containerID)
-  return nil
+	delete(d.Config.Containers, containerID)
+	return nil
 }
 
 func (d *TruckDaemon) ShipContainerImage(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
-  args := bytes.Split(req.Route, []byte("/"))
-  fmt.Println("LIST", string(req.Data), args)
-  return nil
+	args := bytes.Split(req.Route, []byte("/"))
+	fmt.Println("ShipContainerImage", string(req.Data), args)
+	return nil
 }

@@ -22,12 +22,83 @@
 
 package fedops_warehouse
 
-import(
-  "github.com/Fedops/lib/providers"
+import (
+	"bytes"
+	"fmt"
+	"os"
+	//
+	"github.com/wmiller848/Fedops/lib/engine"
+	"github.com/wmiller848/Fedops/lib/engine/network"
+	"github.com/wmiller848/Fedops/lib/providers"
 )
 
 type Warehouse struct {
-  fedops_provider.ProviderVM
-  WarehouseID string
-  Containers  []string
+	fedops_provider.ProviderVM
+	WarehouseID string
+	Containers  []string
+}
+
+type WarehouseDaemon struct {
+	fedops_runtime.Runtime
+}
+
+func CreateDaemon() *WarehouseDaemon {
+	pwd := os.Getenv("PWD")
+
+	warehouseDaemon := WarehouseDaemon{}
+	// Set up the default runtime
+	warehouseDaemon.Configure(pwd)
+	// Set up the routes for network calls
+	err := warehouseDaemon.AddRoute(fedops_network.FedopsRequestInfo, "^/containers$", warehouseDaemon.ListContainers)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	err = warehouseDaemon.AddRoute(fedops_network.FedopsRequestCreate, "^/container/[A-Za-z0-9]+$", warehouseDaemon.PackageContainer)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	err = warehouseDaemon.AddRoute(fedops_network.FedopsRequestUpdate, "^/container/[A-Za-z0-9]+$", warehouseDaemon.UpdateContainer)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	err = warehouseDaemon.AddRoute(fedops_network.FedopsRequestDestroy, "^/container/[A-Za-z0-9]+$", warehouseDaemon.UnpackageContainer)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	err = warehouseDaemon.AddRoute(fedops_network.FedopsRequestCreate, "^/container/[A-Za-z0-9]+/[A-Za-z0-9]+$", warehouseDaemon.PackageContainerImage)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	return &warehouseDaemon
+}
+
+func (d *WarehouseDaemon) ListContainers(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+	args := bytes.Split(req.Route, []byte("/"))
+	fmt.Println("ListContainers", string(req.Data), args)
+	return nil
+}
+
+func (d *WarehouseDaemon) PackageContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+	args := bytes.Split(req.Route, []byte("/"))
+	fmt.Println("PackageContainer", string(req.Data), args)
+	return nil
+}
+
+func (d *WarehouseDaemon) UpdateContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+	args := bytes.Split(req.Route, []byte("/"))
+	fmt.Println("UpdateContainer", string(req.Data), args)
+	return nil
+}
+
+func (d *WarehouseDaemon) UnpackageContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+	args := bytes.Split(req.Route, []byte("/"))
+	fmt.Println("UnpackageContainer", string(req.Data), args)
+	return nil
+}
+
+func (d *WarehouseDaemon) PackageContainerImage(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+	args := bytes.Split(req.Route, []byte("/"))
+	fmt.Println("PackageContainerImage", string(req.Data), args)
+	return nil
 }

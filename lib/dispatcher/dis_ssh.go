@@ -23,403 +23,401 @@
 package fedops
 
 import (
-  // Standard
-  "fmt"
-  "os"
-  // 3rd Party
-  "golang.org/x/crypto/ssh"
-  "golang.org/x/crypto/ssh/terminal"
-  "github.com/pkg/sftp"
-  // FedOps
-  "github.com/Fedops/lib/encryption"
-  "github.com/Fedops/lib/engine"
+	// Standard
+	"fmt"
+	"os"
+	// 3rd Party
+	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/terminal"
+	// FedOps
+	"github.com/wmiller848/Fedops/lib/encryption"
+	"github.com/wmiller848/Fedops/lib/engine"
 )
 
 func (d *Dispatcher) _bootstrap(vmID string, fedType uint) uint {
-  ip := ""
-  providerName := ""
+	ip := ""
+	providerName := ""
 
-  // warehouses := d.Config.Warehouses
-  // for wIndex, _ := range warehouses {
-  //   if warehouses[wIndex].WarehouseID == vmID {
-  //     ip = warehouses[wIndex].IPV4
-  //     providerName = warehouses[wIndex].Provider
-  //     break
-  //   }
-  // }
+	// warehouses := d.Config.Warehouses
+	// for wIndex, _ := range warehouses {
+	//   if warehouses[wIndex].WarehouseID == vmID {
+	//     ip = warehouses[wIndex].IPV4
+	//     providerName = warehouses[wIndex].Provider
+	//     break
+	//   }
+	// }
 
-  // trucks := d.Config.Trucks
-  // for tIndex, _ := range trucks {
-  //   if trucks[tIndex].TruckID == vmID {
-  //     ip = trucks[tIndex].IPV4
-  //     providerName = trucks[tIndex].Provider
-  //     break
-  //   }
-  // }
+	// trucks := d.Config.Trucks
+	// for tIndex, _ := range trucks {
+	//   if trucks[tIndex].TruckID == vmID {
+	//     ip = trucks[tIndex].IPV4
+	//     providerName = trucks[tIndex].Provider
+	//     break
+	//   }
+	// }
 
-  warehouse, ok := d.Config.Warehouses[vmID]
-  if ok {
-    ip = warehouse.IPV4
-    providerName = warehouse.Provider
-  }
+	warehouse, ok := d.Config.Warehouses[vmID]
+	if ok {
+		ip = warehouse.IPV4
+		providerName = warehouse.Provider
+	}
 
-  truck, ok := d.Config.Trucks[vmID]
-  if ok {
-    ip = truck.IPV4
-    providerName = truck.Provider
-  }
+	truck, ok := d.Config.Trucks[vmID]
+	if ok {
+		ip = truck.IPV4
+		providerName = truck.Provider
+	}
 
-  index := 0
-  keys := d.Config.SSHKeys
-  for kIndex, _ := range keys {
-    if keys[kIndex].ID[providerName] != "" {
-      index = kIndex
-      break
-    }
-  }
+	index := 0
+	keys := d.Config.SSHKeys
+	for kIndex, _ := range keys {
+		if keys[kIndex].ID[providerName] != "" {
+			index = kIndex
+			break
+		}
+	}
 
-  key, err := ssh.ParsePrivateKey(d.Config.SSHKeys[index].Keypair.PrivatePem)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
-  config := &ssh.ClientConfig{
-    User: "root",
-    Auth: []ssh.AuthMethod {
-      ssh.PublicKeys(key),
-    },
-  }
+	key, err := ssh.ParsePrivateKey(d.Config.SSHKeys[index].Keypair.PrivatePem)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
+	config := &ssh.ClientConfig{
+		User: "root",
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(key),
+		},
+	}
 
-  if ip == "" {
-    fmt.Println("Could not find warehouse or truck with ID", vmID)
-    return FedopsError
-  }
+	if ip == "" {
+		fmt.Println("Could not find warehouse or truck with ID", vmID)
+		return FedopsError
+	}
 
-  conn, err := ssh.Dial("tcp", ip + ":22", config)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
+	conn, err := ssh.Dial("tcp", ip+":22", config)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
 
-  session, err := conn.NewSession()
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
-  // session.Stdout = os.Stdout
-  // session.Stderr = os.Stderr
+	session, err := conn.NewSession()
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
+	// session.Stdout = os.Stdout
+	// session.Stderr = os.Stderr
 
-  // TODO :: Make this an external config files 
+	// TODO :: Make this an external config files
 
-  /////////////////
-  // Disable Password SSH login and change port to 7575
-  /////////////////
-  cmd := "sed --in-place=.bak 's/ChallengeResponseAuthentication\\ yes/ChallengeResponseAuthentication\\ no/' /etc/ssh/sshd_config"
-  cmd += " && "
-  cmd += "sed --in-place=.bak 's/PasswordAuthentication\\ yes/PasswordAuthentication\\ no/' /etc/ssh/sshd_config"
-  cmd += " && "
-  cmd += "sed --in-place=.bak 's/UsePAM\\ yes/UsePAM\\ no/' /etc/ssh/sshd_config"
-  cmd += " && "
-  cmd += "sed --in-place=.bak 's/#Protocol\\ 2/Protocol\\ 2/' /etc/ssh/sshd_config"
-  // cmd += " && "
-  // cmd += "sed --in-place=.bak 's/#Port\\ 22/Port\\ 7575/' /etc/ssh/sshd_config"
-  // cmd += " && "
-  // cmd += "iptables -A INPUT -p tcp --dport 7575 -j ACCEPT"
-  // cmd += " && "
-  // cmd += "semanage port -a -t ssh_port_t -p tcp 7575"
-  // Generate a new server cert pair
-  
-  /////////////////
-  // TODO :: fedops user
-  // Create a new fedops user, set sudoer settings
-  /////////////////
+	/////////////////
+	// Disable Password SSH login and change port to 7575
+	/////////////////
+	cmd := "sed --in-place=.bak 's/ChallengeResponseAuthentication\\ yes/ChallengeResponseAuthentication\\ no/' /etc/ssh/sshd_config"
+	cmd += " && "
+	cmd += "sed --in-place=.bak 's/PasswordAuthentication\\ yes/PasswordAuthentication\\ no/' /etc/ssh/sshd_config"
+	cmd += " && "
+	cmd += "sed --in-place=.bak 's/UsePAM\\ yes/UsePAM\\ no/' /etc/ssh/sshd_config"
+	cmd += " && "
+	cmd += "sed --in-place=.bak 's/#Protocol\\ 2/Protocol\\ 2/' /etc/ssh/sshd_config"
+	// cmd += " && "
+	// cmd += "sed --in-place=.bak 's/#Port\\ 22/Port\\ 7575/' /etc/ssh/sshd_config"
+	// cmd += " && "
+	// cmd += "iptables -A INPUT -p tcp --dport 7575 -j ACCEPT"
+	// cmd += " && "
+	// cmd += "semanage port -a -t ssh_port_t -p tcp 7575"
+	// Generate a new server cert pair
 
-  /////////////////
-  // Install Docker, git, vim and sudo
-  /////////////////
-  cmd += " && "
-  cmd += "yum -y install docker git"
-  cmd += " && "
-  cmd += "systemctl start docker"
-  cmd += " && "
-  cmd += "systemctl enable docker"
+	/////////////////
+	// TODO :: fedops user
+	// Create a new fedops user, set sudoer settings
+	/////////////////
 
-  /////////////////
-  // Finally Restart SSHD
-  /////////////////
-  cmd += " && "
-  cmd += "systemctl restart sshd"
+	/////////////////
+	// Install Docker, git, vim and sudo
+	/////////////////
+	cmd += " && "
+	cmd += "yum -y install docker git"
+	cmd += " && "
+	cmd += "systemctl start docker"
+	cmd += " && "
+	cmd += "systemctl enable docker"
 
-  // fmt.Println("Running", cmd)
-  err = session.Run(cmd)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
+	/////////////////
+	// Finally Restart SSHD
+	/////////////////
+	cmd += " && "
+	cmd += "systemctl restart sshd"
 
+	// fmt.Println("Running", cmd)
+	err = session.Run(cmd)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
 
-  session.Close()
-  conn.Close()
+	session.Close()
+	conn.Close()
 
-  conn, err = ssh.Dial("tcp", ip + ":22", config)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
+	conn, err = ssh.Dial("tcp", ip+":22", config)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
 
-  // session, err = conn.NewSession()
-  // if err != nil {
-  //   fmt.Println(err.Error())
-  //   return FedopsError
-  // }
+	// session, err = conn.NewSession()
+	// if err != nil {
+	//   fmt.Println(err.Error())
+	//   return FedopsError
+	// }
 
-  // session.Stdout = os.Stdout
-  // session.Stderr = os.Stderr
+	// session.Stdout = os.Stdout
+	// session.Stderr = os.Stderr
 
-  /////////////////
-  // Install Fedops
-  /////////////////
-  // Write the config file
-  keydata, err := fedops_encryption.GenerateRandomBytes(FedopsRemoteKeySize)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
+	/////////////////
+	// Install Fedops
+	/////////////////
+	// Write the config file
+	keydata, err := fedops_encryption.GenerateRandomBytes(FedopsRemoteKeySize)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
 
-  certConfig := fedops_encryption.Cert_Config{IP:ip}
-  cert := fedops_encryption.GenerateCert(certConfig)
+	certConfig := fedops_encryption.Cert_Config{IP: ip}
+	cert := fedops_encryption.GenerateCert(certConfig)
 
-  d.Config.Certs = append(d.Config.Certs, cert)
+	d.Config.Certs = append(d.Config.Certs, cert)
 
-  pwd := "/opt/fedops"
-  r := &fedops_runtime.Runtime{
-    Cipherkey:      fedops_encryption.Encode(keydata),
-    Config:         fedops_runtime.ClusterConfig{
-      ClusterID: d.Config.ClusterID,
-      Cert: cert,
-    },
-    Version:        "0.0.1",
-    PowerDirectory: pwd,
-  }
-  configData := r.UnloadToMemory()
+	pwd := "/opt/fedops"
+	r := &fedops_runtime.Runtime{
+		Cipherkey: fedops_encryption.Encode(keydata),
+		Config: fedops_runtime.ClusterConfig{
+			ClusterID: d.Config.ClusterID,
+			Cert:      cert,
+		},
+		Version:        "0.0.1",
+		PowerDirectory: pwd,
+	}
+	configData := r.UnloadToMemory()
 
-  sftpClient, err := sftp.NewClient(conn)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
+	sftpClient, err := sftp.NewClient(conn)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
 
-  err = sftpClient.Mkdir(pwd)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
+	err = sftpClient.Mkdir(pwd)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
 
-  configFile, err := sftpClient.Create(pwd + "/" + fedops_runtime.ConfigFileName)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
+	configFile, err := sftpClient.Create(pwd + "/" + fedops_runtime.ConfigFileName)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
 
-  _, err = configFile.Write(configData)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
-  configFile.Close()
+	_, err = configFile.Write(configData)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
+	configFile.Close()
 
-  keyFile, err := sftpClient.Create(pwd + "/" + fedops_runtime.KeyFileName)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
+	keyFile, err := sftpClient.Create(pwd + "/" + fedops_runtime.KeyFileName)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
 
-  _, err = keyFile.Write(keydata)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
-  keyFile.Close()
+	_, err = keyFile.Write(keydata)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
+	keyFile.Close()
 
-  sftpClient.Close()
-  conn.Close()
+	sftpClient.Close()
+	conn.Close()
 
-  conn, err = ssh.Dial("tcp", ip + ":22", config)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
-  defer conn.Close()
+	conn, err = ssh.Dial("tcp", ip+":22", config)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
+	defer conn.Close()
 
-  session, err = conn.NewSession()
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
-  defer session.Close()
+	session, err = conn.NewSession()
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
+	defer session.Close()
 
-  // Build fedops
-  cmd = "docker build --no-cache=true --force-rm=true -t fedops " + FedopsRepo
-  cmd += " && "
-  // TODO :: Set up persistant data container instead of mounting a volume from the host
-  if fedType == FedopsTypeTruck {
-    cmd += "docker run -d -v=/opt/fedops/:/opt/fedops/ fedops fedops-truck"
-  } else if fedType == FedopsTypeWarehouse {
-    cmd += "docker run -d -v=/opt/fedops/:/opt/fedops/ fedops fedops-warehouse"
-  }
-  
-  /////////////////
-  // Execute the commands
-  /////////////////
-  // fmt.Println("Running", cmd)
-  err = session.Run(cmd)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }  
+	// Build fedops
+	cmd = "docker build --no-cache=true --force-rm=true -t fedops " + FedopsRepo
+	cmd += " && "
+	// TODO :: Set up persistant data container instead of mounting a volume from the host
+	if fedType == FedopsTypeTruck {
+		cmd += "docker run -d -v=/opt/fedops/:/opt/fedops/ fedops fedops-truck"
+	} else if fedType == FedopsTypeWarehouse {
+		cmd += "docker run -d -v=/opt/fedops/:/opt/fedops/ fedops fedops-warehouse"
+	}
 
-  return FedopsOk
+	/////////////////
+	// Execute the commands
+	/////////////////
+	// fmt.Println("Running", cmd)
+	err = session.Run(cmd)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
+
+	return FedopsOk
 }
 
-
 func (d *Dispatcher) SSH(vmID string) uint {
-  d._ssh(vmID)
-  // fmt.Println("SSH Session Ended")
-  persisted := d.Unload()
-  if persisted != true {
-    return FedopsError
-  } else {
-    return FedopsOk
-  }
+	d._ssh(vmID)
+	// fmt.Println("SSH Session Ended")
+	persisted := d.Unload()
+	if persisted != true {
+		return FedopsError
+	} else {
+		return FedopsOk
+	}
 }
 
 func (d *Dispatcher) _ssh(vmID string) uint {
 
-  promise := make(chan FedopsAction)
-  go d.Refresh(promise)
-  result := <- promise
+	promise := make(chan FedopsAction)
+	go d.Refresh(promise)
+	result := <-promise
 
-  if result.Status == FedopsError {
-    return FedopsError
-  }
+	if result.Status == FedopsError {
+		return FedopsError
+	}
 
-  ip := ""
-  providerName := ""
+	ip := ""
+	providerName := ""
 
-  // warehouses := d.Config.Warehouses
-  // for wIndex, _ := range warehouses {
-  //   if warehouses[wIndex].WarehouseID == vmID {
-  //     ip = warehouses[wIndex].IPV4
-  //     providerName = warehouses[wIndex].Provider
-  //     break
-  //   }
-  // }
+	// warehouses := d.Config.Warehouses
+	// for wIndex, _ := range warehouses {
+	//   if warehouses[wIndex].WarehouseID == vmID {
+	//     ip = warehouses[wIndex].IPV4
+	//     providerName = warehouses[wIndex].Provider
+	//     break
+	//   }
+	// }
 
-  // trucks := d.Config.Trucks
-  // for tIndex, _ := range trucks {
-  //   if trucks[tIndex].TruckID == vmID {
-  //     ip = trucks[tIndex].IPV4
-  //     providerName = trucks[tIndex].Provider
-  //     break
-  //   }
-  // }
+	// trucks := d.Config.Trucks
+	// for tIndex, _ := range trucks {
+	//   if trucks[tIndex].TruckID == vmID {
+	//     ip = trucks[tIndex].IPV4
+	//     providerName = trucks[tIndex].Provider
+	//     break
+	//   }
+	// }
 
-  warehouse, ok := d.Config.Warehouses[vmID]
-  if ok {
-    ip = warehouse.IPV4
-    providerName = warehouse.Provider
-  }
+	warehouse, ok := d.Config.Warehouses[vmID]
+	if ok {
+		ip = warehouse.IPV4
+		providerName = warehouse.Provider
+	}
 
-  truck, ok := d.Config.Trucks[vmID]
-  if ok {
-    ip = truck.IPV4
-    providerName = truck.Provider
-  }
+	truck, ok := d.Config.Trucks[vmID]
+	if ok {
+		ip = truck.IPV4
+		providerName = truck.Provider
+	}
 
-  index := 0
-  keys := d.Config.SSHKeys
-  for kIndex, _ := range keys {
-    if keys[kIndex].ID[providerName] != "" {
-      index = kIndex
-      break
-    }
-  }
+	index := 0
+	keys := d.Config.SSHKeys
+	for kIndex, _ := range keys {
+		if keys[kIndex].ID[providerName] != "" {
+			index = kIndex
+			break
+		}
+	}
 
-  key, err := ssh.ParsePrivateKey(d.Config.SSHKeys[index].Keypair.PrivatePem)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
-  config := &ssh.ClientConfig{
-    User: "root",
-    Auth: []ssh.AuthMethod {
-      ssh.PublicKeys(key),
-    },
-  }
+	key, err := ssh.ParsePrivateKey(d.Config.SSHKeys[index].Keypair.PrivatePem)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
+	config := &ssh.ClientConfig{
+		User: "root",
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(key),
+		},
+	}
 
-  if ip == "" {
-    fmt.Println("Could not find warehouse or truck with ID", vmID)
-    return FedopsError
-  }
+	if ip == "" {
+		fmt.Println("Could not find warehouse or truck with ID", vmID)
+		return FedopsError
+	}
 
-  conn, err := ssh.Dial("tcp", ip + ":22", config)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
-  defer conn.Close()
+	conn, err := ssh.Dial("tcp", ip+":22", config)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
+	defer conn.Close()
 
-  session, err := conn.NewSession()
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
-  defer session.Close()
+	session, err := conn.NewSession()
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
+	defer session.Close()
 
-  fd := int(os.Stdin.Fd())
-  userState, err := terminal.MakeRaw(fd)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
-  defer terminal.Restore(fd, userState)
+	fd := int(os.Stdin.Fd())
+	userState, err := terminal.MakeRaw(fd)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
+	defer terminal.Restore(fd, userState)
 
-  session.Stdout = os.Stdout
-  session.Stderr = os.Stderr
-  session.Stdin = os.Stdin
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stderr
+	session.Stdin = os.Stdin
 
-  termWidth, termHeight, err := terminal.GetSize(fd)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
+	termWidth, termHeight, err := terminal.GetSize(fd)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
 
-  // Set up terminal modes
-  modes := ssh.TerminalModes{
-    ssh.ECHO:          1,     // enable echoing
-    ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
-    ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
-  }
+	// Set up terminal modes
+	modes := ssh.TerminalModes{
+		ssh.ECHO:          1,     // enable echoing
+		ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
+		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
+	}
 
-  // Request pseudo terminal
-  err = session.RequestPty("xterm-256color", termHeight, termWidth, modes)
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
+	// Request pseudo terminal
+	err = session.RequestPty("xterm-256color", termHeight, termWidth, modes)
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
 
-  err = session.Shell()
-  if err != nil {
-    fmt.Println(err.Error())
-    return FedopsError
-  }
+	err = session.Shell()
+	if err != nil {
+		fmt.Println(err.Error())
+		return FedopsError
+	}
 
-  // Will return the status of the last command run
-  err = session.Wait()
-  if err != nil {
-    // fmt.Println(err.Error())
-    return FedopsError
-  }
+	// Will return the status of the last command run
+	err = session.Wait()
+	if err != nil {
+		// fmt.Println(err.Error())
+		return FedopsError
+	}
 
-  return FedopsOk
+	return FedopsOk
 }

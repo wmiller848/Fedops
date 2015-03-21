@@ -28,17 +28,17 @@ import (
 	"fmt"
 	"strings"
 	// 3rd Party
-	"github.com/codegangsta/cli"
 	"code.google.com/p/gopass"
+	"github.com/codegangsta/cli"
 	// FedOps
-	"github.com/Fedops/lib/dispatcher"
+	"github.com/wmiller848/Fedops/lib/dispatcher"
 )
 
 func commandInit(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
-		Name:      "init",
+		Name: "init",
 		// ShortName: "i",
-		Usage:     "create a new cluster",
+		Usage: "create a new cluster",
 		Action: func(c *cli.Context) {
 			hasConfig := fedops.HasConfigFile(pwd)
 			if hasConfig == true {

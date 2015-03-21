@@ -29,38 +29,38 @@ import (
 	// 3rd Party
 	"github.com/codegangsta/cli"
 	// FedOps
-	_ "github.com/Fedops/lib/dispatcher"
+	_ "github.com/wmiller848/Fedops/lib/dispatcher"
 )
 
 func commandSSH(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
-		Name:      "ssh",
+		Name: "ssh",
 		// ShortName: "s",
-		Usage:     "ssh into a warehouse or truck given there ID",
+		Usage: "ssh into a warehouse or truck given there ID",
 		Action: func(c *cli.Context) {
 			//fmt.Printf("%+v \r\n", c)
-      fed, err := initFedops(pwd)
-      if err != nil {
-        fmt.Println("Incorrect Password")
-        return
-      }
+			fed, err := initFedops(pwd)
+			if err != nil {
+				fmt.Println("Incorrect Password")
+				return
+			}
 
-      cmds := c.Args()
+			cmds := c.Args()
 
-      if len(cmds) < 1 {
-        fmt.Println("Need a warehouse or truck ID, run 'fedops info' to view a list")
-        return
-      }
+			if len(cmds) < 1 {
+				fmt.Println("Need a warehouse or truck ID, run 'fedops info' to view a list")
+				return
+			}
 
-      warehouseID := cmds[0]
-      fed.SSH(warehouseID)
+			warehouseID := cmds[0]
+			fed.SSH(warehouseID)
 		},
-    // Flags: []cli.Flag{
-    //   cli.StringFlag{
-    //     Name:  "warehouseID",
-    //     Usage: "warehouseID for warehouse to ssh into",
-    //   },
-    // },
+		// Flags: []cli.Flag{
+		//   cli.StringFlag{
+		//     Name:  "warehouseID",
+		//     Usage: "warehouseID for warehouse to ssh into",
+		//   },
+		// },
 		BashComplete: func(c *cli.Context) {
 			// This will complete if no args are passed
 			if len(c.Args()) > 0 {

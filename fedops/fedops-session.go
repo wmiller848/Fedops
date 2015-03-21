@@ -30,17 +30,17 @@ import (
 	_ "runtime"
 	_ "strings"
 	// 3rd Party
-	"github.com/codegangsta/cli"
 	"code.google.com/p/gopass"
+	"github.com/codegangsta/cli"
 	// FedOps
-	"github.com/Fedops/lib/dispatcher"
+	"github.com/wmiller848/Fedops/lib/dispatcher"
 )
 
 func commandSession(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
-		Name:      "session",
+		Name: "session",
 		// ShortName: "se",
-		Usage:     "output session key",
+		Usage: "output session key",
 		Action: func(c *cli.Context) {
 			hasConfig := fedops.HasConfigFile(pwd)
 			if hasConfig == false {

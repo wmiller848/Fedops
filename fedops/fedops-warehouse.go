@@ -29,101 +29,101 @@ import (
 	// 3rd Party
 	"github.com/codegangsta/cli"
 	// FedOps
-	"github.com/Fedops/lib/dispatcher"
+	"github.com/wmiller848/Fedops/lib/dispatcher"
 )
 
 func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
-		Name:      "warehouse",
+		Name: "warehouse",
 		// ShortName: "w",
-		Usage:     "manage fedops warehouses: create, destroy",
-    Subcommands: []cli.Command{
-      cli.Command{
-        Name: "create",
-        Action: func(c *cli.Context) {
-          providerName := "auto"
-          memSize := "auto"
-          diskSize := "auto"
-          numVcpus := "auto"
+		Usage: "manage fedops warehouses: create, destroy",
+		Subcommands: []cli.Command{
+			cli.Command{
+				Name: "create",
+				Action: func(c *cli.Context) {
+					providerName := "auto"
+					memSize := "auto"
+					diskSize := "auto"
+					numVcpus := "auto"
 
-          fed, err := initFedops(pwd)
-          if err != nil {
-            fmt.Println("Incorrect Password")
-            return
-          }
-          promise := make(chan fedops.FedopsAction)
-          go fed.CreateWarehouse(promise, providerName, memSize, diskSize, numVcpus)
-          result := <- promise
-          switch result.Status {
-          case fedops.FedopsError:
-            fmt.Println("Error")
-          case fedops.FedopsOk:
-            //fmt.Println("Ok")
-          case fedops.FedopsUnknown:
-            fmt.Println("Unknown")
-          }
-        },
-      },
-      cli.Command{
-        Name: "destroy",
-        Action: func(c *cli.Context) {
-          fed, err := initFedops(pwd)
-          if err != nil {
-            fmt.Println("Incorrect Password")
-            return
-          }
+					fed, err := initFedops(pwd)
+					if err != nil {
+						fmt.Println("Incorrect Password")
+						return
+					}
+					promise := make(chan fedops.FedopsAction)
+					go fed.CreateWarehouse(promise, providerName, memSize, diskSize, numVcpus)
+					result := <-promise
+					switch result.Status {
+					case fedops.FedopsError:
+						fmt.Println("Error")
+					case fedops.FedopsOk:
+						//fmt.Println("Ok")
+					case fedops.FedopsUnknown:
+						fmt.Println("Unknown")
+					}
+				},
+			},
+			cli.Command{
+				Name: "destroy",
+				Action: func(c *cli.Context) {
+					fed, err := initFedops(pwd)
+					if err != nil {
+						fmt.Println("Incorrect Password")
+						return
+					}
 
-          if len (c.Args()) == 0 {
-            fmt.Println("Supply a warehouse ID") 
-            return
-          }
+					if len(c.Args()) == 0 {
+						fmt.Println("Supply a warehouse ID")
+						return
+					}
 
-          warehouseID := c.Args()[0] //c.String("warehouseID")
+					warehouseID := c.Args()[0] //c.String("warehouseID")
 
-          promise := make(chan fedops.FedopsAction)
-          go fed.DestroyWarehouse(promise, warehouseID)
-          result := <- promise
-          switch result.Status {
-          case fedops.FedopsError:
-            // fmt.Println("Error")
-          case fedops.FedopsOk:
-            //fmt.Println("Ok")
-          case fedops.FedopsUnknown:
-            fmt.Println("Unknown")
-          }
-        },
-      },
-      cli.Command{
-        Name: "package",
-        Action: func(c *cli.Context) {
-          fed, err := initFedops(pwd)
-          if err != nil {
-            fmt.Println("Incorrect Password")
-            return
-          }
+					promise := make(chan fedops.FedopsAction)
+					go fed.DestroyWarehouse(promise, warehouseID)
+					result := <-promise
+					switch result.Status {
+					case fedops.FedopsError:
+						// fmt.Println("Error")
+					case fedops.FedopsOk:
+						//fmt.Println("Ok")
+					case fedops.FedopsUnknown:
+						fmt.Println("Unknown")
+					}
+				},
+			},
+			cli.Command{
+				Name: "package",
+				Action: func(c *cli.Context) {
+					fed, err := initFedops(pwd)
+					if err != nil {
+						fmt.Println("Incorrect Password")
+						return
+					}
 
-          if len (c.Args()) <= 1 {
-            fmt.Println("Supply a container ID and warehouseID") 
-            return
-          }
+					if len(c.Args()) <= 1 {
+						fmt.Println("Supply a container ID and warehouseID")
+						return
+					}
 
-          containerID := c.Args()[0] //c.String("warehouseID")
-          warehouseID := c.Args()[1]
+					containerID := c.Args()[0] //c.String("warehouseID")
+					warehouseID := c.Args()[1]
 
-          promise := make(chan fedops.FedopsAction)
-          go fed.ShipContainerToWarehouse(promise, containerID, warehouseID)
-          result := <- promise
-          switch result.Status {
-          case fedops.FedopsError:
-            // fmt.Println("Error")
-          case fedops.FedopsOk:
-            //fmt.Println("Ok")
-          case fedops.FedopsUnknown:
-            fmt.Println("Unknown")
-          }
-        },
-      },
-    },
+					promise := make(chan fedops.FedopsAction)
+					go fed.ShipContainerToWarehouse(promise, containerID, warehouseID)
+					result := <-promise
+					switch result.Status {
+					case fedops.FedopsError:
+						// fmt.Println("Error")
+					case fedops.FedopsOk:
+						//fmt.Println("Ok")
+					case fedops.FedopsUnknown:
+						fmt.Println("Unknown")
+					}
+				},
+			},
+		},
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "provider",
@@ -141,10 +141,10 @@ func commandWarehouse(stdin *bufio.Reader, pwd string) cli.Command {
 				Name:  "vcpus-size",
 				Usage: "create : number of vcpus for warehouse, otherwise automatically selects default for provider",
 			},
-      cli.StringFlag{
-        Name:  "warehouseID",
-        Usage: "destory : warehouse ID",
-      },
+			cli.StringFlag{
+				Name:  "warehouseID",
+				Usage: "destory : warehouse ID",
+			},
 		},
 		BashComplete: func(c *cli.Context) {
 			// This will complete if no args are passed

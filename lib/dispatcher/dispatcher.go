@@ -32,11 +32,11 @@ import (
 	"time"
 	// 3rd Party
 	// FedOps
-	"github.com/Fedops/lib/providers"
-  "github.com/Fedops/lib/encryption"
-  "github.com/Fedops/lib/engine/container"
-  "github.com/Fedops/lib/engine/truck"
-  "github.com/Fedops/lib/engine/warehouse"
+	"github.com/wmiller848/Fedops/lib/encryption"
+	"github.com/wmiller848/Fedops/lib/engine/container"
+	"github.com/wmiller848/Fedops/lib/engine/truck"
+	"github.com/wmiller848/Fedops/lib/engine/warehouse"
+	"github.com/wmiller848/Fedops/lib/providers"
 )
 
 const (
@@ -46,30 +46,29 @@ const (
 	MicrosoftAzure uint = 3
 	OpenStack      uint = 4
 
-	SaltSize      int = 512
+	SaltSize int = 512
 
-	ClusterIDSize int = 32
-  WarehouseIDSize int = 16
-  TruckIDSize int = 16
-  ContainerIDSize int = 16
+	ClusterIDSize   int = 32
+	WarehouseIDSize int = 16
+	TruckIDSize     int = 16
+	ContainerIDSize int = 16
 
-  AuthorizationCost int = 10
+	AuthorizationCost int = 10
 
-  FedopsRemoteKeySize int = 32
+	FedopsRemoteKeySize int = 32
 
-  FedopsPoolTime time.Duration = 5
-  FedopsBootWaitTime time.Duration = 30
+	FedopsPoolTime     time.Duration = 5
+	FedopsBootWaitTime time.Duration = 30
 
 	FedopsError   uint = 0
 	FedopsOk      uint = 1
 	FedopsUnknown uint = 2
 
-  FedopsTypeTruck uint = 0
-  FedopsTypeWarehouse uint = 1
+	FedopsTypeTruck     uint = 0
+	FedopsTypeWarehouse uint = 1
 
-
-  FedopsRepo string = "github.com/wmiller848/Fedops"
-  ConfigFileName string = "Fedops"
+	FedopsRepo     string = "github.com/wmiller848/Fedops"
+	ConfigFileName string = "Fedops"
 )
 
 type FedopsAction struct {
@@ -86,7 +85,6 @@ type Tokens struct {
 // 	Name string
 // 	Repo string
 // }
-
 
 //
 //
@@ -108,12 +106,12 @@ type DispatcherConfig struct {
 	ClusterID  string
 	Created    string
 	Modified   string
-  Certs      []fedops_encryption.Cert
+	Certs      []fedops_encryption.Cert
 	SSHKeys    []fedops_provider.ProviderKeypair
 	Tokens     map[string]Tokens
 	Warehouses map[string]*fedops_warehouse.Warehouse
 	Trucks     map[string]*fedops_truck.Truck
-  Containers map[string]*fedops_container.Container
+	Containers map[string]*fedops_container.Container
 }
 
 type Dispatcher struct {
@@ -179,7 +177,7 @@ func GetSalt(pwd string) ([]byte, error) {
 
 func loadConfig(cipherkey []byte, pwd string) (DispatcherConfig, error) {
 	var config DispatcherConfig
-  cdata, err := GetConfigFile(pwd)
+	cdata, err := GetConfigFile(pwd)
 	if err != nil {
 		//  We couldn't find the config file :(
 		//fmt.Println(err.Error())
@@ -226,8 +224,8 @@ func (d *Dispatcher) writeKeypair(sshKey fedops_encryption.Keypair, provider fed
 
 func (d *Dispatcher) Unload() bool {
 
-  now := time.Now()
-  d.Config.Modified = now.UTC().String()
+	now := time.Now()
+	d.Config.Modified = now.UTC().String()
 
 	pwd := d.PowerDirectory
 	disjson, err := json.Marshal(d.Config)
@@ -247,18 +245,18 @@ func (d *Dispatcher) Unload() bool {
 		return false
 	}
 
-	err = ioutil.WriteFile(pwd+"/" + ConfigFileName, encrypted, 0666)
+	err = ioutil.WriteFile(pwd+"/"+ConfigFileName, encrypted, 0666)
 	if err != nil {
 		fmt.Println(err.Error())
 		return false
 	}
-  if len(d.Salt) > 0 {
-    err = ioutil.WriteFile(pwd+"/.fedops-salt", d.Salt, 0666)
-    if err != nil {
-      fmt.Println(err.Error())
-      return false
-    }
-  }
+	if len(d.Salt) > 0 {
+		err = ioutil.WriteFile(pwd+"/.fedops-salt", d.Salt, 0666)
+		if err != nil {
+			fmt.Println(err.Error())
+			return false
+		}
+	}
 	return true
 }
 
@@ -272,9 +270,9 @@ func (d *Dispatcher) InitCloudProvider(promise chan FedopsAction, provider strin
 		}
 		digo := fedops_provider.DigitalOceanProvider(auth)
 		d.Config.Tokens = make(map[string]Tokens)
-    d.Config.Warehouses = make(map[string]*fedops_warehouse.Warehouse)
-    d.Config.Trucks = make(map[string]*fedops_truck.Truck)
-    d.Config.Containers = make(map[string]*fedops_container.Container)
+		d.Config.Warehouses = make(map[string]*fedops_warehouse.Warehouse)
+		d.Config.Trucks = make(map[string]*fedops_truck.Truck)
+		d.Config.Containers = make(map[string]*fedops_container.Container)
 		d.Config.Tokens[fedops_provider.DigitalOceanName] = tokens
 		promise <- FedopsAction{
 			Status: d._initProvider(&digo),
@@ -294,11 +292,11 @@ func (d *Dispatcher) InitCloudProvider(promise chan FedopsAction, provider strin
 		promise <- FedopsAction{
 			Status: FedopsError,
 		}
-  case "openstack":
-    fmt.Println("No API Driver... consider forking and submiting a PR")
-    promise <- FedopsAction{
-      Status: FedopsError,
-    }
+	case "openstack":
+		fmt.Println("No API Driver... consider forking and submiting a PR")
+		promise <- FedopsAction{
+			Status: FedopsError,
+		}
 	default:
 		fmt.Println("Unknown provider " + provider)
 		promise <- FedopsAction{
@@ -317,10 +315,10 @@ func (d *Dispatcher) InitCloudProvider(promise chan FedopsAction, provider strin
 
 func (d *Dispatcher) _initProvider(provider fedops_provider.Provider) uint {
 
-  // certConfig := fedops_encryption.Cert_Config{}
-  // cert := fedops_encryption.GenerateCert(certConfig)
+	// certConfig := fedops_encryption.Cert_Config{}
+	// cert := fedops_encryption.GenerateCert(certConfig)
 
-  // d.Config.Certs = append(d.Config.Certs, cert)
+	// d.Config.Certs = append(d.Config.Certs, cert)
 
 	keypairConfig := fedops_encryption.Keypair_Config{}
 	sshKey := fedops_encryption.GenerateKeypair(keypairConfig)
@@ -380,25 +378,25 @@ func (d *Dispatcher) _refresh(provider fedops_provider.Provider) uint {
 		return FedopsError
 	}
 
-  warehouses := d.Config.Warehouses
+	warehouses := d.Config.Warehouses
 	for wIndex, _ := range warehouses {
 		for vIndex, _ := range vms {
 			if vms[vIndex].ID[provider.Name()] == warehouses[wIndex].ID[provider.Name()] {
 				warehouses[wIndex].IPV4 = vms[vIndex].IPV4
-        warehouses[wIndex].Status = vms[vIndex].Status
+				warehouses[wIndex].Status = vms[vIndex].Status
 			}
 		}
 	}
 
-  trucks := d.Config.Trucks
-  for tIndex, _ := range trucks {
-    for vIndex, _ := range vms {
-      if vms[vIndex].ID[provider.Name()] == trucks[tIndex].ID[provider.Name()] {
-        trucks[tIndex].IPV4 = vms[vIndex].IPV4
-        trucks[tIndex].Status = vms[vIndex].Status
-      }
-    }
-  }
+	trucks := d.Config.Trucks
+	for tIndex, _ := range trucks {
+		for vIndex, _ := range vms {
+			if vms[vIndex].ID[provider.Name()] == trucks[tIndex].ID[provider.Name()] {
+				trucks[tIndex].IPV4 = vms[vIndex].IPV4
+				trucks[tIndex].Status = vms[vIndex].Status
+			}
+		}
+	}
 
 	return FedopsOk
 }

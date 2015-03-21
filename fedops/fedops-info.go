@@ -29,14 +29,14 @@ import (
 	// 3rd Party
 	"github.com/codegangsta/cli"
 	// FedOps
-	"github.com/Fedops/lib/dispatcher"
+	"github.com/wmiller848/Fedops/lib/dispatcher"
 )
 
 func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
-		Name:      "info",
+		Name: "info",
 		// ShortName: "if",
-		Usage:     "get info on the cluster",
+		Usage: "get info on the cluster",
 		Action: func(c *cli.Context) {
 			hasConfig := fedops.HasConfigFile(pwd)
 			if hasConfig == false {
@@ -53,11 +53,11 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 
 			promise := make(chan fedops.FedopsAction)
 			go fed.Refresh(promise)
-			result := <- promise
+			result := <-promise
 			switch result.Status {
 			case fedops.FedopsError:
 				fmt.Println("Error")
-        return
+				return
 			case fedops.FedopsOk:
 				//fmt.Println("Ok")
 			case fedops.FedopsUnknown:
@@ -66,7 +66,7 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 			//fmt.Printf("%+v \r\n", fed.Config)
 
 			//fmt.Println("ClusterID | " + fed.Config.ClusterID)
-      // Warehouses
+			// Warehouses
 			fmt.Println("Warehouses")
 			if len(fed.Config.Warehouses) > 0 {
 				for _, warehouse := range fed.Config.Warehouses {
@@ -77,9 +77,9 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 				fmt.Println("\t", "Try 'fedops warehouse create'")
 			}
 
-      fmt.Printf("\r\n")
+			fmt.Printf("\r\n")
 
-      // Trucks
+			// Trucks
 			fmt.Println("Trucks")
 			if len(fed.Config.Trucks) > 0 {
 				for _, truck := range fed.Config.Trucks {
@@ -90,18 +90,18 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 				fmt.Println("\t", "Try 'fedops truck create'")
 			}
 
-      fmt.Printf("\r\n")
+			fmt.Printf("\r\n")
 
-      // Containers
-      fmt.Println("Unshipped Containers")
-      if len(fed.Config.Containers) > 0 {
-        for _, container := range fed.Config.Containers {
-          fmt.Println("\t", "-", container.ContainerID + " | " + container.Repo)
-        }
-      } else {
-        fmt.Println("\t", "No Ccntainers available")
-        fmt.Println("\t", "Try 'fedops containers create :GIT_REPO'")
-      }
+			// Containers
+			fmt.Println("Unshipped Containers")
+			if len(fed.Config.Containers) > 0 {
+				for _, container := range fed.Config.Containers {
+					fmt.Println("\t", "-", container.ContainerID+" | "+container.Repo)
+				}
+			} else {
+				fmt.Println("\t", "No Ccntainers available")
+				fmt.Println("\t", "Try 'fedops containers create :GIT_REPO'")
+			}
 		},
 		BashComplete: func(c *cli.Context) {
 			// This will complete if no args are passed

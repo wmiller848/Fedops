@@ -24,7 +24,8 @@ package fedops_provider
 
 import (
 	_ "fmt"
-  "github.com/Fedops/lib/encryption"
+
+	"github.com/wmiller848/Fedops/lib/encryption"
 )
 
 // The Provider interface describes the functionality required for fedops
@@ -47,7 +48,7 @@ type Provider interface {
 	ListVMs() ([]ProviderVM, error)
 	CreateVM(string, ProviderSize, ProviderImage, []ProviderKeypair) (ProviderVM, error)
 
-  DestroyVM(ProviderVM) error
+	DestroyVM(ProviderVM) error
 
 	SnapShotVM(ProviderVM) (ProviderImage, error)
 }
@@ -55,8 +56,8 @@ type Provider interface {
 // The ProviderCert describes an id map that links a given provider id
 // and the cert together
 type ProviderCerts struct {
-  ID      map[string]string
-  Cert fedops_encryption.Cert
+	ID   map[string]string
+	Cert fedops_encryption.Cert
 }
 
 // The ProviderKeypair describes an id map that links a given provider id

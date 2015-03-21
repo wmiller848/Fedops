@@ -29,14 +29,14 @@ import (
 	// 3rd Party
 	"github.com/codegangsta/cli"
 	// FedOps
-	_ "github.com/Fedops/lib/dispatcher"
+	_ "github.com/wmiller848/Fedops/lib/dispatcher"
 )
 
 func commandLog(stdin *bufio.Reader, pwd string) cli.Command {
 	cmd := cli.Command{
-		Name:      "log",
+		Name: "log",
 		// ShortName: "l",
-		Usage:     "output event stream logs",
+		Usage: "output event stream logs",
 		Action: func(c *cli.Context) {
 			//fmt.Printf("%+v \r\n", c)
 			fmt.Println("Doing log thing...")

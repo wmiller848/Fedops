@@ -23,83 +23,83 @@
 package main
 
 import (
-  _ "fmt"
-  "runtime"
-  _ "os"
-  _ "crypto/tls"
-  //
-  "github.com/Fedops/lib/engine/truck"
+	_ "crypto/tls"
+	_ "fmt"
+	_ "os"
+	"runtime"
+	//
+	"github.com/wmiller848/Fedops/lib/engine/truck"
 )
 
 func main() {
-  //
-  numCpus := runtime.NumCPU()
-  runtime.GOMAXPROCS(numCpus)
+	//
+	numCpus := runtime.NumCPU()
+	runtime.GOMAXPROCS(numCpus)
 
-  daemon := fedops_truck.CreateDaemon()
-  daemon.Listen()
-  // server cert is self signed -> server_cert == ca_cert
-  // CA_Pool := x509.NewCertPool()
-  // severCert, err := ioutil.ReadFile("./cert.pem")
-  // if err != nil {
-  //     log.Fatal("Could not load server certificate!")
-  // }
-  // CA_Pool.AppendCertsFromPEM(severCert)
+	daemon := fedops_truck.CreateDaemon()
+	daemon.Listen()
+	// server cert is self signed -> server_cert == ca_cert
+	// CA_Pool := x509.NewCertPool()
+	// severCert, err := ioutil.ReadFile("./cert.pem")
+	// if err != nil {
+	//     log.Fatal("Could not load server certificate!")
+	// }
+	// CA_Pool.AppendCertsFromPEM(severCert)
 
-  // config := tls.Config{RootCAs: CA_Pool}
+	// config := tls.Config{RootCAs: CA_Pool}
 
-  // conn, err := tls.Dial("tcp", "127.0.0.1:1337", &config)
-  // if err != nil {
-  //     log.Fatalf("client: dial: %s", err)
-  // }
+	// conn, err := tls.Dial("tcp", "127.0.0.1:1337", &config)
+	// if err != nil {
+	//     log.Fatalf("client: dial: %s", err)
+	// }
 
-  // pwd := os.Getenv("PWD")
-  // hasConfig := fedops.HasConfigFile(pwd)
-  // if hasConfig == false {
-  //   fmt.Println("FedOps cluster config file does not exist")
-  //   return
-  // }
+	// pwd := os.Getenv("PWD")
+	// hasConfig := fedops.HasConfigFile(pwd)
+	// if hasConfig == false {
+	//   fmt.Println("FedOps cluster config file does not exist")
+	//   return
+	// }
 
-  // session_key := os.Getenv("FEDOPS_SESSION_KEY")
-  // if session_key == "" {
-  //   fmt.Println("'FEDOPS_SESSION_KEY' enviroment variable has been unset, please reset it to match the session key for your cluster")
-  //   return
-  // }
+	// session_key := os.Getenv("FEDOPS_SESSION_KEY")
+	// if session_key == "" {
+	//   fmt.Println("'FEDOPS_SESSION_KEY' enviroment variable has been unset, please reset it to match the session key for your cluster")
+	//   return
+	// }
 
-  // key, err := fedops.Decode([]byte(session_key))
-  // if err != nil {
-  //   fmt.Println(err.Error())
-  //   return
-  // }
+	// key, err := fedops.Decode([]byte(session_key))
+	// if err != nil {
+	//   fmt.Println(err.Error())
+	//   return
+	// }
 
-  // fed, err := fedops.CreateDispatcher(key, pwd, true)
-  // if err != nil {
-  //   fmt.Println(err.Error())
-  //   return
-  // }
-  // fed_certs := fed.Config.Certs
+	// fed, err := fedops.CreateDispatcher(key, pwd, true)
+	// if err != nil {
+	//   fmt.Println(err.Error())
+	//   return
+	// }
+	// fed_certs := fed.Config.Certs
 
-  // // cert, err := tls.LoadX509KeyPair("./cert.pem", "./key.pem")
-  // cert, err := tls.X509KeyPair(fed_certs[0].CertificatePem, fed_certs[0].PrivatePem)
-  // if err != nil {
-  //   fmt.Println(err.Error())
-  //   return
-  // }
+	// // cert, err := tls.LoadX509KeyPair("./cert.pem", "./key.pem")
+	// cert, err := tls.X509KeyPair(fed_certs[0].CertificatePem, fed_certs[0].PrivatePem)
+	// if err != nil {
+	//   fmt.Println(err.Error())
+	//   return
+	// }
 
-  // config := tls.Config{Certificates: []tls.Certificate{cert}}
-  // listener, err := tls.Listen("tcp", "127.0.0.1:1337", &config)
-  // if err != nil {
-  //   fmt.Println(err.Error())
-  //   return
-  // }
+	// config := tls.Config{Certificates: []tls.Certificate{cert}}
+	// listener, err := tls.Listen("tcp", "127.0.0.1:1337", &config)
+	// if err != nil {
+	//   fmt.Println(err.Error())
+	//   return
+	// }
 
-  // for {
-  //     conn, err := listener.Accept()
-  //     if err != nil {
-  //       fmt.Println("server: accept: %s", err)
-  //       break
-  //     }
-  //     fmt.Println("server: accepted from %s", conn.RemoteAddr())
-  //     // go handleConnection(conn)
-  // }
+	// for {
+	//     conn, err := listener.Accept()
+	//     if err != nil {
+	//       fmt.Println("server: accept: %s", err)
+	//       break
+	//     }
+	//     fmt.Println("server: accepted from %s", conn.RemoteAddr())
+	//     // go handleConnection(conn)
+	// }
 }

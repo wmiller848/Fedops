@@ -29,11 +29,11 @@ import (
 	"os"
 	"runtime"
 	// 3rd Party
-	"github.com/codegangsta/cli"
 	"code.google.com/p/gopass"
+	"github.com/codegangsta/cli"
 	// FedOps
-	"github.com/Fedops/lib/dispatcher"
-  "github.com/Fedops/lib/encryption"
+	"github.com/wmiller848/Fedops/lib/dispatcher"
+	"github.com/wmiller848/Fedops/lib/encryption"
 )
 
 const (
@@ -56,7 +56,7 @@ func initFedops(pwd string) (*fedops.Dispatcher, error) {
 	} else {
 		fmt.Printf("Cluster Config Password... ")
 		pass, _ := gopass.GetPass("")
-    passwd = []byte(pass)
+		passwd = []byte(pass)
 	}
 
 	fed, err := fedops.CreateDispatcher(passwd, pwd, useSession)
@@ -78,8 +78,8 @@ func main() {
 
 	_cli := cli.NewApp()
 	_cli.Name = "FedOps"
-  _cli.Author = "W. Chase Miller"
-  _cli.Email = "wmiller.fedops@gmail.com"
+	_cli.Author = "W. Chase Miller"
+	_cli.Email = "wmiller.fedops@gmail.com"
 	_cli.Usage = "Docker continuous deployment and cloud management, see https://github.com/wmiller848/Fedops for guides"
 	_cli.Version = "0.0.1"
 	_cli.EnableBashCompletion = true
@@ -88,7 +88,7 @@ func main() {
 
 	// Register subcommands
 	commands = append(commands, commandConfig(stdin, pwd))
-  commands = append(commands, commandContainer(stdin, pwd))
+	commands = append(commands, commandContainer(stdin, pwd))
 	commands = append(commands, commandInfo(stdin, pwd))
 	commands = append(commands, commandInit(stdin, pwd))
 	commands = append(commands, commandLog(stdin, pwd))

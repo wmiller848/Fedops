@@ -23,139 +23,139 @@
 package main
 
 import (
-  // Standard
-  "bufio"
-  "fmt"
-  // 3rd Party
-  "github.com/codegangsta/cli"
-  // FedOps
-  "github.com/Fedops/lib/dispatcher"
+	// Standard
+	"bufio"
+	"fmt"
+	// 3rd Party
+	"github.com/codegangsta/cli"
+	// FedOps
+	"github.com/wmiller848/Fedops/lib/dispatcher"
 )
 
 func commandTruck(stdin *bufio.Reader, pwd string) cli.Command {
-  cmd := cli.Command{
-    Name:      "truck",
-    // ShortName: "t",
-    Usage:     "manage fedops trucks: create, destroy",
-    Subcommands: []cli.Command{
-      cli.Command{
-        Name: "create",
-        Action: func(c *cli.Context) {
-          providerName := "auto"
-          memSize := "auto"
-          diskSize := "auto"
-          numVcpus := "auto"
+	cmd := cli.Command{
+		Name: "truck",
+		// ShortName: "t",
+		Usage: "manage fedops trucks: create, destroy",
+		Subcommands: []cli.Command{
+			cli.Command{
+				Name: "create",
+				Action: func(c *cli.Context) {
+					providerName := "auto"
+					memSize := "auto"
+					diskSize := "auto"
+					numVcpus := "auto"
 
-          fed, err := initFedops(pwd)
-          if err != nil {
-            fmt.Println("Incorrect Password")
-            return
-          }
-          promise := make(chan fedops.FedopsAction)
-          go fed.CreateTruck(promise, providerName, memSize, diskSize, numVcpus)
-          result := <- promise
-          switch result.Status {
-          case fedops.FedopsError:
-            fmt.Println("Error")
-          case fedops.FedopsOk:
-            //fmt.Println("Ok")
-          case fedops.FedopsUnknown:
-            fmt.Println("Unknown")
-          }
-        },
-      },
-      cli.Command{
-        Name: "destroy",
-        Action: func(c *cli.Context) {
-          fed, err := initFedops(pwd)
-          if err != nil {
-            fmt.Println("Incorrect Password")
-            return
-          }
+					fed, err := initFedops(pwd)
+					if err != nil {
+						fmt.Println("Incorrect Password")
+						return
+					}
+					promise := make(chan fedops.FedopsAction)
+					go fed.CreateTruck(promise, providerName, memSize, diskSize, numVcpus)
+					result := <-promise
+					switch result.Status {
+					case fedops.FedopsError:
+						fmt.Println("Error")
+					case fedops.FedopsOk:
+						//fmt.Println("Ok")
+					case fedops.FedopsUnknown:
+						fmt.Println("Unknown")
+					}
+				},
+			},
+			cli.Command{
+				Name: "destroy",
+				Action: func(c *cli.Context) {
+					fed, err := initFedops(pwd)
+					if err != nil {
+						fmt.Println("Incorrect Password")
+						return
+					}
 
-          if len (c.Args()) == 0 {
-            fmt.Println("Supply a truck ID") 
-            return
-          }
+					if len(c.Args()) == 0 {
+						fmt.Println("Supply a truck ID")
+						return
+					}
 
-          warehouseID := c.Args()[0] //c.String("warehouseID")
+					warehouseID := c.Args()[0] //c.String("warehouseID")
 
-          promise := make(chan fedops.FedopsAction)
-          go fed.DestroyTruck(promise, warehouseID)
-          result := <- promise
-          switch result.Status {
-          case fedops.FedopsError:
-            // fmt.Println("Error")
-          case fedops.FedopsOk:
-            //fmt.Println("Ok")
-          case fedops.FedopsUnknown:
-            fmt.Println("Unknown")
-          }
-        },
-      },
-      cli.Command{
-        Name: "deliver",
-        Action: func(c *cli.Context) {
-          fed, err := initFedops(pwd)
-          if err != nil {
-            fmt.Println("Incorrect Password")
-            return
-          }
+					promise := make(chan fedops.FedopsAction)
+					go fed.DestroyTruck(promise, warehouseID)
+					result := <-promise
+					switch result.Status {
+					case fedops.FedopsError:
+						// fmt.Println("Error")
+					case fedops.FedopsOk:
+						//fmt.Println("Ok")
+					case fedops.FedopsUnknown:
+						fmt.Println("Unknown")
+					}
+				},
+			},
+			cli.Command{
+				Name: "deliver",
+				Action: func(c *cli.Context) {
+					fed, err := initFedops(pwd)
+					if err != nil {
+						fmt.Println("Incorrect Password")
+						return
+					}
 
-          if len (c.Args()) <= 1 {
-            fmt.Println("Supply a container ID and truckID") 
-            return
-          }
+					if len(c.Args()) <= 1 {
+						fmt.Println("Supply a container ID and truckID")
+						return
+					}
 
-          containerID := c.Args()[0] //c.String("warehouseID")
-          truckID := c.Args()[1]
+					containerID := c.Args()[0] //c.String("warehouseID")
+					truckID := c.Args()[1]
 
-          promise := make(chan fedops.FedopsAction)
-          go fed.ShipContainerImageToTruck(promise, containerID, truckID)
-          result := <- promise
-          switch result.Status {
-          case fedops.FedopsError:
-            // fmt.Println("Error")
-          case fedops.FedopsOk:
-            //fmt.Println("Ok")
-          case fedops.FedopsUnknown:
-            fmt.Println("Unknown")
-          }
-        },
-      },
-    },
-    Flags: []cli.Flag{
-      cli.StringFlag{
-        Name:  "provider",
-        Usage: "create : provider for warehouse, otherwise automatically selects an available provider",
-      },
-      cli.StringFlag{
-        Name:  "memory-size",
-        Usage: "create : memory size for warehouse, otherwise automatically selects default for provider",
-      },
-      cli.StringFlag{
-        Name:  "disk-size",
-        Usage: "create : disk size for warehouse, otherwise automatically selects default for provider",
-      },
-      cli.StringFlag{
-        Name:  "vcpus-size",
-        Usage: "create : number of vcpus for warehouse, otherwise automatically selects default for provider",
-      },
-      cli.StringFlag{
-        Name:  "truckID",
-        Usage: "destory : truck ID",
-      },
-    },
-    BashComplete: func(c *cli.Context) {
-      // This will complete if no args are passed
-      if len(c.Args()) > 0 {
-        return
-      }
-      truckTasks := []string{"create", "destroy", "transfer"}
-      for _, t := range truckTasks {
-        fmt.Println(t)
-      }
-    },
-  }
-  return cmd
+					promise := make(chan fedops.FedopsAction)
+					go fed.ShipContainerImageToTruck(promise, containerID, truckID)
+					result := <-promise
+					switch result.Status {
+					case fedops.FedopsError:
+						// fmt.Println("Error")
+					case fedops.FedopsOk:
+						//fmt.Println("Ok")
+					case fedops.FedopsUnknown:
+						fmt.Println("Unknown")
+					}
+				},
+			},
+		},
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "provider",
+				Usage: "create : provider for warehouse, otherwise automatically selects an available provider",
+			},
+			cli.StringFlag{
+				Name:  "memory-size",
+				Usage: "create : memory size for warehouse, otherwise automatically selects default for provider",
+			},
+			cli.StringFlag{
+				Name:  "disk-size",
+				Usage: "create : disk size for warehouse, otherwise automatically selects default for provider",
+			},
+			cli.StringFlag{
+				Name:  "vcpus-size",
+				Usage: "create : number of vcpus for warehouse, otherwise automatically selects default for provider",
+			},
+			cli.StringFlag{
+				Name:  "truckID",
+				Usage: "destory : truck ID",
+			},
+		},
+		BashComplete: func(c *cli.Context) {
+			// This will complete if no args are passed
+			if len(c.Args()) > 0 {
+				return
+			}
+			truckTasks := []string{"create", "destroy", "transfer"}
+			for _, t := range truckTasks {
+				fmt.Println(t)
+			}
+		},
+	}
+	return cmd
 }

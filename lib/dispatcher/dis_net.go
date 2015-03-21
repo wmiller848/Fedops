@@ -23,60 +23,60 @@
 package fedops
 
 import (
-  "fmt"
-  "errors"
-  "crypto/tls"
-  "crypto/x509"
-  "encoding/gob"
-  //
-  "github.com/Fedops/lib/engine/network"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/gob"
+	"errors"
+	"fmt"
+	//
+	"github.com/wmiller848/Fedops/lib/engine/network"
 )
 
 func (d *Dispatcher) OpenConnection(vmIP string) *tls.Conn {
-  // server cert is self signed -> server_cert == ca_cert
-  certPool := x509.NewCertPool()
+	// server cert is self signed -> server_cert == ca_cert
+	certPool := x509.NewCertPool()
 
-  fed_certs := d.Config.Certs
-  certPool.AppendCertsFromPEM(fed_certs[0].CertificatePem)
+	fed_certs := d.Config.Certs
+	certPool.AppendCertsFromPEM(fed_certs[0].CertificatePem)
 
-  config := tls.Config{
-    RootCAs: certPool,
-    PreferServerCipherSuites: true,
-    SessionTicketsDisabled: true,
-    CipherSuites: []uint16{
-      tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-    },
-    CurvePreferences: []tls.CurveID{tls.CurveP521},
-    MinVersion: tls.VersionTLS12,
-    MaxVersion: tls.VersionTLS12,
-  }
+	config := tls.Config{
+		RootCAs:                  certPool,
+		PreferServerCipherSuites: true,
+		SessionTicketsDisabled:   true,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		},
+		CurvePreferences: []tls.CurveID{tls.CurveP521},
+		MinVersion:       tls.VersionTLS12,
+		MaxVersion:       tls.VersionTLS12,
+	}
 
-  conn, err := tls.Dial("tcp", vmIP + ":13371", &config)
-  if err != nil {
-    fmt.Println("client: dial:", err.Error())
-    return nil
-  }
-  // defer conn.Close()
-  return conn
+	conn, err := tls.Dial("tcp", vmIP+":13371", &config)
+	if err != nil {
+		fmt.Println("client: dial:", err.Error())
+		return nil
+	}
+	// defer conn.Close()
+	return conn
 }
 
 func (d *Dispatcher) WriteToConn(conn *tls.Conn, req *fedops_network.FedopsRequest) error {
-  enc := gob.NewEncoder(conn)
-  err := enc.Encode(req)
-  if err != nil {
-    return err
-  }
+	enc := gob.NewEncoder(conn)
+	err := enc.Encode(req)
+	if err != nil {
+		return err
+	}
 
-  dec := gob.NewDecoder(conn)
-  var res fedops_network.FedopsResponse
-  err = dec.Decode(&res)
-  if err != nil {
-    return err
-  }
+	dec := gob.NewDecoder(conn)
+	var res fedops_network.FedopsResponse
+	err = dec.Decode(&res)
+	if err != nil {
+		return err
+	}
 
-  if !res.Success {
-    return errors.New("Remote returned " + string(res.Error))
-  }
+	if !res.Success {
+		return errors.New("Remote returned " + string(res.Error))
+	}
 
-  return nil
+	return nil
 }

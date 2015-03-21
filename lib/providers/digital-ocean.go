@@ -25,12 +25,12 @@ package fedops_provider
 import (
 	"bytes"
 	"encoding/json"
-  _ "fmt"
+	_ "fmt"
 	_ "io/ioutil"
 	"net/http"
 	"strconv"
-  //
-  "github.com/Fedops/lib/encryption"
+	//
+	"github.com/wmiller848/Fedops/lib/encryption"
 )
 
 const DigitalOceanName string = "DigitalOcean"
@@ -111,9 +111,8 @@ func (digo *DigitalOcean) CreateKeypair(clusterid string, keypair fedops_encrypt
 	return pkeypair, nil
 }
 
-
 func (digo *DigitalOcean) ListSize() (ProviderSize, error) {
-  return ProviderSize{}, nil
+	return ProviderSize{}, nil
 }
 
 func (digo *DigitalOcean) ListSizes() ([]ProviderSize, error) {
@@ -179,7 +178,7 @@ func (digo *DigitalOcean) GetDefaultSize() (ProviderSize, error) {
 }
 
 func (digo *DigitalOcean) ListImage() (ProviderImage, error) {
-  return ProviderImage{}, nil
+	return ProviderImage{}, nil
 }
 
 func (digo *DigitalOcean) ListImages() ([]ProviderImage, error) {
@@ -239,53 +238,53 @@ func (digo *DigitalOcean) GetDefaultImage() (ProviderImage, error) {
 }
 
 func (digo *DigitalOcean) ListVM() (ProviderVM, error) {
-  client := &http.Client{}
-  req, err := http.NewRequest("GET", digo.ApiEndpoint+digo.VM_URI, nil)
-  req.Header.Add("X-FedOps-Provider", DigitalOceanName)
-  //req.Header.Add("Content-Type", "application/json")
-  req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
-  resp, err := client.Do(req)
-  if err != nil {
-    return ProviderVM{}, err
-  }
-  defer resp.Body.Close()
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", digo.ApiEndpoint+digo.VM_URI, nil)
+	req.Header.Add("X-FedOps-Provider", DigitalOceanName)
+	//req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
+	resp, err := client.Do(req)
+	if err != nil {
+		return ProviderVM{}, err
+	}
+	defer resp.Body.Close()
 
-  //fmt.Println("Response Status:", resp.Status)
-  //fmt.Println("Response Headers:", resp.Header)
-  decoder := json.NewDecoder(resp.Body)
-  var data interface{}
+	//fmt.Println("Response Status:", resp.Status)
+	//fmt.Println("Response Headers:", resp.Header)
+	decoder := json.NewDecoder(resp.Body)
+	var data interface{}
 
-  err = decoder.Decode(&data)
-  if err != nil {
-    return ProviderVM{}, err
-  }
+	err = decoder.Decode(&data)
+	if err != nil {
+		return ProviderVM{}, err
+	}
 
-  jsonMap := data.(map[string]interface{})
-  droplet := jsonMap["droplet"].(map[string]interface{})
+	jsonMap := data.(map[string]interface{})
+	droplet := jsonMap["droplet"].(map[string]interface{})
 
-  id := droplet["id"]
-  networks := droplet["networks"].(map[string]interface{})
-  ipv4 := networks["v4"].([]interface{})
-  v4 := ipv4[0].(map[string]interface{})
-  //ipv6 := networks["v6"].([]interface{})
-  //v6 := ipv6[0].(map[string]interface{})
-  status := droplet["status"]
-  if status == "active" {
-    status = "up"
-  } else {
-    status = "down"
-  }
+	id := droplet["id"]
+	networks := droplet["networks"].(map[string]interface{})
+	ipv4 := networks["v4"].([]interface{})
+	v4 := ipv4[0].(map[string]interface{})
+	//ipv6 := networks["v6"].([]interface{})
+	//v6 := ipv6[0].(map[string]interface{})
+	status := droplet["status"]
+	if status == "active" {
+		status = "up"
+	} else {
+		status = "down"
+	}
 
-  ids := make(map[string]string)
-  ids[DigitalOceanName] = strconv.FormatFloat(id.(float64), 'f', 0, 32)
-  pvm := ProviderVM{
-    ID:   ids,
-    IPV4: v4["ip_address"].(string),
-    //IPV6: v6["ip_address"].(string),
-    Provider: DigitalOceanName,
-    Status: status.(string),
-  }
-  return pvm, nil
+	ids := make(map[string]string)
+	ids[DigitalOceanName] = strconv.FormatFloat(id.(float64), 'f', 0, 32)
+	pvm := ProviderVM{
+		ID:   ids,
+		IPV4: v4["ip_address"].(string),
+		//IPV6: v6["ip_address"].(string),
+		Provider: DigitalOceanName,
+		Status:   status.(string),
+	}
+	return pvm, nil
 }
 
 func (digo *DigitalOcean) ListVMs() ([]ProviderVM, error) {
@@ -318,21 +317,21 @@ func (digo *DigitalOcean) ListVMs() ([]ProviderVM, error) {
 		id := vmvalue.(map[string]interface{})["id"]
 		networks := vmvalue.(map[string]interface{})["networks"].(map[string]interface{})
 		ipv4 := networks["v4"].([]interface{})
-    var v4 map[string]interface{}
-    if len(ipv4) > 0 {
-      v4 = ipv4[0].(map[string]interface{})
-    } else {
-      v4 = make(map[string]interface{})
-      v4["ip_address"] = ""
-    }
+		var v4 map[string]interface{}
+		if len(ipv4) > 0 {
+			v4 = ipv4[0].(map[string]interface{})
+		} else {
+			v4 = make(map[string]interface{})
+			v4["ip_address"] = ""
+		}
 		//ipv6 := networks["v6"].([]interface{})
 		//v6 := ipv6[0].(map[string]interface{})
-    status := vmvalue.(map[string]interface{})["status"]
-    if status == "active" {
-      status = "up"
-    } else {
-      status = "down"
-    }
+		status := vmvalue.(map[string]interface{})["status"]
+		if status == "active" {
+			status = "up"
+		} else {
+			status = "down"
+		}
 
 		ids := make(map[string]string)
 		ids[DigitalOceanName] = strconv.FormatFloat(id.(float64), 'f', 0, 32)
@@ -341,7 +340,7 @@ func (digo *DigitalOcean) ListVMs() ([]ProviderVM, error) {
 			IPV4: v4["ip_address"].(string),
 			//IPV6: v6["ip_address"].(string),
 			Provider: DigitalOceanName,
-      Status: status.(string),
+			Status:   status.(string),
 		}
 		pvms = append(pvms, pvm)
 	}
@@ -394,39 +393,39 @@ func (digo *DigitalOcean) CreateVM(vmid string, size ProviderSize, image Provide
 
 	droplet := jsonMap["droplet"].(map[string]interface{})
 
-  status := droplet["status"]
-  if status == "new" {
-    status = "booting"
-  } else {
-    status = "error"
-  }
+	status := droplet["status"]
+	if status == "new" {
+		status = "booting"
+	} else {
+		status = "error"
+	}
 
 	ids := make(map[string]string)
 	ids[DigitalOceanName] = strconv.FormatFloat(droplet["id"].(float64), 'f', 0, 32)
 	pvm := ProviderVM{
 		ID:       ids,
 		Provider: DigitalOceanName,
-    Status: status.(string),
+		Status:   status.(string),
 	}
 	return pvm, nil
 }
 
 func (digo *DigitalOcean) DestroyVM(vm ProviderVM) error {
-  client := &http.Client{}
-  req, err := http.NewRequest("DELETE", digo.ApiEndpoint+digo.VM_URI+"/"+vm.ID[DigitalOceanName], nil)
-  req.Header.Add("X-FedOps-Provider", DigitalOceanName)
-  //req.Header.Add("Content-Type", "application/json")
-  req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
-  resp, err := client.Do(req)
-  if err != nil {
-    return err
-  }
-  defer resp.Body.Close()
+	client := &http.Client{}
+	req, err := http.NewRequest("DELETE", digo.ApiEndpoint+digo.VM_URI+"/"+vm.ID[DigitalOceanName], nil)
+	req.Header.Add("X-FedOps-Provider", DigitalOceanName)
+	//req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+digo.ApiKey)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-  //fmt.Println("Response Status:", resp.Status)
-  //fmt.Println("Response Headers:", resp.Header)
+	//fmt.Println("Response Status:", resp.Status)
+	//fmt.Println("Response Headers:", resp.Header)
 
-  return nil
+	return nil
 }
 
 func (digo *DigitalOcean) SnapShotVM(ProviderVM) (ProviderImage, error) {
