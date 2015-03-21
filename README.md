@@ -7,19 +7,19 @@
 
 ## About ##
 
-Fedops is a cloud vps manager and contionous intigration tool designed to easilty and securely manage shipping docker containers. Fedops initigrates very tightly with docker, and the docker registery.
+Fedops is a cloud vps manager and continuous integration tool designed to easily and securely manage shipping docker containers. Fedops integrates very tightly with docker, and the docker registry.
 
 You can use Fedops to create a cluster of machines that will poll source control, build, test, and deploy to any number of machines you define.
 
 The developer is referred to as the dispatcher
 
-Machines that manage continous intigration are called warehouses
+Machines that manage continuous integration are called warehouses
 
 Machines that receive and run shipped containers are called trucks
 
 Fedops believes in robust security, the 'init' command will walk you through configuring a new cluster.
 After you have configured the new cluster Fedops will create an encrypted configuration file for the cluster.
-This is important as your configuration file will store sensative information about your account for a given cloud provider, ssh key pairs, and tls certificate key pairs.
+This is important as your configuration file will store sensitive information about your account for a given cloud provider, ssh key pairs, and tls certificate key pairs.
 
 You should treat the 'Fedops' file with care.
 
@@ -61,7 +61,7 @@ fedops truck create
 fedops container create https://github.com/wmiller848/amazing_example
 ```
 
-### Ship a container for continous deployment ###
+### Ship a container for continuous deployment ###
 ```
 fedops warehouse ship [warehouseID] [containerID]
 ```
@@ -85,7 +85,7 @@ Warehouses
 Trucks
   - 891h91h981h809hd819 - 201.0.10.11 | up | 1 minute
     * 98cn1oh901h109h19h0 - https://github.com/wmiller848/amazing_example | X, Waiting... 1 minute ago
-  
+
 Unshipped Containers
   none
 ```
@@ -99,7 +99,7 @@ Warehouses
 Trucks
   - 891h91h981h809hd819 - 201.0.10.11 | up | 10 minutes
     * 98cn1oh901h109h19h0 - https://github.com/wmiller848/amazing_example | √, Running... 5 minutes ago
-  
+
 Unshipped Containers
   none
 ```
@@ -121,7 +121,7 @@ Trucks
     * 98cn1oh901h109h19h0 - https://github.com/wmiller848/amazing_example | √, Running... 10 minutes ago
   - jsysa819bdoi18h0hd0 - 201.0.10.15 | up | 1 minute
     * 98cn1oh901h109h19h0 - https://github.com/wmiller848/amazing_example | √, Running... 1 minute ago
-  
+
 Unshipped Containers
   none
 ```
@@ -141,7 +141,7 @@ fedops help [subcommand]
 
 Fedops uses a push based architecture, after a warehouse is established it will poll source control. From there it will push events to the relevant trucks via secure tcp listeners.
 
-By defualt all nodes on any provider are fedora images with SELinux installed/enabled
+By default all nodes on any provider are fedora images with SELinux installed/enabled
 
 See https://getfedora.org/
 
@@ -159,6 +159,8 @@ Fedops produces '521 Elliptic Curve' based private keys that are equilvant to 15
 See https://www.nsa.gov/business/programs/elliptic_curve.shtml
 
 ALL DATA at rest and/or on the wire is encypted at least once in additon to any transport encryption
+
+Fedops does not protect you from running services with known exploits, not updating (although this may be supported in the future) your servers software, metadata collection from large nation-state organizations and/or internet service providers, rootkits or malware that may infect your vps's. Fedops makes it easy to deploy applications and servers, we recommend you frequently cycle your servers (i.e. destroy and create new ones). In short, its a scary world out there, be careful.
 
 ## Liceneces ##
 
