@@ -39,6 +39,7 @@ func main() {
 	daemon := fedops_truck.CreateDaemon()
 	if daemon != nil {
 		daemon.Listen()
+		daemon.StartEventEngine()
 	}
 	// server cert is self signed -> server_cert == ca_cert
 	// CA_Pool := x509.NewCertPool()

@@ -23,9 +23,11 @@
 package fedops_warehouse
 
 import (
+	//
 	"bytes"
 	"fmt"
 	"os"
+	"time"
 	//
 	"github.com/wmiller848/Fedops/lib/engine"
 	"github.com/wmiller848/Fedops/lib/engine/network"
@@ -80,8 +82,24 @@ func (d *WarehouseDaemon) ListContainers(req *fedops_network.FedopsRequest, res 
 }
 
 func (d *WarehouseDaemon) PackageContainer(req *fedops_network.FedopsRequest, res *fedops_network.FedopsResponse) error {
+	var containerID, truckID string
 	args := bytes.Split(req.Route, []byte("/"))
-	fmt.Println("PackageContainer", string(req.Data), args)
+	if len(args) >= 3 {
+		containerID = string(args[2])
+	}
+	dataArgs := bytes.Split(req.Data, []byte(":"))
+	if len(dataArgs) >= 2 {
+		truckID = string(dataArgs[1])
+	}
+	fmt.Println("PackageContainer", containerID, truckID)
+	event := fedops_runtime.FedopsEvent{
+		ID:         containerID + ":" + truckID,
+		Handle:     d.PollSourceControll,
+		Persistant: true,
+		Time:       time.Now(),
+	}
+	d.Events = append(d.Events, event)
+
 	return nil
 }
 
@@ -101,4 +119,8 @@ func (d *WarehouseDaemon) PackageContainerImage(req *fedops_network.FedopsReques
 	args := bytes.Split(req.Route, []byte("/"))
 	fmt.Println("PackageContainerImage", string(req.Data), args)
 	return nil
+}
+
+func (d *WarehouseDaemon) PollSourceControll(event *fedops_runtime.FedopsEvent) {
+	fmt.Println(event)
 }

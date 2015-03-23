@@ -47,6 +47,15 @@ const (
 	ConfigFileName string = "Fedops-Runtime"
 )
 
+type FedopsEventHandle func(event *FedopsEvent)
+
+type FedopsEvent struct {
+	ID         string
+	Handle     FedopsEventHandle
+	Persistant bool
+	Time       time.Time
+}
+
 //
 //
 type RuntimeError struct {
@@ -74,6 +83,7 @@ type Runtime struct {
 	PowerDirectory string
 	Config         ClusterConfig
 	Routes         []fedops_network.FedopsRoute
+	Events         []FedopsEvent
 }
 
 func (r *Runtime) Configure(pwd string) error {
@@ -333,4 +343,20 @@ func (r *Runtime) Listen() {
 		fmt.Println(conn.RemoteAddr(), "Connected")
 		go r.HandleConnection(conn)
 	}
+}
+
+func (r *Runtime) StartEventEngine() error {
+	for {
+		l := len(r.Events)
+		if l > 0 {
+			event := r.Events[l-1 : l][0]
+			ftime := event.Time.Add(2 * time.Second)
+			n := time.Now()
+			if n.After(ftime) {
+				go event.Handle(&event)
+				event.Time = n
+			}
+		}
+	}
+	return nil
 }
