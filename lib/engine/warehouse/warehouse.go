@@ -98,6 +98,7 @@ func (d *WarehouseDaemon) PackageContainer(req *fedops_network.FedopsRequest, re
 		Persistant: true,
 		Time:       time.Now(),
 	}
+	fmt.Println(event)
 	d.Events = append(d.Events, event)
 
 	return nil

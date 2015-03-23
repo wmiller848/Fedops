@@ -347,12 +347,15 @@ func (r *Runtime) Listen() {
 
 func (r *Runtime) StartEventEngine() error {
 	for {
+		fmt.Println("Running StartEventEngine...")
 		l := len(r.Events)
 		if l > 0 {
+			fmt.Println("Processing Event")
 			event := r.Events[l-1 : l][0]
 			ftime := event.Time.Add(2 * time.Second)
 			n := time.Now()
 			if n.After(ftime) {
+				fmt.Println("Calling Handle for Event")
 				go event.Handle(&event)
 				event.Time = n
 			}

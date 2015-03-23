@@ -124,6 +124,9 @@ func (d *Dispatcher) _shipContainerToWarehouse(containerID, warehouseID string) 
 			}
 
 			conn := d.OpenConnection(warehouse.IPV4)
+			if conn == nil {
+				return FedopsError
+			}
 			err = d.WriteToConn(conn, &req)
 			if err != nil {
 				fmt.Println(err.Error())
@@ -140,6 +143,9 @@ func (d *Dispatcher) _shipContainerToWarehouse(containerID, warehouseID string) 
 			}
 
 			conn = d.OpenConnection(truck.IPV4)
+			if conn == nil {
+				return FedopsError
+			}
 			err = d.WriteToConn(conn, &req)
 			if err != nil {
 				fmt.Println(err.Error())
@@ -156,6 +162,9 @@ func (d *Dispatcher) _shipContainerToWarehouse(containerID, warehouseID string) 
 		}
 
 		conn := d.OpenConnection(warehouse.IPV4)
+		if conn == nil {
+			return FedopsError
+		}
 		defer conn.Close()
 
 		err = d.WriteToConn(conn, &req)
@@ -223,6 +232,9 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
 		}
 
 		conn := d.OpenConnection(truck.IPV4)
+		if conn == nil {
+			return FedopsError
+		}
 		err = d.WriteToConn(conn, &req)
 		if err != nil {
 			fmt.Println(err.Error())
@@ -242,6 +254,9 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
 
 		warehouse := d.Config.Warehouses[container.Warehouse]
 		conn = d.OpenConnection(warehouse.IPV4)
+		if conn == nil {
+			return FedopsError
+		}
 		defer conn.Close()
 		err = d.WriteToConn(conn, &req)
 		if err != nil {
@@ -257,6 +272,9 @@ func (d *Dispatcher) _shipContainerImageToTruck(containerID, truckID string) uin
 		}
 
 		conn := d.OpenConnection(truck.IPV4)
+		if conn == nil {
+			return FedopsError
+		}
 		defer conn.Close()
 
 		err = d.WriteToConn(conn, &req)
