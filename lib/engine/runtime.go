@@ -308,14 +308,13 @@ func (r *Runtime) HandleConnection(conn net.Conn) {
 	// conn.Write([]byte("ok"))
 }
 
-func (r *Runtime) Listen(status chan bool) {
+func (r *Runtime) Listen(status chan error) {
 	fed_cert := r.Config.Cert
 	// cert, err := tls.LoadX509KeyPair("./cert.pem", "./key.pem")
 	cert, err := tls.X509KeyPair(fed_cert.CertificatePem, fed_cert.PrivatePem)
 	if err != nil {
 		fmt.Println(err.Error())
-		status <- false
-		return
+		status <- err
 	}
 
 	config := tls.Config{
@@ -346,7 +345,7 @@ func (r *Runtime) Listen(status chan bool) {
 	}
 }
 
-func (r *Runtime) StartEventEngine(status chan bool) error {
+func (r *Runtime) StartEventEngine(status chan error) {
 	for {
 		l := len(r.Events)
 		if l > 0 {
@@ -356,10 +355,9 @@ func (r *Runtime) StartEventEngine(status chan bool) error {
 			n := time.Now()
 			if n.After(ftime) {
 				fmt.Println("Calling Handle for Event")
-				go event.Handle(&event)
 				event.Time = n
+				go event.Handle(&event)
 			}
 		}
 	}
-	return nil
 }
