@@ -123,5 +123,5 @@ func (d *WarehouseDaemon) PackageContainerImage(req *fedops_network.FedopsReques
 }
 
 func (d *WarehouseDaemon) PollSourceControll(event *fedops_runtime.FedopsEvent) {
-	fmt.Println(event)
+	fmt.Println("PollSourceControll", event)
 }

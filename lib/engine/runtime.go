@@ -348,7 +348,6 @@ func (r *Runtime) Listen(status chan bool) {
 
 func (r *Runtime) StartEventEngine(status chan bool) error {
 	for {
-		fmt.Println("Running StartEventEngine...")
 		l := len(r.Events)
 		if l > 0 {
 			fmt.Println("Processing Event")
