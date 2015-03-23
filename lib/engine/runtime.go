@@ -336,6 +336,7 @@ func (r *Runtime) Listen(status chan error) {
 		return
 	}
 
+	fmt.Println("Starting Listener Loop")
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -348,7 +349,7 @@ func (r *Runtime) Listen(status chan error) {
 }
 
 func (r *Runtime) StartEventEngine(status chan error) {
-	fmt.Println("StartEventEngine")
+	fmt.Println("StartEventEngine Loop")
 	for {
 		l := len(r.Events)
 		if l > 0 {
