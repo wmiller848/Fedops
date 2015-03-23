@@ -23,6 +23,7 @@
 package main
 
 import (
+	"fmt"
 	"runtime"
 	//
 	"github.com/wmiller848/Fedops/lib/engine/warehouse"
@@ -33,10 +34,13 @@ func main() {
 	runtime.GOMAXPROCS(numCpus)
 
 	daemon := fedops_warehouse.CreateDaemon()
+	statusChan := make(chan bool)
 	if daemon != nil {
-		daemon.Listen()
-		daemon.StartEventEngine()
+		go daemon.Listen(statusChan)
+		go daemon.StartEventEngine(statusChan)
 	}
+	status := <-statusChan
+	fmt.Println(status)
 	// server cert is self signed -> server_cert == ca_cert
 	// CA_Pool := x509.NewCertPool()
 	// severCert, err := ioutil.ReadFile("./cert.pem")

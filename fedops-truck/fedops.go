@@ -23,9 +23,7 @@
 package main
 
 import (
-	_ "crypto/tls"
-	_ "fmt"
-	_ "os"
+	"fmt"
 	"runtime"
 	//
 	"github.com/wmiller848/Fedops/lib/engine/truck"
@@ -37,10 +35,13 @@ func main() {
 	runtime.GOMAXPROCS(numCpus)
 
 	daemon := fedops_truck.CreateDaemon()
+	statusChan := make(chan bool)
 	if daemon != nil {
-		daemon.Listen()
-		daemon.StartEventEngine()
+		daemon.Listen(statusChan)
+		daemon.StartEventEngine(statusChan)
 	}
+	status := <-statusChan
+	fmt.Println(status)
 	// server cert is self signed -> server_cert == ca_cert
 	// CA_Pool := x509.NewCertPool()
 	// severCert, err := ioutil.ReadFile("./cert.pem")

@@ -308,12 +308,13 @@ func (r *Runtime) HandleConnection(conn net.Conn) {
 	// conn.Write([]byte("ok"))
 }
 
-func (r *Runtime) Listen() {
+func (r *Runtime) Listen(status chan bool) {
 	fed_cert := r.Config.Cert
 	// cert, err := tls.LoadX509KeyPair("./cert.pem", "./key.pem")
 	cert, err := tls.X509KeyPair(fed_cert.CertificatePem, fed_cert.PrivatePem)
 	if err != nil {
 		fmt.Println(err.Error())
+		status <- false
 		return
 	}
 
@@ -345,7 +346,7 @@ func (r *Runtime) Listen() {
 	}
 }
 
-func (r *Runtime) StartEventEngine() error {
+func (r *Runtime) StartEventEngine(status chan bool) error {
 	for {
 		fmt.Println("Running StartEventEngine...")
 		l := len(r.Events)
