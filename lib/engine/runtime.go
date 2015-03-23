@@ -245,6 +245,7 @@ func (r *Runtime) AddRoute(method uint, route string, handle fedops_network.Hand
 
 // Handles incoming requests.
 func (r *Runtime) HandleConnection(conn net.Conn) {
+	fmt.Println("HandleConnection")
 	// Make a buffer to hold incoming data.
 	// buf := make([]byte, 1024)
 	// Read the incoming connection into the buffer.
@@ -309,12 +310,13 @@ func (r *Runtime) HandleConnection(conn net.Conn) {
 }
 
 func (r *Runtime) Listen(status chan error) {
+	fmt.Println("Listen")
 	fed_cert := r.Config.Cert
 	// cert, err := tls.LoadX509KeyPair("./cert.pem", "./key.pem")
 	cert, err := tls.X509KeyPair(fed_cert.CertificatePem, fed_cert.PrivatePem)
 	if err != nil {
-		fmt.Println(err.Error())
 		status <- err
+		return
 	}
 
 	config := tls.Config{
@@ -330,7 +332,7 @@ func (r *Runtime) Listen(status chan error) {
 	}
 	listener, err := tls.Listen("tcp", ":13371", &config)
 	if err != nil {
-		fmt.Println(err.Error())
+		status <- err
 		return
 	}
 
@@ -346,10 +348,10 @@ func (r *Runtime) Listen(status chan error) {
 }
 
 func (r *Runtime) StartEventEngine(status chan error) {
+	fmt.Println("StartEventEngine")
 	for {
 		l := len(r.Events)
 		if l > 0 {
-			fmt.Println("Processing Event")
 			event := r.Events[l-1 : l][0]
 			ftime := event.Time.Add(2 * time.Second)
 			n := time.Now()

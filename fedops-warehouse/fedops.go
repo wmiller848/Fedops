@@ -39,8 +39,11 @@ func main() {
 		go daemon.Listen(statusChan)
 		go daemon.StartEventEngine(statusChan)
 	}
+
 	err := <-statusChan
-	fmt.Println(err.Error())
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	// server cert is self signed -> server_cert == ca_cert
 	// CA_Pool := x509.NewCertPool()
 	// severCert, err := ioutil.ReadFile("./cert.pem")
