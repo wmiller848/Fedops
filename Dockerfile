@@ -4,7 +4,7 @@ MAINTAINER W. Chase Miller
 
 USER root
 
-RUN yum -y install glibc gcc make cmake git hostname libgit2-devel pcre-devel
+RUN yum -y install glibc-devel gcc make cmake git hostname libgit2-devel pcre-devel
 
 WORKDIR /opt
 RUN git clone https://github.com/golang/go
