@@ -362,5 +362,6 @@ func (r *Runtime) StartEventEngine(status chan error) {
 				go event.Handle(&event)
 			}
 		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }

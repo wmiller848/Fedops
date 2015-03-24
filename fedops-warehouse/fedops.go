@@ -37,7 +37,7 @@ func main() {
 	statusChan := make(chan error)
 	if daemon != nil {
 		go daemon.Listen(statusChan)
-		// go daemon.StartEventEngine(statusChan)
+		go daemon.StartEventEngine(statusChan)
 	}
 
 	err := <-statusChan
