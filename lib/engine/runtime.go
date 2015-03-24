@@ -351,15 +351,21 @@ func (r *Runtime) Listen(status chan error) {
 func (r *Runtime) StartEventEngine(status chan error) {
 	fmt.Println("StartEventEngine Loop")
 	for {
+		var event FedopsEvent
 		l := len(r.Events)
 		if l > 0 {
-			event := r.Events[l-1 : l][0]
+			event, r.Events = r.Events[l-1], r.Events[:l-1]
 			ftime := event.Time.Add(2 * time.Second)
 			n := time.Now()
 			if n.After(ftime) {
-				fmt.Println("Calling Handle for Event")
 				event.Time = n
 				go event.Handle(&event)
+				if event.Persistant {
+					events := r.Events
+					r.Events = make([]FedopsEvent, l)
+					r.Events = append(r.Events, event)
+					r.Events = append(r.Events, events[:l-1]...)
+				}
 			}
 		}
 		time.Sleep(10 * time.Millisecond)
