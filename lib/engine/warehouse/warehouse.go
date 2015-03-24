@@ -29,6 +29,8 @@ import (
 	"os"
 	"time"
 	//
+	"gopkg.in/libgit2/git2go.v22"
+	//
 	"github.com/wmiller848/Fedops/lib/engine"
 	"github.com/wmiller848/Fedops/lib/engine/network"
 	"github.com/wmiller848/Fedops/lib/providers"
@@ -124,5 +126,5 @@ func (d *WarehouseDaemon) PackageContainerImage(req *fedops_network.FedopsReques
 
 func (d *WarehouseDaemon) PollSourceControll(event *fedops_runtime.FedopsEvent) {
 	fmt.Println("PollSourceControll", event)
-
+	git.OpenRepository("https://github.com/libgit2/git2go.git")
 }
