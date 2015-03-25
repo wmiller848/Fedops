@@ -126,5 +126,10 @@ func (d *WarehouseDaemon) PackageContainerImage(req *fedops_network.FedopsReques
 
 func (d *WarehouseDaemon) PollSourceControll(event *fedops_runtime.FedopsEvent) {
 	fmt.Println("PollSourceControll", event)
-	git.OpenRepository("https://github.com/libgit2/git2go.git")
+	repo, err := git.OpenRepository("https://github.com/libgit2/git2go.git")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	co := repo.CheckoutHead(nil)
+	fmt.Println(co)
 }
