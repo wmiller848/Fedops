@@ -353,12 +353,14 @@ func (r *Runtime) StartEventEngine(status chan error) {
 	for {
 		var event FedopsEvent
 		l := len(r.Events)
+		fmt.Println("Events", l)
 		if l > 0 {
 			event, r.Events = r.Events[l-1], r.Events[:l-1]
 			ftime := event.Time.Add(2 * time.Second)
 			n := time.Now()
 			if n.After(ftime) {
 				event.Time = n
+				fmt.Println("Running Event Handle")
 				go event.Handle(&event)
 				if event.Persistant {
 					events := r.Events
