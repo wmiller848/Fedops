@@ -27,9 +27,9 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
 	"time"
-	//
-	"gopkg.in/libgit2/git2go.v22"
 	//
 	"github.com/wmiller848/Fedops/lib/engine"
 	"github.com/wmiller848/Fedops/lib/engine/network"
@@ -126,10 +126,13 @@ func (d *WarehouseDaemon) PackageContainerImage(req *fedops_network.FedopsReques
 
 func (d *WarehouseDaemon) PollSourceControll(event *fedops_runtime.FedopsEvent) {
 	fmt.Println("PollSourceControll", event)
-	repo, err := git.OpenRepository("https://github.com/libgit2/git2go.git")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	co := repo.CheckoutHead(nil)
-	fmt.Println(co)
+	idArgs := strings.Split(event.ID, ":")
+	containerID := idArgs[0]
+	// truckID := idArgs[0]
+
+	container := d.Config.Containers[containerID]
+
+	cmd := exec.Command("git clone")
+
+	fmt.Println(container, cmd)
 }
