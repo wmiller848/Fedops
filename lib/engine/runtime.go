@@ -362,13 +362,15 @@ func (r *Runtime) StartEventEngine(status chan error) {
 				r.Events = r.Events[:l-1]
 				event.Time = n
 				fmt.Println("Running Event Handle")
-				go event.Handle(&event)
-				if event.Persistant {
-					events := r.Events
-					r.Events = make([]FedopsEvent, l)
-					r.Events = append(r.Events, event)
-					r.Events = append(r.Events, events[:l-1]...)
-				}
+				go (func() {
+					event.Handle(&event)
+					if event.Persistant {
+						events := r.Events
+						r.Events = make([]FedopsEvent, l)
+						r.Events = append(r.Events, event)
+						r.Events = append(r.Events, events...)
+					}
+				})()
 			}
 		}
 		time.Sleep(500 * time.Millisecond)

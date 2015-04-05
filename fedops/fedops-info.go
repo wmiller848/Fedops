@@ -96,7 +96,9 @@ func commandInfo(stdin *bufio.Reader, pwd string) cli.Command {
 			fmt.Println("Unshipped Containers")
 			if len(fed.Config.Containers) > 0 {
 				for _, container := range fed.Config.Containers {
-					fmt.Println("\t", "-", container.ContainerID+" | "+container.Repo)
+					if container != nil {
+						fmt.Println("\t", "-", container.ContainerID+" | "+container.Repo)
+					}
 				}
 			} else {
 				fmt.Println("\t", "No Ccntainers available")

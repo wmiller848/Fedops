@@ -74,6 +74,8 @@ func (d *Dispatcher) DestroyContainer(promise chan FedopsAction, containerID str
 
 	d.Config.Containers[containerID] = nil
 
+	delete(d.Config.Containers, containerID)
+
 	persisted := d.Unload()
 	if persisted != true {
 		promise <- FedopsAction{
