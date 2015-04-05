@@ -355,10 +355,11 @@ func (r *Runtime) StartEventEngine(status chan error) {
 		l := len(r.Events)
 		if l > 0 {
 			fmt.Println("Events -", l)
-			event, r.Events = r.Events[l-1], r.Events[:l-1]
+			event = r.Events[l-1]
 			ftime := event.Time.Add(2 * time.Second)
 			n := time.Now()
 			if n.After(ftime) {
+				r.Events = r.Events[:l-1]
 				event.Time = n
 				fmt.Println("Running Event Handle")
 				go event.Handle(&event)
