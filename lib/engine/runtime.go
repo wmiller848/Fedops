@@ -354,12 +354,13 @@ func (r *Runtime) StartEventEngine(status chan error) {
 		var event FedopsEvent
 		l := len(r.Events)
 		if l > 0 {
+			i := l - 1
 			fmt.Println("Events -", l)
-			event = r.Events[l-1]
+			event = r.Events[i]
 			ftime := event.Time.Add(2 * time.Second)
 			n := time.Now()
 			if n.After(ftime) {
-				r.Events = r.Events[:l-1]
+				r.Events = r.Events[:i]
 				event.Time = n
 				fmt.Println("Running Event Handle")
 				fmt.Println(len(r.Events))
@@ -368,7 +369,9 @@ func (r *Runtime) StartEventEngine(status chan error) {
 					events := r.Events
 					r.Events = make([]FedopsEvent, l)
 					r.Events = append(r.Events, event)
-					r.Events = append(r.Events, events...)
+					if len(r.Events) > 1 {
+						r.Events = append(r.Events, events...)
+					}
 				}
 			}
 		}
