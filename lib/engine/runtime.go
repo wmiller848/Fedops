@@ -362,6 +362,7 @@ func (r *Runtime) StartEventEngine(status chan error) {
 				r.Events = r.Events[:l-1]
 				event.Time = n
 				fmt.Println("Running Event Handle")
+				fmt.Println(len(r.Events))
 				event.Handle(&event)
 				if event.Persistant {
 					events := r.Events
