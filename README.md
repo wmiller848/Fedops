@@ -160,13 +160,14 @@ See https://www.nsa.gov/business/programs/elliptic_curve.shtml
 
 ALL DATA at rest and/or on the wire is encypted at least once in additon to any transport encryption
 
-Fedops does not protect you from running services with known exploits, not updating (although this may be supported in the future) your servers software, metadata collection from large nation-state organizations and/or internet service providers, rootkits or malware that may infect your vps's. Fedops makes it easy to deploy applications and servers, we recommend you frequently cycle your servers (i.e. destroy and create new ones). In short, its a scary world out there, be careful.
+Fedops does not protect you from running services with known exploits, not updating (although this may be supported in the future) your servers software, metadata collection from large nation-state organizations and/or internet service providers, rootkits or malware that may infect your vps's. Fedops makes it easy to deploy applications and servers, we recommend you frequently cycle your servers (i.e. destroy and create new ones).
 
 ## Liceneces ##
 
 The MIT License (MIT)
 
-Copyright (c) 2014 William Miller
+Copyright (c) William Miller
+Last revised 2015
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
