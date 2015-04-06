@@ -1,6 +1,6 @@
 # Docker build for Fedops
 FROM fedora:latest
-MAINTAINER W. Chase Miller
+MAINTAINER William Miller
 
 USER root
 
