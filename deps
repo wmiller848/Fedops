@@ -1,0 +1,6 @@
+go get -u code.google.com/p/gopass
+go get -u github.com/codegangsta/cli
+go get -u github.com/pkg/sftp
+go get -u golang.org/x/crypto/bcrypt
+go get -u golang.org/x/crypto/ssh
+go get -u golang.org/x/crypto/ssh/terminal
